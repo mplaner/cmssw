@@ -14,3 +14,4 @@
 <export>
   <lib   name="1"/>
 </export>
+#modfication #this adds a line containing #modification at the end of BuildFile.xml
