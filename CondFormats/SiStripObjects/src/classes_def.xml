@@ -94,4 +94,14 @@
     <!-- <field name="names_" mapping="blob"/> -->
     <!-- <field name="values_" mapping="blob"/> -->
   </class>
+
+  <class name="Phase2TrackerModule" ClassVersion="11">
+   <version ClassVersion="11" checksum="707066581"/>
+    <version ClassVersion="10" checksum="2583259051"/>
+  </class>
+
+  <class name="Phase2TrackerCabling" ClassVersion="10">
+    <version ClassVersion="10" checksum="4113645328"/>
+  </class>
+
 </lcgdict>

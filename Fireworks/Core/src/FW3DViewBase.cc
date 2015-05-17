@@ -56,7 +56,10 @@ private:
 public:
    Clipsi(TGLRnrCtx* ctx):TGLClip(* new TGLClipsiLogical, TGLMatrix(), fgColor), m_rnrCtx(ctx){}
    virtual ~Clipsi() {}
+   using TGLClip::Setup;
    virtual void Setup(const TGLBoundingBox & bbox) override {}
+
+   using TGLClip::PlaneSet;
    virtual void PlaneSet(TGLPlaneSet_t & planeSet) const override
    {
       TGLCamera& cam = m_rnrCtx->RefCamera();
@@ -104,8 +107,8 @@ public:
 // 
 //
 ////////////////////////////////////////////////////////////////////////////////
-FW3DViewBase::FW3DViewBase(TEveWindowSlot* iParent, FWViewType::EType typeId):
-   FWEveView(iParent, typeId, 8),
+FW3DViewBase::FW3DViewBase(TEveWindowSlot* iParent, FWViewType::EType typeId, unsigned int version):
+   FWEveView(iParent, typeId, version ),
    m_geometry(0),
    m_glClip(0),
    m_showMuonBarrel(this, "Show Muon Barrel",  0l, 0l, 2l ),

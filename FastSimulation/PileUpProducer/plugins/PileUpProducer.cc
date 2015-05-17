@@ -1,6 +1,8 @@
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/LuminosityBlock.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/RandomNumberGenerator.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
@@ -24,11 +26,12 @@
 #include <sys/stat.h>
 #include <cmath>
 
-PileUpProducer::PileUpProducer(edm::ParameterSet const & p) : hprob(0)
+PileUpProducer::PileUpProducer(edm::ParameterSet const & p) : hprob(0), currentValuesWereSet(false)
 {    
 
-  // This producer produces an object PileupMixingContent, needed by PileupSummaryInfo
+  // This producer produces an object PileupMixingContent and PileupVertexContent, needed by PileupSummaryInfo
   produces<PileupMixingContent>();
+  produces<PileupVertexContent>();
   // This producer produces a HepMCProduct, with all pileup vertices/particles
   produces<edm::HepMCProduct>("PileUpEvents");
   
@@ -138,14 +141,11 @@ PileUpProducer::~PileUpProducer() {
 
 void PileUpProducer::beginRun(edm::Run const&, edm::EventSetup const&)
 {
-  
-  gROOT->cd();
-  
   std::string fullPath;
   
   // Read the information from a previous run (to keep reproducibility)
-  bool input = this->read(inputFile);
-  if ( input ) 
+  currentValuesWereSet = this->read(inputFile);
+  if ( currentValuesWereSet )
     std::cout << "***WARNING*** You are reading pile-up information from the file "
 	      << inputFile << " created in an earlier run."
 	      << std::endl;
@@ -181,37 +181,36 @@ void PileUpProducer::beginRun(edm::Run const&, edm::EventSetup const&)
     theBranches[file]->SetAddress(&thePUEvents[file]);
     //
     theNumberOfEntries[file] = theTrees[file]->GetEntries();
-    // RANDOM_NUMBER_ERROR
-    // Random numbers should only be generated in the beginLuminosityBlock method
-    // or event methods of a module
-    RandomEngineAndDistribution random;
-    // Add some randomness (if there was no input file)
-    if ( !input ) 
-      theCurrentEntry[file] 
-	= (unsigned) (theNumberOfEntries[file] * random.flatShoot());
 
-    theTrees[file]->GetEntry(theCurrentEntry[file]);
-    unsigned NMinBias = thePUEvents[file]->nMinBias();
-    theNumberOfMinBiasEvts[file] = NMinBias;
-    // Add some randomness (if there was no input file)
-    if ( !input )
-	theCurrentMinBiasEvt[file] = 
-	  (unsigned) (theNumberOfMinBiasEvts[file] * random.flatShoot());
-    
-    /*
-    std::cout << "File " << theFileNames[file]
-	      << " is opened with " << theNumberOfEntries[file] 
-	      << " entries and will be read from Entry/Event "
-	      << theCurrentEntry[file] << "/" << theCurrentMinBiasEvt[file]
-	      << std::endl;
-    */
+    if ( currentValuesWereSet ) {
+      theTrees[file]->GetEntry(theCurrentEntry[file]);
+      unsigned NMinBias = thePUEvents[file]->nMinBias();
+      theNumberOfMinBiasEvts[file] = NMinBias;
+    }
   }
-  
-  // Return Loot in the same state as it was when entering. 
   gROOT->cd();
-  
 }
- 
+
+void PileUpProducer::beginLuminosityBlock(edm::LuminosityBlock const& lumi, edm::EventSetup const&) {
+  if ( !currentValuesWereSet ) {
+    currentValuesWereSet = true;
+
+    RandomEngineAndDistribution random(lumi.index());
+
+    for ( unsigned file=0; file < theNumberOfFiles; ++file ) {
+      theCurrentEntry[file] =
+        (unsigned) (theNumberOfEntries[file] * random.flatShoot());
+
+      theTrees[file]->GetEntry(theCurrentEntry[file]);
+      unsigned NMinBias = thePUEvents[file]->nMinBias();
+      theNumberOfMinBiasEvts[file] = NMinBias;
+
+      theCurrentMinBiasEvt[file] =
+        (unsigned) (theNumberOfMinBiasEvts[file] * random.flatShoot());
+    }
+  }
+}
+
 void PileUpProducer::endRun(edm::Run const&, edm::EventSetup const&)
 { 
   // Close all local files
@@ -226,10 +225,6 @@ void PileUpProducer::endRun(edm::Run const&, edm::EventSetup const&)
   
   // Close the output file
   myOutputFile.close();
-  
-  // And return Loot in the same state as it was when entering. 
-  gROOT->cd();
-  
 }
 
 void PileUpProducer::produce(edm::Event & iEvent, const edm::EventSetup & es)
@@ -255,7 +250,7 @@ void PileUpProducer::produce(edm::Event & iEvent, const edm::EventSetup & es)
     // other modules using it also declare the same shared resource.
     // This also breaks replay.
     float d = (float) hprob->GetRandom();
-    PUevts = (int) d;
+    PUevts = (int) random.poissonShoot(d);
     truePUevts = d;
   }
   //  std::cout << "PUevts = " << PUevts << std::endl;
@@ -263,6 +258,7 @@ void PileUpProducer::produce(edm::Event & iEvent, const edm::EventSetup & es)
   // Save this information in the PileupMixingContent object
   // IMPORTANT: the bunch crossing number is always 0 because FastSim has no out-of-time PU
   std::auto_ptr< PileupMixingContent > PileupMixing_;
+  std::auto_ptr< PileupVertexContent > PileupVertexing_;
 
   std::vector<int> bunchCrossingList;
   bunchCrossingList.push_back(0);
@@ -272,9 +268,27 @@ void PileUpProducer::produce(edm::Event & iEvent, const edm::EventSetup & es)
   
   std::vector<float> trueInteractionList;
   trueInteractionList.push_back(truePUevts);
+
+  std::vector<edm::EventID> eventInfoList;
+
+  std::vector<float> pThatList;
+  std::vector<float> zposList;
+
+  // generate fake EventID list to prevent crash in PileupInfo
+
+  for(uint32_t index=0; index!=uint(PUevts); ++index) {
+    edm::EventID Fake(index,index,index);
+    eventInfoList.push_back(Fake);
+    pThatList.push_back(0.);
+    zposList.push_back(0.);
+  }
   
-  PileupMixing_ = std::auto_ptr< PileupMixingContent >(new PileupMixingContent(bunchCrossingList,numInteractionList,trueInteractionList));
+  PileupMixing_ = std::auto_ptr< PileupMixingContent >(new PileupMixingContent(bunchCrossingList,numInteractionList,trueInteractionList,eventInfoList,450)); // it shouldn't matter what the assumed bunchspacing is if there is no OOT PU. Add argument for compatibility.
   iEvent.put(PileupMixing_);
+
+  PileupVertexing_ = std::auto_ptr< PileupVertexContent >(new PileupVertexContent(pThatList, zposList));
+
+  iEvent.put(PileupVertexing_);
 
   // Get N events from random files
   for ( int ievt=0; ievt<PUevts; ++ievt ) { 
@@ -383,7 +397,11 @@ void PileUpProducer::produce(edm::Event & iEvent, const edm::EventSetup & es)
 
     }
     // End of particle loop
-    
+
+    // ERROR The way this loops through the pileup events breaks
+    // replay. Which events are retrieved for pileup depends on
+    // which previous events were processed.
+
     // Increment for next time
     ++theCurrentMinBiasEvt[file];
     

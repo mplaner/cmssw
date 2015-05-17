@@ -43,7 +43,7 @@
 
 #include "CondFormats/AlignmentRecord/interface/GlobalPositionRcd.h"
 #include "CondFormats/AlignmentRecord/interface/TrackerAlignmentRcd.h"
-#include "CondFormats/AlignmentRecord/interface/TrackerAlignmentErrorRcd.h"
+#include "CondFormats/AlignmentRecord/interface/TrackerAlignmentErrorExtendedRcd.h"
 #include "CondFormats/AlignmentRecord/interface/TrackerSurfaceDeformationRcd.h" 
 
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
@@ -176,11 +176,11 @@ void TrackerGeometryIntoNtuples::analyze(const edm::Event& iEvent, const edm::Ev
 	
 	//build the tracker
 	edm::ESHandle<Alignments> alignments;
-	edm::ESHandle<AlignmentErrors> alignmentErrors;
+	edm::ESHandle<AlignmentErrorsExtended> alignmentErrors;
 	edm::ESHandle<AlignmentSurfaceDeformations> surfaceDeformations;
 	
 	iSetup.get<TrackerAlignmentRcd>().get(alignments);
-	iSetup.get<TrackerAlignmentErrorRcd>().get(alignmentErrors);
+	iSetup.get<TrackerAlignmentErrorExtendedRcd>().get(alignmentErrors);
 	iSetup.get<TrackerSurfaceDeformationRcd>().get(surfaceDeformations);
 	
 	//apply the latest alignments
@@ -195,7 +195,7 @@ void TrackerGeometryIntoNtuples::analyze(const edm::Event& iEvent, const edm::Ev
 	theCurrentTracker = new AlignableTracker(&(*theCurTracker), tTopo);
 
 	Alignments* theAlignments = theCurrentTracker->alignments();
-	//AlignmentErrors* theAlignmentErrors = theCurrentTracker->alignmentErrors();	
+	//AlignmentErrorsExtended* theAlignmentErrorsExtended = theCurrentTracker->alignmentErrors();	
 	
 	//alignments
 	addBranches();
@@ -227,8 +227,8 @@ void TrackerGeometryIntoNtuples::analyze(const edm::Event& iEvent, const edm::Ev
 	
 	delete theAlignments;
 
-	std::vector<AlignTransformError> alignErrors = alignmentErrors->m_alignError;
-	for (std::vector<AlignTransformError>::const_iterator i = alignErrors.begin(); i != alignErrors.end(); ++i){
+	std::vector<AlignTransformErrorExtended> alignErrors = alignmentErrors->m_alignError;
+	for (std::vector<AlignTransformErrorExtended>::const_iterator i = alignErrors.begin(); i != alignErrors.end(); ++i){
 
 		m_rawid = i->rawId();
 		CLHEP::HepSymMatrix errMatrix = i->matrix();
@@ -244,10 +244,10 @@ void TrackerGeometryIntoNtuples::analyze(const edm::Event& iEvent, const edm::Ev
 	}
 
 	// Get GeomDetUnits for the current tracker 
-	std::vector<GeomDetUnit*>detUnits =  theCurTracker->detUnits() ; 
+	auto const & detUnits =  theCurTracker->detUnits() ; 
 	int detUnit(0) ;
 	//\\for (unsigned int iDet = 0; iDet < detUnits.size(); ++iDet) {
-	for (std::vector<GeomDetUnit*>::const_iterator iunit = detUnits.begin(); iunit != detUnits.end(); ++iunit) { 
+	for (auto iunit = detUnits.begin(); iunit != detUnits.end(); ++iunit) { 
 
 	  DetId detid = (*iunit)->geographicalId(); 
 	  m_rawid = detid.rawId() ; 
@@ -255,7 +255,7 @@ void TrackerGeometryIntoNtuples::analyze(const edm::Event& iEvent, const edm::Ev
 
           ++detUnit ; 		 
           //\\GeomDetUnit* geomDetUnit = detUnits.at(iDet) ; 
-          GeomDetUnit* geomDetUnit = *iunit ; 
+          auto geomDetUnit = *iunit ; 
 
 	  // Get SurfaceDeformation for this GeomDetUnit 
 	  if ( geomDetUnit->surfaceDeformation() ) {

@@ -7,7 +7,7 @@
  **
  ***/
 
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -24,8 +24,6 @@
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
 #include "RecoEcal/EgammaCoreTools/interface/PositionCalc.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeedFwd.h"
-#include "RecoEgamma/EgammaIsolationAlgos/interface/PfBlockBasedIsolation.h"
-#include "RecoCaloTools/MetaCollections/interface/CaloRecHitMetaCollections.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 #include "RecoEgamma/PhotonIdentification/interface/PFPhotonIsolationCalculator.h"
 #include "RecoEgamma/PhotonIdentification/interface/PhotonIsolationCalculator.h"
@@ -40,7 +38,7 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 
 // GEDPhotonProducer inherits from EDProducer, so it can be a module:
-class GEDPhotonProducer : public edm::EDProducer {
+class GEDPhotonProducer : public edm::stream::EDProducer<> {
 
  public:
 

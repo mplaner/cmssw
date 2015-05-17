@@ -30,7 +30,7 @@ to be returned, *not* the ordinal number of the T to be returned.
 
 #include "boost/concept_check.hpp"
 #include "boost/iterator/transform_iterator.hpp"
-#include "boost/shared_ptr.hpp"
+#include <memory>
 
 #include "DataFormats/Common/interface/traits.h"
 #include "DataFormats/Common/interface/DetSet.h"
@@ -67,7 +67,7 @@ public:
     };
     template<typename T>
       struct LazyAdapter : public std::unary_function<const DetSet<T>&, const DetSet<T>&> {
-        LazyAdapter(boost::shared_ptr<LazyGetter<T> > iGetter): getter_(iGetter) {}
+        LazyAdapter(std::shared_ptr<LazyGetter<T> > iGetter): getter_(iGetter) {}
         const DetSet<T>& operator()(const DetSet<T>& iUpdate) const {
           if(iUpdate.data.empty() && getter_) {
             //NOTE: because this is 'updating a cache' we need to cast away the const
@@ -78,7 +78,7 @@ public:
           return iUpdate;
         }
 private:
-        boost::shared_ptr<LazyGetter<T> > getter_;
+        std::shared_ptr<LazyGetter<T> > getter_;
       };
   }
   //------------------------------------------------------------
@@ -120,7 +120,7 @@ private:
 
     DetSetLazyVector() {}
     
-    DetSetLazyVector(boost::shared_ptr<dslv::LazyGetter<T> > iGetter, const std::vector<det_id_type>& iDets) :
+    DetSetLazyVector(std::shared_ptr<dslv::LazyGetter<T> > iGetter, const std::vector<det_id_type>& iDets) :
     sets_(),
     getter_(iGetter) {
         sets_.reserve(iDets.size());
@@ -169,7 +169,7 @@ private:
 
   private:
     collection_type   sets_;
-    boost::shared_ptr<dslv::LazyGetter<T> > getter_;
+    std::shared_ptr<dslv::LazyGetter<T> > getter_;
   };
 
   template <class T>

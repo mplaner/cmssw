@@ -1,4 +1,3 @@
-
 #include <boost/cstdint.hpp>
 
 #include "CondFormats/EcalObjects/interface/EcalCondObjectContainer.h"
@@ -15,6 +14,10 @@
 #include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
 #include "CondFormats/EcalObjects/interface/EcalIntercalibConstantsMC.h"
 #include "CondFormats/EcalObjects/interface/EcalIntercalibErrors.h"
+#include "CondFormats/EcalObjects/interface/EcalTimeBiasCorrections.h"
+#include "CondFormats/EcalObjects/interface/EcalSamplesCorrelation.h"
+#include "CondFormats/EcalObjects/interface/EcalPulseShapes.h"
+#include "CondFormats/EcalObjects/interface/EcalPulseCovariances.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeCalibErrors.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeOffsetConstant.h"
@@ -59,9 +62,6 @@
 #include "CondFormats/EcalObjects/interface/EcalTPGStripStatus.h"
 #include "CondFormats/EcalObjects/interface/EcalTPGSpike.h"
 #include "CondFormats/EcalObjects/interface/EcalSRSettings.h"
-#include "CondFormats/EcalObjects/interface/EcalTimeBiasCorrections.h"
-
-
 
 namespace CondFormats_EcalObjects {
   struct dictionary {
@@ -201,6 +201,19 @@ namespace CondFormats_EcalObjects {
     //    std::vector<float> ecalSRSettings_dccNormalizedWeights_1;
     //    float ecalSRSettings_dccNormalizedWeights_elt_2;
     
-	EcalTimeBiasCorrections timeBiasCorrections;
+    EcalTimeBiasCorrections timeBiasCorrections;
+
+    EcalSamplesCorrelation samplesCorrelation;
+
+    std::vector<EcalPulseShape> v_ecalPulseShape;
+    EcalContainer<EEDetId,EcalPulseShape> ec_eeDetId_ecalPulseShape;
+    EcalContainer<EBDetId,EcalPulseShape> ec_ebDetId_ecalPulseShape;
+    EcalCondObjectContainer<EcalPulseShape> ecalPSmap; //typedef EcalPulseShape
+
+    std::vector<EcalPulseCovariance> v_ecalPulseCovariance;
+    EcalContainer<EEDetId,EcalPulseCovariance> ec_eeDetId_ecalPulseCovariance;
+    EcalContainer<EBDetId,EcalPulseCovariance> ec_ebDetId_ecalPulseCovariance;
+    EcalCondObjectContainer<EcalPulseCovariance> ecalPCmap; //typedef EcalPulseCovariance
+
   };
 }

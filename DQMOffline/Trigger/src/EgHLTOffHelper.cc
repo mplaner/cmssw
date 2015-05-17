@@ -100,7 +100,7 @@ void OffHelper::setup(const edm::ParameterSet& conf, edm::ConsumesCollector && i
 
 //this code was taken out of OffHelper::setup due to HLTConfigProvider changes
 //it still assumes that this is called only once
-void OffHelper::setupTriggers(const HLTConfigProvider& hltConfig,const std::vector<std::string>& hltFiltersUsed)
+void OffHelper::setupTriggers(const HLTConfigProvider& hltConfig,const std::vector<std::string>& hltFiltersUsed, const TrigCodes& trigCodes)
 {
   hltFiltersUsed_ = hltFiltersUsed; //expensive but only do this once and faster ways could make things less clear
   //now work out how many objects are requires to pass filter for it to accept
@@ -115,7 +115,7 @@ void OffHelper::setupTriggers(const HLTConfigProvider& hltConfig,const std::vect
   for(size_t trigNr=0;trigNr<trigCutParams_.size();trigNr++) {
     std::string trigName = trigCutParams_[trigNr].getParameter<std::string>("trigName");
     if(std::find(hltFiltersUsed_.begin(),hltFiltersUsed_.end(),trigName)!=hltFiltersUsed_.end()){ //perhaps I should sort hltFiltersUsed_....
-      trigCuts_.push_back(std::make_pair(TrigCodes::getCode(trigName),OffEgSel(trigCutParams_[trigNr])));
+      trigCuts_.push_back(std::make_pair(trigCodes.getCode(trigName),OffEgSel(trigCutParams_[trigNr])));
       //   std::cout<<trigName<<std::endl<<"between"<<std::endl<<trigCutParams_[trigNr]<<std::endl<<"after"<<std::endl;
     }
   }
@@ -149,14 +149,14 @@ void OffHelper::setupTriggers(const HLTConfigProvider& hltConfig,const std::vect
   }
 }
 
-int OffHelper::makeOffEvt(const edm::Event& edmEvent,const edm::EventSetup& setup,egHLT::OffEvt& offEvent)
+int OffHelper::makeOffEvt(const edm::Event& edmEvent,const edm::EventSetup& setup,egHLT::OffEvt& offEvent,const TrigCodes& c)
 {
   offEvent.clear();
   int errCode=0; //excution stops as soon as an error is flagged
   if(errCode==0) errCode = getHandles(edmEvent,setup);
   if(errCode==0) errCode = fillOffEleVec(offEvent.eles());
   if(errCode==0) errCode = fillOffPhoVec(offEvent.phos());
-  if(errCode==0) errCode = setTrigInfo(edmEvent, offEvent);
+  if(errCode==0) errCode = setTrigInfo(edmEvent, offEvent, c);
   if(errCode==0) offEvent.setJets(recoJets_);
   return errCode;
 }
@@ -243,12 +243,10 @@ int OffHelper::fillOffEleVec(std::vector<OffEle>& egHLTOffEles)
 void OffHelper::fillIsolData(const reco::GsfElectron& ele,OffEle::IsolData& isolData)
 {
   EgammaTowerIsolation hcalIsolAlgo(hltHadIsolOuterCone_,hltHadIsolInnerCone_,hltHadIsolEtMin_,hltHadIsolDepth_,caloTowers_.product());
-  EcalRecHitMetaCollection ebHits(*ebRecHits_);
-  EcalRecHitMetaCollection eeHits(*eeRecHits_);
   EgammaRecHitIsolation ecalIsolAlgoEB(hltEMIsolOuterCone_,hltEMIsolInnerConeEB_,hltEMIsolEtaSliceEB_,
-				       hltEMIsolEtMinEB_,hltEMIsolEMinEB_,caloGeom_,&ebHits,ecalSeverityLevel_.product(),DetId::Ecal);
+				       hltEMIsolEtMinEB_,hltEMIsolEMinEB_,caloGeom_,*ebRecHits_,ecalSeverityLevel_.product(),DetId::Ecal);
   EgammaRecHitIsolation ecalIsolAlgoEE(hltEMIsolOuterCone_,hltEMIsolInnerConeEE_,hltEMIsolEtaSliceEE_,
-				       hltEMIsolEtMinEE_,hltEMIsolEMinEE_,caloGeom_,&eeHits,ecalSeverityLevel_.product(),DetId::Ecal);
+				       hltEMIsolEtMinEE_,hltEMIsolEMinEE_,caloGeom_,*eeRecHits_,ecalSeverityLevel_.product(),DetId::Ecal);
   
   isolData.ptTrks=ele.dr03TkSumPt();
   isolData.nrTrks=999; //no longer supported
@@ -388,12 +386,10 @@ int OffHelper::fillOffPhoVec(std::vector<OffPho>& egHLTOffPhos)
 void OffHelper::fillIsolData(const reco::Photon& pho,OffPho::IsolData& isolData)
 {
   EgammaTowerIsolation hcalIsolAlgo(hltHadIsolOuterCone_,hltHadIsolInnerCone_,hltHadIsolEtMin_,hltHadIsolDepth_,caloTowers_.product());
-  EcalRecHitMetaCollection ebHits(*ebRecHits_);
-  EcalRecHitMetaCollection eeHits(*ebRecHits_);
   EgammaRecHitIsolation ecalIsolAlgoEB(hltEMIsolOuterCone_,hltEMIsolInnerConeEB_,hltEMIsolEtaSliceEB_,
-				       hltEMIsolEtMinEB_,hltEMIsolEMinEB_,caloGeom_,&ebHits,ecalSeverityLevel_.product(),DetId::Ecal);
+				       hltEMIsolEtMinEB_,hltEMIsolEMinEB_,caloGeom_,*ebRecHits_,ecalSeverityLevel_.product(),DetId::Ecal);
   EgammaRecHitIsolation ecalIsolAlgoEE(hltEMIsolOuterCone_,hltEMIsolInnerConeEE_,hltEMIsolEtaSliceEE_,
-				       hltEMIsolEtMinEE_,hltEMIsolEMinEE_,caloGeom_,&eeHits,ecalSeverityLevel_.product(),DetId::Ecal);
+				       hltEMIsolEtMinEE_,hltEMIsolEMinEE_,caloGeom_,*eeRecHits_,ecalSeverityLevel_.product(),DetId::Ecal);
   
   isolData.nrTrks = pho.nTrkHollowConeDR03();
   isolData.ptTrks = pho.trkSumPtHollowConeDR03();
@@ -447,23 +443,23 @@ void OffHelper::fillClusShapeData(const reco::Photon& pho,OffPho::ClusShapeData&
   }
 }  
 
-int OffHelper::setTrigInfo(const edm::Event & edmEvent, egHLT::OffEvt& offEvent)
+int OffHelper::setTrigInfo(const edm::Event & edmEvent, egHLT::OffEvt& offEvent, const TrigCodes& trigCodes)
 {
-  TrigCodes::TrigBitSet evtTrigBits = trigTools::getFiltersPassed(hltFiltersUsedWithNrCandsCut_,trigEvt_.product(),hltTag_);
+  TrigCodes::TrigBitSet evtTrigBits = trigTools::getFiltersPassed(hltFiltersUsedWithNrCandsCut_,trigEvt_.product(),hltTag_,trigCodes);
   //the l1 prescale paths dont have a filter with I can figure out if it passed or failed with so have to use TriggerResults
   if(l1PreScaledPaths_.size()==l1PreScaledFilters_.size()){ //check to ensure both vectors have same number of events incase of screw ups     
     const edm::TriggerNames & triggerNames = edmEvent.triggerNames(*trigResults_);
     for(size_t pathNr=0;pathNr<l1PreScaledPaths_.size();pathNr++){ //now we have to check the prescaled l1 trigger paths
       unsigned int pathIndex = triggerNames.triggerIndex(l1PreScaledPaths_[pathNr]);
       if(pathIndex<trigResults_->size() && trigResults_->accept(pathIndex)){
-	evtTrigBits |=TrigCodes::getCode(l1PreScaledFilters_[pathNr]);
+	evtTrigBits |= trigCodes.getCode(l1PreScaledFilters_[pathNr]);
       }    
     }
   }
 
   offEvent.setEvtTrigBits(evtTrigBits);
 
-  trigTools::setFiltersObjPasses(offEvent.eles(),hltFiltersUsed_,l1PreAndSeedFilters_,evtTrigBits,trigEvt_.product(),hltTag_);
-  trigTools::setFiltersObjPasses(offEvent.phos(),hltFiltersUsed_,l1PreAndSeedFilters_,evtTrigBits,trigEvt_.product(),hltTag_); 
+  trigTools::setFiltersObjPasses(offEvent.eles(),hltFiltersUsed_,l1PreAndSeedFilters_,evtTrigBits,trigCodes,trigEvt_.product(),hltTag_);
+  trigTools::setFiltersObjPasses(offEvent.phos(),hltFiltersUsed_,l1PreAndSeedFilters_,evtTrigBits,trigCodes,trigEvt_.product(),hltTag_); 
   return 0;
 }

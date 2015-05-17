@@ -4,9 +4,16 @@
 #include "ClusMultPlots.h"
 #include "SOF_profiles.h"
 #include "SiStripQualityHistoryPlots.h"
+#include "UtilityMacros.h"
+#include "TrackPlots.h"
+#include "SeedMultiplicityPlots.h"
 #ifdef __CINT__
 #pragma link off all functions;
 #pragma link C++ function PlotOccupancyMap;
+#pragma link C++ function PlotTrackerXsect;
+#pragma link C++ function PlotOccupancyMapPhase2;
+#pragma link C++ function printFrame;
+#pragma link C++ function combinedOccupancy;
 #pragma link C++ function AverageRunMultiplicity;
 #pragma link C++ function PlotPixelMultVtxPos;
 #pragma link C++ function DeadTimeAPVCycle;
@@ -24,4 +31,11 @@
 #pragma link C++ function printSOF;
 #pragma link C++ function AverageRunBadChannels;
 #pragma link C++ function StripCompletePlot;
+#pragma link C++ function PlotOnTrackOccupancyPhase2;
+#pragma link C++ function projectProfile2DAlongX;
+#pragma link C++ function projectProfile2DAlongY;
+#pragma link C++ function TrackPlots;
+#pragma link C++ function SeedMultiplicityPlots;
+#pragma link C++ function SeedMultiplicityComparisonPlot;
+#pragma link C++ function PlotDebugFPIX_XYMap;
 #endif

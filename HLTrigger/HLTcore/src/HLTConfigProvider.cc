@@ -26,7 +26,7 @@ static const bool useL1GtTriggerMenuLite(false);
 
 // an empty dummy config data used when we fail to initialize 
 static const HLTConfigData* s_dummyHLTConfigData()
-{ static HLTConfigData dummyHLTConfigData;
+{ static const HLTConfigData dummyHLTConfigData;
   return &dummyHLTConfigData;
 }
 
@@ -37,29 +37,6 @@ HLTConfigProvider::HLTConfigProvider():
   hltConfigData_(s_dummyHLTConfigData()),
   l1GtUtils_(new L1GtUtils())
 {
-  //  HLTConfigDataRegistry::instance()->extra().increment();
-}
-
-//HLTConfigProvider::~HLTConfigProvider() {
-//  if (HLTConfigDataRegistry::instance()->extra().decrement()==0) {
-//    HLTConfigDataRegistry::instance()->data().clear();
-//  }
-//}
-
-HLTConfigProvider::HLTConfigCounterSentry::HLTConfigCounterSentry() {
-  HLTConfigDataRegistry::instance()->extraForUpdate().increment();
-}
-
-HLTConfigProvider::HLTConfigCounterSentry::HLTConfigCounterSentry(HLTConfigCounterSentry const&) {
-  HLTConfigDataRegistry::instance()->extraForUpdate().increment();
-}
-
-HLTConfigProvider::HLTConfigCounterSentry::HLTConfigCounterSentry(HLTConfigCounterSentry &&) {
-  HLTConfigDataRegistry::instance()->extraForUpdate().increment();
-}
-
-HLTConfigProvider::HLTConfigCounterSentry::~HLTConfigCounterSentry() {
-  HLTConfigDataRegistry::instance()->extraForUpdate().decrement();
 }
 
 bool HLTConfigProvider::init(const edm::Run& iRun, 
@@ -112,9 +89,9 @@ void HLTConfigProvider::init(const edm::ProcessHistory& iHistory, const std::str
 			      << endl;
    }
    if (processName_=="*") {
-     clear();
      LogError("HLTConfigData") << "Auto-discovery of processName failed!"
 			       << endl;
+     clear();
      return;
    }
 
@@ -124,10 +101,10 @@ void HLTConfigProvider::init(const edm::ProcessHistory& iHistory, const std::str
      if (hi->processName()==processName_) {n++;}
    }
    if (n>1) {
-     clear();
      LogError("HLTConfigProvider") << " ProcessName '"<< processName_
 				   << " found " << n
 				   << " times in history!" << endl;
+     clear();
      return;
    }
 
@@ -141,12 +118,8 @@ void HLTConfigProvider::init(const edm::ProcessHistory& iHistory, const std::str
        getDataFrom(processConfiguration.parameterSetID());
      }
    } else {
-     LogError("HLTConfigProvider") << "Falling back to processName-only init!";
-     clear();
+     LogError("HLTConfigProvider") << "Falling back to ProcessName-only init using ProcessName '"<<processName_<<"' !";
      init(processName_);
-     if (!inited_) {
-       LogError("HLTConfigProvider") << "ProcessName not found in history!";
-     }
      return;
    }
 }
@@ -233,26 +206,26 @@ void HLTConfigProvider::init(const std::string& processName)
 				    << hNames << "." << endl;
 
    if (nPSets==0) {
-     clear();
      LogError("HLTConfigProvider") << " Process name '"
 				   << processName
 				   << "' not found in registry!" << endl;
+     clear();
      return;
    }
    if (psetID==ParameterSetID()) {
-     clear();
      LogError("HLTConfigProvider") << " Process name '"
 				   << processName
 				   << "' found but ParameterSetID invalid!"
 				   << endl;
+     clear();
      return;
    }
    if (nPSets>1) {
-     clear();
      LogError("HLTConfigProvider") << " Process name '"
 				   << processName
 				   << " found " << nPSets
 				   << " times in registry!" << endl;
+     clear();
      return;
    }
 

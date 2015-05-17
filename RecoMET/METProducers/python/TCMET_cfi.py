@@ -3,12 +3,12 @@ import FWCore.ParameterSet.Config as cms
 ##____________________________________________________________________________||
 tcMet = cms.EDProducer(
     "TCMETProducer",
-    alias = cms.string('TCMET'),
+    alias = cms.string('tcMet'),
     electronVetoCone = cms.bool(True),
     electronInputTag  = cms.InputTag("gedGsfElectrons"),
     muonInputTag      = cms.InputTag("muons"),
     trackInputTag     = cms.InputTag("generalTracks"),
-    metInputTag       = cms.InputTag("met"),
+    metInputTag       = cms.InputTag("caloMet"),
     beamSpotInputTag  = cms.InputTag("offlineBeamSpot"),
     vertexInputTag    = cms.InputTag("offlinePrimaryVertices"),
     muonDepValueMap   = cms.InputTag("muonMETValueMapProducer"  , "muCorrData"),
@@ -58,9 +58,13 @@ tcMet = cms.EDProducer(
     dupDCotTh = cms.double(0.0006),
     PFClustersECAL = cms.InputTag("particleFlowClusterECAL"),
     PFClustersHCAL = cms.InputTag("particleFlowClusterHCAL"),
-    PFClustersHFEM = cms.InputTag("particleFlowClusterHFEM"),
-    PFClustersHFHAD = cms.InputTag("particleFlowClusterHFHAD"),
+    PFClustersHF = cms.InputTag("particleFlowClusterHF"),
     usePFClusters = cms.bool(False)
     )
+
+##____________________________________________________________________________||
+tcMetWithPFclusters = tcMet.clone()
+tcMetWithPFclusters.alias = cms.string('tcMetWithPFclusters')
+tcMetWithPFclusters.usePFClusters = cms.bool(True)
 
 ##____________________________________________________________________________||

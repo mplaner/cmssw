@@ -18,7 +18,6 @@
 #include <fstream>
 #include <iomanip>
 #include "TFile.h"
-#include "Cintex/Cintex.h"
 
 namespace cond {
   class ListIOVUtilities : public Utilities {
@@ -117,16 +116,12 @@ cond::ListIOVUtilities::ListIOVUtilities():Utilities("cmscond_list_iov"){
   addOption<bool>("outputfile","o","dump iov content for loading");
   addOption<std::string>("tag","t","list info of the specified tag");
 
-  ROOT::Cintex::Cintex::Enable();
-  
 }
 
 cond::ListIOVUtilities::~ListIOVUtilities(){
 }
 
 int cond::ListIOVUtilities::execute(){
-  initializePluginManager();
-  
   bool listAll = hasOptionValue("all");
   bool dump = hasOptionValue("outputfile");
   std::auto_ptr<std::ofstream> outFile;

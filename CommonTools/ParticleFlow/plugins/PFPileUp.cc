@@ -19,6 +19,8 @@ PFPileUp::PFPileUp(const edm::ParameterSet& iConfig) {
 
   tokenPFCandidates_
     = consumes<PFCollection>(iConfig.getParameter<InputTag>("PFCandidates"));
+  tokenPFCandidatesView_
+    = mayConsume<PFView>(iConfig.getParameter<InputTag>("PFCandidates"));
 
   tokenVertices_
     = consumes<VertexCollection>(iConfig.getParameter<InputTag>("Vertices"));
@@ -48,9 +50,6 @@ PFPileUp::PFPileUp(const edm::ParameterSet& iConfig) {
 
 PFPileUp::~PFPileUp() { }
 
-
-
-void PFPileUp::beginJob() { }
 
 
 void PFPileUp::produce(Event& iEvent,
@@ -90,7 +89,7 @@ void PFPileUp::produce(Event& iEvent,
     // then we can pass it to the PFPileupAlgo.
     else {
       Handle<PFView> pfView;
-      bool getFromView = iEvent.getByToken( tokenPFCandidates_, pfView );
+      bool getFromView = iEvent.getByToken( tokenPFCandidatesView_, pfView );
       if ( ! getFromView ) {
 	throw cms::Exception("PFPileUp is misconfigured. This needs to be either vector<FwdPtr<PFCandidate> >, or View<PFCandidate>");
       }

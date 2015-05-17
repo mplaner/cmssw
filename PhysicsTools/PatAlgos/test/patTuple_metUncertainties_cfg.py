@@ -8,19 +8,20 @@ process.load("PhysicsTools.PatAlgos.selectionLayer1.selectedPatCandidates_cff")
 process.load("PhysicsTools.PatUtils.patPFMETCorrections_cff")
 
 from PhysicsTools.PatAlgos.tools.jetTools import switchJetCollection
-switchJetCollection(process,cms.InputTag('ak5PFJets'),
-                 jetCorrections = ('AK5PF', ['L1FastJet', 'L2Relative', 'L3Absolute'], '')
-                 )
-
-## let it run
-process.p = cms.Path(
-    process.selectedPatCandidates
-)
+switchJetCollection(process,
+                    jetSource = cms.InputTag('ak4PFJets'),
+                    jetCorrections = ('AK4PF', ['L1FastJet', 'L2Relative', 'L3Absolute'], '')
+                    )
 
 # apply type I/type I + II PFMEt corrections to pat::MET object
 # and estimate systematic uncertainties on MET
-from PhysicsTools.PatUtils.tools.metUncertaintyTools import runMEtUncertainties
-runMEtUncertainties(process)
+from PhysicsTools.PatUtils.tools.runType1PFMEtUncertainties import runType1PFMEtUncertainties
+runType1PFMEtUncertainties(process,addToPatDefaultSequence=False,
+                           jetCollection="selectedPatJets",
+                           electronCollection="selectedPatElectrons",
+                           muonCollection="selectedPatMuons",
+                           tauCollection="selectedPatTaus")
+
 
 ## ------------------------------------------------------
 #  In addition you usually want to change the following

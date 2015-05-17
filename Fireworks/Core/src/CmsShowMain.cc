@@ -101,6 +101,9 @@ static const char* const kLiveCommandOpt  = "live";
 static const char* const kFieldCommandOpt = "field";
 static const char* const kFreePaletteCommandOpt = "free-palette";
 static const char* const kAutoSaveAllViews = "auto-save-all-views";
+static const char* const kAutoSaveType     = "auto-save-type";
+static const char* const kAutoSaveHeight   = "auto-save-height";
+static const char* const kSyncAllViews     = "sync-all-views";
 static const char* const kEnableFPE        = "enable-fpe";
 static const char* const kZeroWinOffsets   = "zero-window-offsets";
 static const char* const kNoVersionCheck   = "no-version-check";
@@ -153,8 +156,8 @@ CmsShowMain::CmsShowMain(int argc, char *argv[])
       (kConfigFileCommandOpt, po::value<std::string>(),   "Include configuration file")
       (kNoConfigFileCommandOpt,                           "Empty configuration")
       (kNoVersionCheck,                                   "No file version check")
-      (kGeomFileCommandOpt,   po::value<std::string>(),   "Include geometry file")
-      (kSimGeomFileCommandOpt,po::value<std::string>(),   "Set simulation geometry file to browser")
+      (kGeomFileCommandOpt,   po::value<std::string>(),   "Reco geometry file. Default is cmsGeom10.root")
+      (kSimGeomFileCommandOpt,po::value<std::string>(),   "Geometry file for browsing in table view. Default is CmsSimGeom-14.root. Can be simulation or reco geometry in TGeo format")
      (kFieldCommandOpt, po::value<double>(),             "Set magnetic field value explicitly. Default is auto-field estimation")
    (kRootInteractiveCommandOpt,                        "Enable root interactive prompt")
    (kSoftCommandOpt,                                   "Try to force software rendering to avoid problems with bad hardware drivers")
@@ -166,8 +169,11 @@ CmsShowMain::CmsShowMain(int argc, char *argv[])
       (kPortCommandOpt, po::value<unsigned int>(),        "Listen to port for new data files to open")
       (kLoopCommandOpt,                                   "Loop events in play mode")
       (kChainCommandOpt, po::value<unsigned int>(),       "Chain up to a given number of recently open files. Default is 1 - no chain")
-   (kLiveCommandOpt,                                   "Enforce playback mode if a user is not using display")
- (kAutoSaveAllViews, po::value<std::string>(),       "Auto-save all views with given prefix (run_event_lumi_view.png is appended)");
+      (kLiveCommandOpt,                                   "Enforce playback mode if a user is not using display")
+      (kAutoSaveAllViews, po::value<std::string>(),       "Auto-save all views with given prefix (run_event_lumi_view.<auto-save-type> is appended)")
+      (kAutoSaveType,     po::value<std::string>(),       "Image type of auto-saved views, png or jpg (png is default)")
+      (kAutoSaveHeight, po::value<int>(),                 "Screenshots height when auto-save-all-views is enabled")
+      (kSyncAllViews,                                     "Synchronize all views on new event");
 
  po::options_description debugdesc("Debug");
    debugdesc.add_options()
@@ -248,25 +254,25 @@ CmsShowMain::CmsShowMain(int argc, char *argv[])
       if (access(configFilename(), R_OK) == -1)
       {
          fwLog(fwlog::kError) << "Specified configuration file does not exist. Quitting.\n";
-         exit(0);
+         exit(1);
       }
+
+      fwLog(fwlog::kInfo) << "Config "  <<  configFilename() << std::endl;
    } else {
       if (vm.count(kNoConfigFileOpt)) {
-         fwLog(fwlog::kInfo) << "No configuration is loaded, show everything.\n";
-         setConfigFilename("");
-      } else
-         setConfigFilename("default.fwc");
+         fwLog(fwlog::kInfo) << "No configuration is loaded.\n";
+         configurationManager()->setIgnore();
+      } 
    }
-   fwLog(fwlog::kInfo) << "Config "  <<  configFilename() << std::endl;
 
    // geometry
    if (vm.count(kGeomFileOpt)) {
       setGeometryFilename(vm[kGeomFileOpt].as<std::string>());
+      fwLog(fwlog::kInfo) << "Geometry file " << geometryFilename() << "\n";
    } else {
       //  fwLog(fwlog::kInfo) << "No geom file name.  Choosing default.\n";
       setGeometryFilename("cmsGeom10.root");
    }
-   fwLog(fwlog::kInfo) << "Geometry file " << geometryFilename() << "\n";
 
    if (vm.count(kSimGeomFileOpt)) {
       setSimGeometryFilename(vm[kSimGeomFileOpt].as<std::string>());
@@ -284,7 +290,7 @@ CmsShowMain::CmsShowMain(int argc, char *argv[])
    // open any graphics or build dictionaries
    AutoLibraryLoader::enable();
 
-   TEveManager::Create(kFALSE, "FIV");
+   TEveManager::Create(kFALSE, eveMode ? "FIV" : "FI");
 
    setup(m_navigator.get(), m_context.get(), m_metadataManager.get());
 
@@ -312,11 +318,20 @@ CmsShowMain::CmsShowMain(int argc, char *argv[])
    startupTasks()->addTask(f);
    f=boost::bind(&CmsShowMainBase::setupViewManagers,this);
    startupTasks()->addTask(f);
-   f=boost::bind(&CmsShowMainBase::setupConfiguration,this);
-   startupTasks()->addTask(f);
-   f=boost::bind(&CmsShowMain::setupDataHandling,this);
-   startupTasks()->addTask(f);
 
+   if ( m_inputFiles.empty()) {
+      f=boost::bind(&CmsShowMainBase::setupConfiguration,this);
+      startupTasks()->addTask(f);
+      f=boost::bind(&CmsShowMain::setupDataHandling,this);
+      startupTasks()->addTask(f);
+   }
+   else {
+      f=boost::bind(&CmsShowMain::setupDataHandling,this);
+      startupTasks()->addTask(f);
+      f=boost::bind(&CmsShowMainBase::setupConfiguration,this);
+      startupTasks()->addTask(f);
+   }
+  
    if (vm.count(kLoopOpt))
       setPlayLoop();
 
@@ -345,9 +360,25 @@ CmsShowMain::CmsShowMain(int argc, char *argv[])
       m_context->getField()->setUserField(vm[kFieldCommandOpt].as<double>());
    }
    if(vm.count(kAutoSaveAllViews)) {
+      std::string type = "png";
+      if(vm.count(kAutoSaveType)) {
+         type = vm[kAutoSaveType].as<std::string>();
+         if (type != "png" && type != "jpg")
+         {
+            fwLog(fwlog::kError) << "Specified auto-save type not supported. Quitting.\n";
+            exit(1);
+         }
+      }
       std::string fmt = vm[kAutoSaveAllViews].as<std::string>();
-      fmt += "%u_%u_%u_%s.png";
+      fmt += "%u_%u_%llu_%s.";
+      fmt += type;
       setAutoSaveAllViewsFormat(fmt);
+   }
+   if (vm.count(kAutoSaveHeight)) {
+      setAutoSaveAllViewsHeight(vm[kAutoSaveHeight].as<int>());
+   }
+   if (vm.count(kSyncAllViews)) {
+       FWEveViewManager::syncAllViews();
    }
    if(vm.count(kNoVersionCheck)) {
       m_noVersionCheck=true;
@@ -654,7 +685,7 @@ CmsShowMain::setupDataHandling()
       checkPosition();
       draw();
    }
-   else if (m_monitor.get() == 0 && (eiManager()->begin() != eiManager()->end()) )
+   else if (m_monitor.get() == 0 && (configurationManager()->getIgnore() == false) )
    {
       if (m_inputFiles.empty())
          openDataViaURL();

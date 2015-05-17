@@ -97,17 +97,20 @@ FastSimRecoLocalCaloAOD = cms.PSet(
 
 #Full Event content 
 FastSimRecoTrackerFEVT = cms.PSet(
-    outputCommands = cms.untracked.vstring('keep *_iterativeGSWithMaterialTracks_*_*')
-)
+    outputCommands = cms.untracked.vstring('keep *_iterativeGSWithMaterialTracks_*_*',
+                                           'keep *_generalTracksBeforeMixing_*_*')
+    )
 
 #RECO content
 FastSimRecoTrackerRECO = cms.PSet(
-    outputCommands = cms.untracked.vstring('keep *_iterativeGSWithMaterialTracks_*_*')
+    outputCommands = cms.untracked.vstring('keep *_iterativeGSWithMaterialTracks_*_*',
+                                           'keep *_generalTracksBeforeMixing_*_*')
 )
 
 #AOD content
 FastSimRecoTrackerAOD = cms.PSet(
-    outputCommands = cms.untracked.vstring('keep recoTracks_iterativeGSWithMaterialTracks_*_*')
+    outputCommands = cms.untracked.vstring('keep recoTracks_iterativeGSWithMaterialTracks_*_*',
+                                           'keep *_generalTracksBeforeMixing_*_*')
 )
 
 
@@ -246,3 +249,23 @@ FEVTDEBUGHLTEventContent.outputCommands.extend(FastSimRecoLocalTrackerFEVT.outpu
 FEVTDEBUGHLTEventContent.outputCommands.extend(FastSimRecoLocalCaloFEVT.outputCommands)
 FEVTDEBUGHLTEventContent.outputCommands.extend(FastSimRecoTrackerFEVT.outputCommands)
 FEVTDEBUGHLTEventContent.outputCommands.extend(FastSimParticleFlowFEVT.outputCommands) 
+
+#####################################################################
+#
+# To be used only to create the MinBias sample for "new mixing" (--eventcontent=FASTPU)
+#
+#####################################################################
+
+for _entry in [FEVTDEBUGEventContent,FEVTSIMEventContent,GENRAWEventContent,FEVTDEBUGHLTEventContent,HLTDEBUGEventContent,HLTDebugFEVT,HLTDebugRAW,RAWDEBUGHLTEventContent,RAWRECODEBUGHLTEventContent,RAWRECOSIMHLTEventContent,RAWSIMHLTEventContent,]:
+    _entry.outputCommands.append('drop *_gtDigis_*_*')
+
+FASTPUEventContent = cms.PSet(
+    outputCommands = cms.untracked.vstring('drop *', 
+                                           'keep *_famosSimHits_*_*',
+                                           'keep *_MuonSimHits_*_*',
+                                           'drop *_generalTracksBeforeMixing_MVAVals_*',
+                                           'drop *_famosSimHits_VertexTypes_*',    
+                                           'keep *_generalTracksBeforeMixing_*_*',
+                                           'keep edmHepMCProduct_generator_*_*',
+                                           )
+    )

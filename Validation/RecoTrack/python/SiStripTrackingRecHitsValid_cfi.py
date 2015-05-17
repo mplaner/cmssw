@@ -2,7 +2,8 @@ import FWCore.ParameterSet.Config as cms
 
 StripTrackingRecHitsValid = cms.EDAnalyzer("SiStripTrackingRecHitsValid",
     outputFile = cms.string('striptrackingrechitshisto.root'),
-    OutputMEsInRootFile = cms.bool(True),
+    runStandalone = cms.bool(False),
+    OutputMEsInRootFile = cms.bool(False),
     TopFolderName = cms.string('SiStrip/RecHitsValidation/TrackingRecHits'),
 
     TH1Resolx_LF = cms.PSet(

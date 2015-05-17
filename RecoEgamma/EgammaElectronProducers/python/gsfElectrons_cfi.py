@@ -159,7 +159,10 @@ ecalDrivenGsfElectrons = cms.EDProducer("GsfElectronEcalDrivenProducer",
    useIsolationValues = cms.bool(False),
   SoftElecMVAFilesString = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/TMVA_BDTSoftElectrons_9Dec2013.weights.xml"
-                                ),
+                                ), 
+  ElecMVAFilesString = cms.vstring(
+     "RecoEgamma/ElectronIdentification/data/TMVA_BDTSimpleCat_17Feb2011.weights.xml"
+                                 ),
 
 )
 
@@ -329,8 +332,11 @@ gsfElectrons = cms.EDProducer("GsfElectronProducer",
            edSumNeutralHadronEt= cms.InputTag('elEDIsoValueNeutral04')),
 
    SoftElecMVAFilesString = cms.vstring(
-    "RecoEgamma/ElectronIdentification/data/TMVA_BDTSoftElectrons_9Dec2013.weights.xml"
+    "RecoEgamma/ElectronIdentification/data/TMVA_BDTSoftElectrons_7Feb2014.weights.xml"
                                 ),
+   ElecMVAFilesString = cms.vstring(
+     "RecoEgamma/ElectronIdentification/data/TMVA_BDTSimpleCat_17Feb2011.weights.xml"
+                                 ),
 )
 
 

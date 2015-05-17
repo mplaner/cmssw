@@ -47,7 +47,10 @@ using namespace std;
 MuonSeedOrcaPatternRecognition::MuonSeedOrcaPatternRecognition(const edm::ParameterSet& pset,edm::ConsumesCollector& iC)
 : MuonSeedVPatternRecognition(pset),
   theCrackEtas(pset.getParameter<std::vector<double> >("crackEtas")),
-  theCrackWindow(pset.getParameter<double>("crackWindow"))
+  theCrackWindow(pset.getParameter<double>("crackWindow")),
+  theDeltaPhiWindow(pset.existsAs<double>("deltaPhiSearchWindow") ? pset.getParameter<double>("deltaPhiSearchWindow") : 0.25),
+  theDeltaEtaWindow(pset.existsAs<double>("deltaEtaSearchWindow") ? pset.getParameter<double>("deltaEtaSearchWindow") : 0.2),
+theDeltaCrackWindow(pset.existsAs<double>("deltaEtaCrackSearchWindow") ? pset.getParameter<double>("deltaEtaCrackSearchWindow") : 0.25)
 {
   muonMeasurements = new MuonDetLayerMeasurements (theDTRecSegmentLabel.label(),theCSCRecSegmentLabel,edm::InputTag(),
 						   iC,
@@ -59,6 +62,7 @@ MuonSeedOrcaPatternRecognition::MuonSeedOrcaPatternRecognition(const edm::Parame
 void MuonSeedOrcaPatternRecognition::produce(const edm::Event& event, const edm::EventSetup& eSetup,
                                              std::vector<MuonRecHitContainer> & result)
 {
+    
   // divide the RecHits by DetLayer, in order to fill the
   // RecHitContainer like it was in ORCA
   
@@ -67,11 +71,11 @@ void MuonSeedOrcaPatternRecognition::produce(const edm::Event& event, const edm:
   eSetup.get<MuonRecoGeometryRecord>().get(muonLayers);
 
   // get the DT layers
-  vector<DetLayer*> dtLayers = muonLayers->allDTLayers();
+  vector<const DetLayer*> dtLayers = muonLayers->allDTLayers();
 
   // get the CSC layers
-  vector<DetLayer*> cscForwardLayers = muonLayers->forwardCSCLayers();
-  vector<DetLayer*> cscBackwardLayers = muonLayers->backwardCSCLayers();
+  vector<const DetLayer*> cscForwardLayers = muonLayers->forwardCSCLayers();
+  vector<const DetLayer*> cscBackwardLayers = muonLayers->backwardCSCLayers();
     
   // Backward (z<0) EndCap disk
   const DetLayer* ME4Bwd = cscBackwardLayers[4];
@@ -472,8 +476,8 @@ void MuonSeedOrcaPatternRecognition::complete(MuonRecHitContainer& seedSegments,
     // be a little more lenient in cracks
     bool crack = isCrack(recHit) || isCrack(first);
     //float detaWindow = 0.3;
-    float detaWindow = crack ? 0.25 : 0.2;
-    if ( deta > detaWindow || dphi > .25 ) {
+    float detaWindow = crack ? theDeltaCrackWindow : theDeltaEtaWindow;
+    if ( deta > detaWindow || dphi > theDeltaPhiWindow ) {
       continue;
     }   // +vvp!!!
 

@@ -26,6 +26,7 @@
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
 #include "TrackingTools/GeomPropagators/interface/StateOnTrackerBound.h"
+#include "RecoTracker/MeasurementDet/interface/MeasurementTrackerEvent.h"
 
 // Math
 #include "Math/GenVector/VectorUtil.h"
@@ -51,7 +52,7 @@ class CosmicRegionalSeedGenerator : public TrackingRegionProducer {
  public:
   explicit CosmicRegionalSeedGenerator(const edm::ParameterSet& conf, edm::ConsumesCollector && iC);
 
-  virtual ~CosmicRegionalSeedGenerator() {};
+  virtual ~CosmicRegionalSeedGenerator() {}
   
   virtual std::vector<TrackingRegion* > regions(const edm::Event& event, const edm::EventSetup& es) const;
 
@@ -75,6 +76,7 @@ class CosmicRegionalSeedGenerator : public TrackingRegionProducer {
   edm::EDGetTokenT<reco::MuonCollection>	 recoMuonsToken_	; 
   edm::EDGetTokenT<reco::TrackCollection>	 recoTrackMuonsToken_	; 
   edm::EDGetTokenT<reco::RecoChargedCandidateCollection> recoL2MuonsToken_	; 
+  edm::EDGetTokenT<MeasurementTrackerEvent> measurementTrackerEventToken_	;
 
   
   bool   doJetsExclusionCheck_;

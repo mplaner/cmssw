@@ -14,7 +14,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+//#include "FWCore/Framework/interface/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -32,7 +32,6 @@
 #include "DataFormats/RecoCandidate/interface/IsoDepositFwd.h"
 
 #include "TrackingTools/TrackAssociator/interface/TrackDetectorAssociator.h"
-#include "Utilities/Timing/interface/TimerStack.h"
 
 #include <boost/regex.hpp>
 #include "RecoMuon/MuonIdentification/plugins/MuonIdProducer.h"
@@ -89,7 +88,8 @@ muIsoExtractorCalo_(0),muIsoExtractorTrack_(0),muIsoExtractorJet_(0)
 
    // Load TrackDetectorAssociator parameters
    edm::ParameterSet parameters = iConfig.getParameter<edm::ParameterSet>("TrackAssociatorParameters");
-   parameters_.loadParameters( parameters );
+   edm::ConsumesCollector iC = consumesCollector();
+   parameters_.loadParameters( parameters, iC );
 
    // Load parameters for the TimingFiller
    edm::ParameterSet timingParameters = iConfig.getParameter<edm::ParameterSet>("TimingFillerParameters");
@@ -211,9 +211,6 @@ MuonIdProducer::~MuonIdProducer()
 
 void MuonIdProducer::init(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   // TimerStack timers;
-   // timers.push("MuonIdProducer::produce::init");
-
    innerTrackCollectionHandle_.clear();
    outerTrackCollectionHandle_.clear();
    linkCollectionHandle_.clear();
@@ -224,14 +221,12 @@ void MuonIdProducer::init(edm::Event& iEvent, const edm::EventSetup& iSetup)
    dytCollectionHandle_.clear();
 
 
-   // timers.push("MuonIdProducer::produce::init::getPropagator");
    edm::ESHandle<Propagator> propagator;
    iSetup.get<TrackingComponentsRecord>().get("SteppingHelixPropagatorAny", propagator);
    trackAssociator_.setPropagator(propagator.product());
 
    if (fillTrackerKink_) trackerKinkFinder_->init(iSetup);
 
-   // timers.pop_and_push("MuonIdProducer::produce::init::getInputCollections");
    for ( unsigned int i = 0; i < inputCollectionLabels_.size(); ++i ) {
       if ( inputCollectionTypes_[i] == "inner tracks" ) {
 	 iEvent.getByToken(innerTrackCollectionToken_, innerTrackCollectionHandle_);
@@ -322,6 +317,7 @@ reco::Muon MuonIdProducer::makeMuon( const reco::MuonTrackLinks& links )
    reco::Muon::MuonTrackTypePair chosenTrack;
    reco::TrackRef tpfmsRef;
    reco::TrackRef pickyRef;
+   reco::TrackRef dytRef;
    bool useSigmaSwitch = false;
 
    if (tpfmsCollectionHandle_.isValid() && !tpfmsCollectionHandle_.failedToGet() &&
@@ -329,8 +325,9 @@ reco::Muon MuonIdProducer::makeMuon( const reco::MuonTrackLinks& links )
 
      tpfmsRef = muon::getTevRefitTrack(links.globalTrack(), *tpfmsCollectionHandle_);
      pickyRef = muon::getTevRefitTrack(links.globalTrack(), *pickyCollectionHandle_);
+     dytRef = muon::getTevRefitTrack(links.globalTrack(), *dytCollectionHandle_);
 
-     if (tpfmsRef.isNull() && pickyRef.isNull()){
+     if (tpfmsRef.isNull() && pickyRef.isNull() && dytRef.isNull()){
        edm::LogWarning("MakeMuonWithTEV")<<"Failed to get  TEV refits, fall back to sigma switch.";
        useSigmaSwitch = true;
      }
@@ -344,7 +341,7 @@ reco::Muon MuonIdProducer::makeMuon( const reco::MuonTrackLinks& links )
 				      ptThresholdToFillCandidateP4WithGlobalFit_);
    } else {
      chosenTrack = muon::tevOptimized( links.globalTrack(), links.trackerTrack(),
-				       tpfmsRef, pickyRef,
+				       tpfmsRef, pickyRef, dytRef,
 				       ptThresholdToFillCandidateP4WithGlobalFit_);
    }
    aMuon = makeMuon(*chosenTrack.first);
@@ -421,7 +418,7 @@ int MuonIdProducer::overlap(const reco::Muon& muon, const reco::Track& track)
    int numberOfCommonDetIds = 0;
    if ( ! muon.isMatchesValid() ||
 	track.extra().isNull() ||
-	track.extra()->recHits().isNull() ) return numberOfCommonDetIds;
+	track.extra()->recHitsSize()==0 ) return numberOfCommonDetIds;
    const std::vector<reco::MuonChamberMatch>& matches( muon.matches() );
    for ( std::vector<reco::MuonChamberMatch>::const_iterator match = matches.begin();
 	 match != matches.end(); ++match )
@@ -429,14 +426,14 @@ int MuonIdProducer::overlap(const reco::Muon& muon, const reco::Track& track)
 	if ( match->segmentMatches.empty() ) continue;
 	bool foundCommonDetId = false;
 
-	for ( TrackingRecHitRefVector::const_iterator hit = track.extra()->recHitsBegin();
+	for ( auto hit = track.extra()->recHitsBegin();
 	      hit != track.extra()->recHitsEnd(); ++hit )
 	  {
 	     // LogTrace("MuonIdentification") << "hit DetId: " << std::hex << hit->get()->geographicalId().rawId() <<
 	     //  "\t hit chamber DetId: " << getChamberId(hit->get()->geographicalId()) <<
 	     //  "\t segment DetId: " << match->id.rawId() << std::dec;
 
-	     if ( chamberId(hit->get()->geographicalId()) == match->id.rawId() ) {
+	     if ( chamberId((*hit)->geographicalId()) == match->id.rawId() ) {
 		foundCommonDetId = true;
 		break;
 	     }
@@ -476,8 +473,6 @@ bool validateGlobalMuonPair( const reco::MuonTrackLinks& goodMuon,
 
 void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   // TimerStack timers;
-   // timers.push("MuonIdProducer::produce");
 
    std::auto_ptr<reco::MuonCollection> outputMuons(new reco::MuonCollection);
    std::auto_ptr<reco::CaloMuonCollection> caloMuons( new reco::CaloMuonCollection );
@@ -593,11 +588,8 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		 direction != directions.end(); ++direction )
 	     {
 		// make muon
-		// timers.push("MuonIdProducer::produce::fillMuonId");
 	       reco::Muon trackerMuon( makeMuon(iEvent, iSetup, reco::TrackRef( innerTrackCollectionHandle_, i ), reco::Muon::InnerTrack ) );
-		trackerMuon.setType( reco::Muon::TrackerMuon | reco::Muon::RPCMuon );
 		fillMuonId(iEvent, iSetup, trackerMuon, *direction);
-		// timers.pop();
 
 		if ( debugWithTruthMatching_ ) {
 		   // add MC hits to a list of matched segments.
@@ -611,6 +603,8 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		bool newMuon = true;
 		bool goodTrackerMuon = isGoodTrackerMuon( trackerMuon );
 		bool goodRPCMuon = isGoodRPCMuon( trackerMuon );
+		if ( goodTrackerMuon ) trackerMuon.setType( trackerMuon.type() | reco::Muon::TrackerMuon );
+		if ( goodRPCMuon ) trackerMuon.setType( trackerMuon.type() | reco::Muon::RPCMuon );
 		for ( reco::MuonCollection::iterator muon = outputMuons->begin();
 		      muon !=  outputMuons->end(); ++muon )
 		  {
@@ -629,7 +623,7 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 		       }
 		  }
 		if ( newMuon ) {
-		   if ( goodTrackerMuon ){
+		   if ( goodTrackerMuon || goodRPCMuon ){
 		      outputMuons->push_back( trackerMuon );
 		   } else {
 		      LogTrace("MuonIdentification") << "track failed minimal number of muon matches requirement";
@@ -702,7 +696,6 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    for ( reco::MuonCollection::iterator muon = outputMuons->begin(); muon != outputMuons->end(); ++muon )
      {
 	// Fill muonID
-	// timers.push("MuonIdProducer::produce::fillMuonId");
 	if ( ( fillMatching_ && ! muon->isMatchesValid() ) ||
 	     ( fillEnergy_ && !muon->isEnergyValid() ) )
 	  {
@@ -729,14 +722,10 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
             fillTrackerKink(*muon);
         }
 
-	// timers.push("MuonIdProducer::produce::fillCaloCompatibility");
 	if ( fillCaloCompatibility_ ) muon->setCaloCompatibility( muonCaloCompatibility_.evaluate(*muon) );
-	// timers.pop();
 
-	// timers.push("MuonIdProducer::produce::fillIsolation");
 	if ( fillIsolation_ ) fillMuonIsolation(iEvent, iSetup, *muon,
 						trackDepColl[i], ecalDepColl[i], hcalDepColl[i], hoDepColl[i], jetDepColl[i]);
-	// timers.pop();
 
         // fill timing information
         reco::MuonTime muonTime;
@@ -762,9 +751,7 @@ void MuonIdProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      }
 
    LogTrace("MuonIdentification") << "number of muons produced: " << outputMuons->size();
-   // timers.push("MuonIdProducer::produce::fillArbitration");
    if ( fillMatching_ ) fillArbitrationInfo( outputMuons.get() );
-   // timers.pop();
    edm::OrphanHandle<reco::MuonCollection> muonHandle = iEvent.put(outputMuons);
 
    filler.insert(muonHandle, combinedTimeColl.begin(), combinedTimeColl.end());

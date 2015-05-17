@@ -22,7 +22,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDFilter.h"
+#include "FWCore/Framework/interface/stream/EDFilter.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -39,7 +39,7 @@
 
 using namespace std;
 using namespace reco;
-class ElectronIdMVABased : public edm::EDFilter {
+class ElectronIdMVABased : public edm::stream::EDFilter<> {
 	public:
 		explicit ElectronIdMVABased(const edm::ParameterSet&);
 		~ElectronIdMVABased();
@@ -132,13 +132,13 @@ bool ElectronIdMVABased::filter(edm::Event& iEvent, const edm::EventSetup& iSetu
 	  if (eleEta <= 1.485 && mvaVal > thresholdBarrel && isoDr03 < thresholdIsoBarrel) {
 	    mvaElectrons->push_back( *egIter );
 	    reco::GsfElectron::MvaOutput myMvaOutput;
-	    myMvaOutput.mva = mvaVal;
+	    myMvaOutput.mva_Isolated = mvaVal;
 	    mvaElectrons->back().setMvaOutput(myMvaOutput);
 	  }
 	  else if (eleEta > 1.485 && mvaVal > thresholdEndcap  && isoDr03 < thresholdIsoEndcap) {
 	    mvaElectrons->push_back( *egIter );
 	    reco::GsfElectron::MvaOutput myMvaOutput;
-	    myMvaOutput.mva = mvaVal;
+	    myMvaOutput.mva_Isolated = mvaVal;
 	    mvaElectrons->back().setMvaOutput(myMvaOutput);
 	  }
 

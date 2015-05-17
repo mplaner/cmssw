@@ -1,17 +1,22 @@
 #ifndef FastSimulation_PileUpProducer_PileUpProducer_H
 #define FastSimulation_PileUpProducer_PileUpProducer_H
 
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupMixingContent.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupVertexContent.h"
 
 #include <vector>
 #include <string>
 #include <fstream>
 #include "TH1F.h"
 
-class ParameterSet;
-class Event;
-class EventSetup;
+namespace edm {
+  class Event;
+  class EventSetup;
+  class LuminosityBlock;
+  class ParameterSet;
+  class Run;
+}
 
 class TFile;
 class TTree;
@@ -20,7 +25,7 @@ class PUEvent;
 
 class PrimaryVertexGenerator;
 
-class PileUpProducer : public edm::EDProducer
+class PileUpProducer : public edm::stream::EDProducer <>
 {
 
  public:
@@ -28,6 +33,7 @@ class PileUpProducer : public edm::EDProducer
   explicit PileUpProducer(edm::ParameterSet const & p);
   virtual ~PileUpProducer();
   virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
+  virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&) override;
   virtual void endRun(edm::Run const&, edm::EventSetup const&) override;
   virtual void produce(edm::Event & e, const edm::EventSetup & c) override;
 
@@ -66,6 +72,8 @@ class PileUpProducer : public edm::EDProducer
   std::vector<double> dataProb;
   int varSize;
   int probSize;
+
+  bool currentValuesWereSet;
 };
 
 #endif

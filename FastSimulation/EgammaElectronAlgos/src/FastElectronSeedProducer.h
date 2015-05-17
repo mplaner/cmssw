@@ -18,19 +18,19 @@ namespace edm {
   class ParameterSet;
 }
 
-#include "RecoCaloTools/MetaCollections/interface/CaloRecHitMetaCollections.h"
 //#include "RecoEgamma/EgammaTools/interface/HoECalculator.h"
 //#include "RecoEgamma/EgammaIsolationAlgos/interface/EgammaHcalIsolation.h"
 #include "RecoCaloTools/Selectors/interface/CaloDualConeSelector.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/HcalRecHit/interface/HcalRecHitCollections.h"
 #include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
 
-class FastElectronSeedProducer : public edm::EDProducer
+class FastElectronSeedProducer : public edm::stream::EDProducer<>
 {
 
  public:
@@ -45,7 +45,6 @@ class FastElectronSeedProducer : public edm::EDProducer
  private:
 
   void filterClusters(const edm::Handle<reco::SuperClusterCollection>& superClusters,
-		      //HBHERecHitMetaCollection* mhbhe,
 		      reco::SuperClusterRefVector& sclRefs);
 
   /*
@@ -74,7 +73,6 @@ class FastElectronSeedProducer : public edm::EDProducer
   unsigned long long caloGeomCacheId_ ;
   EgammaHcalIsolation * hcalIso_ ;
   //CaloDualConeSelector * doubleConeSel_ ;
-  HBHERecHitMetaCollection * mhbhe_ ;
 
   // maximum H/E where H is the Hcal energy inside the cone centered on the seed cluster eta-phi position
   double maxHOverE_ ;

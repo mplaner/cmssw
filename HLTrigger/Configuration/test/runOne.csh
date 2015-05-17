@@ -7,16 +7,21 @@ set rawLHC = L1RePack
 set rawSIM = DigiL1Raw
 
 echo
+date +%F\ %a\ %T
 echo Starting $0 $1 $2
 
 if ( $2 == "" ) then
-  set tables = ( GRun )
-else if ( $2 == ALL ) then
-  set tables = ( GRun PIon 8E33v2 2013 HIon )
-else if ( $2 == DEV ) then
-  set tables = ( GRun PIon HIon )
-else if ( $2 == FROZEN ) then
-  set tables = ( 8E33v2 2013 )
+  set tables = ( GRun 50nsGRun )
+else if ( ($2 == all) || ($2 == ALL) ) then
+  set tables = ( GRun 50nsGRun HIon PIon 25ns14e33_v1 50ns_5e33_v1 Fake )
+else if ( ($2 == dev) || ($2 == DEV) ) then
+  set tables = ( GRun 50nsGRun HIon PIon )
+else if ( ($2 == full) || ($2 == FULL) ) then
+  set tables = ( FULL )
+else if ( ($2 == fake) || ($2 == FAKE) ) then
+  set tables = ( Fake )
+else if ( ($2 == frozen) || ($2 == FROZEN) ) then
+  set tables = ( 25ns14e33_v1 50ns_5e33_v1 Fake )
 else
   set tables = ( $2 )
 endif
@@ -26,16 +31,18 @@ foreach gtag ( $1 )
   foreach table ( $tables )
 
     if ($gtag == DATA) then
+      set realData = True
       set base = RelVal_${rawLHC}
     else
+      set realData = False
       set base = RelVal_${rawSIM}
     endif
 
 #   run workflows
 
-    set base = ( $base ONLINE_HLT RelVal_HLT RelVal_HLT2 )
+    set base = ( $base OnLine_HLT RelVal_HLT RelVal_HLT2 )
 
-    if ( $gtag == STARTUP ) then
+    if ( $gtag == MC ) then
       if ( ( $table != HIon ) && ( $table != PIon) ) then
         set base = ( $base FastSim_GenToHLT )
       endif
@@ -46,10 +53,19 @@ foreach gtag ( $1 )
       echo
       set name = ${task}_${table}_${gtag}
       rm -f $name.{log,root}
-      echo "cmsRun $name.py >& $name.log"
-#     ls -l        $name.py
-      time  cmsRun $name.py >& $name.log
-      echo "exit status: $?"
+
+      if ( $task == OnLine_HLT ) then
+        set short = ${task}_${table}
+        echo "`date +%T` cmsRun $short.py realData=${realData} globalTag="@" inputFiles="@" >& $name.log"
+#       ls -l        $short.py
+        time  cmsRun $short.py realData=${realData} globalTag="@" inputFiles="@" >& $name.log
+        echo "`date +%T` exit status: $?"
+      else
+        echo "`date +%T` cmsRun $name.py >& $name.log"
+#       ls -l        $name.py
+        time  cmsRun $name.py >& $name.log
+        echo "`date +%T` exit status: $?"
+      endif
 
       if ( ( $task == RelVal_${rawLHC} ) || ( $task == RelVal_${rawSIM} ) ) then
 #       link to input file for subsequent steps
@@ -65,16 +81,16 @@ end
 
 # special fastsim integration test
 
-if ( $1 == STARTUP ) then
+if ( $1 == MC ) then
   foreach task ( IntegrationTestWithHLT_cfg )
 
     echo
     set name = ${task}
     rm -f $name.{log,root}
-    echo "cmsRun $name.py >& $name.log"
+    echo "`date +%T` cmsRun $name.py >& $name.log"
 #   ls -l        $name.py
     time  cmsRun $name.py >& $name.log
-    echo "exit status: $?"
+    echo "`date +%T` exit status: $?"
 
   end
 endif
@@ -96,10 +112,10 @@ foreach gtag ( $1 )
       echo
       set name = ${task}_${table}_${gtag}
       rm -f $name.{log,root}
-      echo "cmsRun $name.py >& $name.log"
+      echo "`date +%T` cmsRun $name.py >& $name.log"
 #     ls -l        $name.py
       time  cmsRun $name.py >& $name.log
-      echo "exit status: $?"
+      echo "`date +%T` exit status: $?"
 
     end
 
@@ -107,6 +123,13 @@ foreach gtag ( $1 )
 
 end
 
+# running each HLT trigger path individually one by one
+
+if ( ($2 != all) && ($2 != dev) && ($2 != full) && ($2 != fake) && ($2 != frozen) ) then
+  ./runIntegration.csh $1 $2
+endif
+
 echo
 echo Finished $0 $1 $2
+date +%F\ %a\ %T
 #

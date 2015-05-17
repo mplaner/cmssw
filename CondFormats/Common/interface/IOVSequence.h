@@ -1,5 +1,6 @@
 #ifndef Cond_IOVSequence_h
 #define Cond_IOVSequence_h
+
 #include "CondFormats/Common/interface/UpdateStamp.h"
 #include "CondFormats/Common/interface/IOVElement.h"
 #include "CondFormats/Common/interface/Time.h"
@@ -26,7 +27,7 @@ namespace cond {
     typedef ora::QueryableVector<Item> Container;
     typedef Container::iterator iterator;
     typedef Container::const_iterator const_iterator;
-    typedef enum { Unknown=-1, Obsolete, Tag, TagInGT, ChildTag, ChildTagInGT } ScopeType;
+    enum ScopeType { Unknown=-1, Obsolete, Tag, TagInGT, ChildTag, ChildTagInGT };
 
     IOVSequence();
 
@@ -118,7 +119,7 @@ namespace cond {
     
     mutable Container * m_sorted;
 
-  };
+};
 
 }//ns cond
 #endif

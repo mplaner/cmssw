@@ -7,8 +7,10 @@
 #include "GeneratorInterface/Core/interface/ParameterCollector.h"
 #include "GeneratorInterface/Pythia8Interface/interface/P8RndmEngine.h"
 
+#include "HepMC/IO_AsciiParticles.h"
+
 #include <Pythia8/Pythia.h>
-#include <Pythia8/Pythia8ToHepMC.h>
+#include <Pythia8Plugins/HepMC2.h>
 
 namespace CLHEP {
   class HepRandomEngine;
@@ -25,7 +27,6 @@ namespace gen {
 	 
          virtual bool generatePartonsAndHadronize() = 0;
          bool decay() { return true; } // NOT used - let's call it "design imperfection"
-         virtual bool residualDecay();
          bool readSettings( int ); // common func
          virtual bool initializeForInternalPartons() = 0;
          bool declareStableParticles( const std::vector<int>& ); // common func
@@ -46,7 +47,9 @@ namespace gen {
 	 
 	 unsigned int                   pythiaPylistVerbosity;
          bool                           pythiaHepMCVerbosity;
+         bool                           pythiaHepMCVerbosityParticles;
 	 unsigned int                   maxEventsToPrint;
+         HepMC::IO_AsciiParticles*      ascii_io;
 
       private:
 

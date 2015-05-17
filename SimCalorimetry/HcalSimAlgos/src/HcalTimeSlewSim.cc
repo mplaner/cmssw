@@ -8,13 +8,15 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "CLHEP/Random/RandGaussQ.h"
+
 HcalTimeSlewSim::HcalTimeSlewSim(const CaloVSimParameterMap * parameterMap)
-  : theParameterMap(parameterMap),theRandGaussQ(0) 
+  : theParameterMap(parameterMap)
 {
 }
 
 
-
+// not quite adequate to 25ns high-PU regime
 double HcalTimeSlewSim::charge(const CaloSamples & samples) const
 {
   double totalCharge = 0.;
@@ -28,7 +30,7 @@ double HcalTimeSlewSim::charge(const CaloSamples & samples) const
 }
 
 
-void HcalTimeSlewSim::delay(CaloSamples & samples) const 
+void HcalTimeSlewSim::delay(CaloSamples & samples, CLHEP::HepRandomEngine* engine) const
 {
   // HO goes slow, HF shouldn't be used at all
   //ZDC not used for the moment
@@ -43,26 +45,46 @@ void HcalTimeSlewSim::delay(CaloSamples & samples) const
       HcalTimeSlew::Slow :
       HcalTimeSlew::Medium;
 
-    double totalCharge = charge(samples);
-    if(totalCharge <= 0.) totalCharge = 1.e-6; // protecion against negaive v.
-    double delay = HcalTimeSlew::delay(totalCharge, biasSetting);
-    // now, the smearing
-    const HcalSimParameters& params=static_cast<const HcalSimParameters&>(theParameterMap->simParameters(detId));
-    if (params.doTimeSmear() && theRandGaussQ!=0) {
-      double rms=params.timeSmearRMS(totalCharge);
-      double smearns=theRandGaussQ->fire()*rms;
+    // double totalCharge = charge(samples); 
 
-      LogDebug("HcalTimeSlewSim") << "TimeSmear charge " << totalCharge << " rms " << rms << " delay " << delay << " smearns " << smearns;
-      delay+=smearns;
+    int maxbin =  samples.size();
+    CaloSamples data(detId, maxbin);   // for a temporary copy 
+    data =  samples;  
+
+    // smearing
+    double eps = 1.e-6;
+    double scale_factor = 0.6;  
+    double scale = data[4] / scale_factor;      
+    double smearns = 0.;
+
+    const HcalSimParameters& params =
+      static_cast<const HcalSimParameters&>(theParameterMap->simParameters(detId));
+    if (params.doTimeSmear()) {
+      double rms = params.timeSmearRMS(scale);
+      smearns = CLHEP::RandGaussQ::shoot(engine)*rms;
+      LogDebug("HcalTimeSlewSim") << "TimeSmear charge " 
+				  << scale << " rms " << rms 
+				  << " smearns " << smearns;
+    }
+    
+    for(int i = 0; i < samples.size()-1; ++i) {
+      double totalCharge = data[i]/scale_factor;   
+      // until we get more precise/reliable QIE8 simulation...  
+
+      double delay = smearns;
+      if(totalCharge <= 0.) totalCharge = eps; // protecion against negaive v.
+      delay += HcalTimeSlew::delay(totalCharge, biasSetting);      
+      if(delay <= 0.) delay = eps;
+
+      double t = i*25. - delay;
+      int firstbin = floor(t/25.);
+      double f = t/25. - firstbin;
+      int nextbin = firstbin + 1;
+      double v2 = (nextbin < 0  || nextbin  >= maxbin) ? 0. : data[nextbin];
+      data[i] = v2*f;
+      data[i+1] = data[i+1] + (v2 - data[i]);
     }
 
-    samples.offsetTime(delay);
-  }
-}
-
-
-void HcalTimeSlewSim::setRandomEngine(CLHEP::HepRandomEngine & engine) {
-  if (theRandGaussQ==0) {
-    theRandGaussQ=new CLHEP::RandGaussQ(engine);
+    samples = data;
   }
 }

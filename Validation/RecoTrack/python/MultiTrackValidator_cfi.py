@@ -33,7 +33,7 @@ multiTrackValidator = cms.EDAnalyzer(
     #associatormap = cms.InputTag("assoc2secStepTk"),
     #associatormap = cms.InputTag("assoc2thStepTk"),
     #associatormap = cms.InputTag("assoc2GsfTracks"),
-    associators = cms.vstring('TrackAssociatorByHitsRecoDenom'),    
+    associators = cms.vstring('trackAssociatorByHitsRecoDenom'),    
     UseAssociators = cms.bool(True), # if False, the TP-RecoTrack maps has to be specified 
 
     ### sim input configuration ###
@@ -57,4 +57,7 @@ multiTrackValidator = cms.EDAnalyzer(
     ### output configuration
     dirName = cms.string('Tracking/Track/'),
     outputFile = cms.string(''),
+
+    ### for fake rate vs dR ###
+    trackCollectionForDrCalculation = cms.InputTag("generalTracks")
 )

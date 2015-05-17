@@ -16,14 +16,26 @@
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHit.h"
 #include "TrackingTools/PatternTools/interface/TrackConstraintAssociation.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "RecoTracker/TransientTrackingRecHit/interface/TkTransientTrackingRecHitBuilder.h"
+#include "TrackingTools/TrackFitters/interface/TrajectoryFitter.h"
+
 
 class MagneticField;
 class TrackingGeometry;
-class TrajectoryFitter;
 class Propagator;
 class Trajectory;
 class TrajectoryStateOnSurface;
-class TransientTrackingRecHitBuilder;
+
+struct FitterCloner {
+   std::unique_ptr<TrajectoryFitter> fitter;
+   TkClonerImpl hitCloner;
+
+  FitterCloner(const TrajectoryFitter * theFitter,const TransientTrackingRecHitBuilder* builder):
+    fitter(theFitter->clone()),
+    hitCloner(static_cast<TkTransientTrackingRecHitBuilder const *>(builder)->cloner()){
+    fitter->setHitCloner(&hitCloner);
+  }
+};
 
 
 template <class T>
@@ -42,12 +54,15 @@ public:
     conf_(conf),
     algoName_(conf_.getParameter<std::string>( "AlgorithmName" )),
     algo_(reco::TrackBase::algoByName(algoName_)),
-    reMatchSplitHits_(false)
+    reMatchSplitHits_(false),
+    usePropagatorForPCA_(false)
       {
         geometricInnerState_ = (conf_.exists("GeometricInnerState") ?
 	  conf_.getParameter<bool>( "GeometricInnerState" ) : true);
 	if (conf_.exists("reMatchSplitHits"))
 	  reMatchSplitHits_=conf_.getParameter<bool>("reMatchSplitHits");
+        if (conf_.exists("usePropagatorForPCA"))
+          usePropagatorForPCA_ = conf_.getParameter<bool>("usePropagatorForPCA");
       }
 
   /// Destructor
@@ -124,6 +139,7 @@ public:
   reco::TrackBase::TrackAlgorithm algo_;
   bool reMatchSplitHits_;
   bool geometricInnerState_;
+  bool usePropagatorForPCA_;
 
   TrajectoryStateOnSurface getInitialState(const T * theT,
 					   TransientTrackingRecHit::RecHitContainer& hits,

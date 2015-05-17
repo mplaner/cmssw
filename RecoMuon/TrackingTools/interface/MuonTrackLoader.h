@@ -22,6 +22,9 @@
 #include "RecoMuon/TrackingTools/interface/MuonCandidate.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
+#include "RecoTracker/TransientTrackingRecHit/interface/TkTransientTrackingRecHitBuilder.h"
+
+
 namespace edm {class Event; class EventSetup; class ParameterSet;}
 
 class Trajectory;
@@ -66,7 +69,8 @@ class MuonTrackLoader {
 								 edm::Event&); 
   
   private:
- 
+    static std::vector<const TrackingRecHit*> unpackHit(const TrackingRecHit &hit);
+
     /// Build a track at the PCA WITHOUT any vertex constriant
     std::pair<bool,reco::Track> buildTrackAtPCA(const Trajectory& trajectory, const reco::BeamSpot &) const;
 
@@ -84,7 +88,10 @@ class MuonTrackLoader {
 
     bool theSmoothingStep;
     std::string theSmootherName;
-    edm::ESHandle<TrajectorySmoother> theSmoother;
+    std::string theTrackerRecHitBuilderName;
+    std::unique_ptr<TrajectorySmoother> theSmoother;
+    TkClonerImpl hitCloner;
+
 
     edm::InputTag theBeamSpotInputTag; 
     edm::EDGetTokenT<reco::BeamSpot> theBeamSpotToken;

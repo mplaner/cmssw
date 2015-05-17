@@ -13,7 +13,6 @@
 #include <array>
 #include <memory>
 #include <string>
-#include "boost/shared_ptr.hpp"
 
 #include "IOPool/Common/interface/RootServiceChecker.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -53,6 +52,7 @@ namespace edm {
 
     std::string const& currentFileName() const;
 
+    static void fillDescription(ParameterSetDescription& desc);
     static void fillDescriptions(ConfigurationDescriptions& descriptions);
 
     using OutputModule::selectorConfig;
@@ -71,7 +71,7 @@ namespace edm {
         explicit Sorter(TTree* tree);
         bool operator() (OutputItem const& lh, OutputItem const& rh) const;
       private:
-        boost::shared_ptr<std::map<std::string, int> > treeMap_;
+        std::shared_ptr<std::map<std::string, int> > treeMap_;
       };
 
       OutputItem();
@@ -103,6 +103,9 @@ namespace edm {
     ///allow inheriting classes to override but still be able to call this method in the overridden version
     virtual bool shouldWeCloseFile() const override;
     virtual void write(EventPrincipal const& e, ModuleCallingContext const*) override;
+
+    virtual std::pair<std::string, std::string> physicalAndLogicalNameForNewFile();
+    virtual void doExtrasAfterCloseFile();
   private:
     virtual void openFile(FileBlock const& fb) override;
     virtual void respondToOpenInputFile(FileBlock const& fb) override;
@@ -124,6 +127,7 @@ namespace edm {
     void writeProductDescriptionRegistry();
     void writeParentageRegistry();
     void writeBranchIDListRegistry();
+    void writeThinnedAssociationsHelper();
     void writeProductDependencies();
     void finishEndFile();
 

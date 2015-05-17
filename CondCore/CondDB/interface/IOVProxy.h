@@ -87,9 +87,13 @@ namespace cond {
       
       std::string payloadObjectType() const;
       
+      cond::SynchronizationType synchronizationType() const;
+
       cond::Time_t endOfValidity() const;
       
       cond::Time_t lastValidatedTime() const;
+
+      std::tuple<std::string, boost::posix_time::ptime, boost::posix_time::ptime > getMetadata() const;
 
       // returns true if at least one IOV is in the sequence.
       bool isEmpty() const;

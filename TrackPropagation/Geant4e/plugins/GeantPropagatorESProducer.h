@@ -7,11 +7,20 @@
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include <boost/shared_ptr.hpp>
 
-class  GeantPropagatorESProducer: public edm::ESProducer{
+/*
+ * GeantPropagatorESProducer
+ *
+ * Produces an Geant4ePropagator for track propagation
+ *
+ */
+
+class GeantPropagatorESProducer: public edm::ESProducer{
  public:
   GeantPropagatorESProducer(const edm::ParameterSet & p);
-  virtual ~GeantPropagatorESProducer(); 
+  virtual ~GeantPropagatorESProducer() override; 
+
   boost::shared_ptr<Propagator> produce(const TrackingComponentsRecord &);
+
  private:
   boost::shared_ptr<Propagator> _propagator;
   edm::ParameterSet pset_;

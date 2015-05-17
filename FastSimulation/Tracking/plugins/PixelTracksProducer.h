@@ -1,8 +1,10 @@
 #ifndef FastSimulation_Tracking_PixelTracksProducer_H
 #define FastSimulation_Tracking_PixelTracksProducer_H
 
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+
+#include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
 
 #include <string>
 
@@ -17,7 +19,7 @@ namespace edm {
 }
 
 
-class PixelTracksProducer :  public edm::EDProducer {
+class PixelTracksProducer :  public edm::stream::EDProducer <> {
 
 public:
   explicit PixelTracksProducer(const edm::ParameterSet& conf);
@@ -33,6 +35,7 @@ private:
   TrackingRegionProducer* theRegionProducer;
 
   edm::InputTag seedProducer;
+  edm::EDGetTokenT<TrajectorySeedCollection> seedProducerToken;
 
 };
 #endif

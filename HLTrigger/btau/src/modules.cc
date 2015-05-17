@@ -24,6 +24,18 @@ DEFINE_FWK_MODULE(HLTmmkFilter);
 #include "HLTmmkkFilter.h"
 DEFINE_FWK_MODULE(HLTmmkkFilter);
 
+#include "HLTmumutkVtxProducer.h"
+DEFINE_FWK_MODULE(HLTmumutkVtxProducer);
+
+#include "HLTmumutkFilter.h"
+DEFINE_FWK_MODULE(HLTmumutkFilter);
+
+#include "HLTmumutktkVtxProducer.h"
+DEFINE_FWK_MODULE(HLTmumutktkVtxProducer);
+
+#include "HLTmumutktkFilter.h"
+DEFINE_FWK_MODULE(HLTmumutktkFilter);
+
 #include "ConeIsolation.h"
 DEFINE_FWK_MODULE(ConeIsolation);
 
@@ -46,6 +58,13 @@ typedef HLTJetTag<reco::CaloJet> HLTCaloJetTag;
 typedef HLTJetTag<reco::  PFJet> HLTPFJetTag;
 DEFINE_FWK_MODULE(HLTCaloJetTag);
 DEFINE_FWK_MODULE(HLTPFJetTag);
+
+#include "HLTJetTagWithMatching.h"
+#include "HLTJetTagWithMatching.cc"
+typedef HLTJetTagWithMatching<reco::CaloJet> HLTCaloJetTagWithMatching;
+typedef HLTJetTagWithMatching<reco::  PFJet> HLTPFJetTagWithMatching;
+DEFINE_FWK_MODULE(HLTCaloJetTagWithMatching);
+DEFINE_FWK_MODULE(HLTPFJetTagWithMatching);
 
 #include "HLTCollectionProducer.h"
 typedef HLTCollectionProducer<reco::CaloJet> HLTCaloJetCollectionProducer;

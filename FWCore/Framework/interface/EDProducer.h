@@ -2,7 +2,7 @@
 #define FWCore_Framework_EDProducer_h
 
 /*----------------------------------------------------------------------
-  
+
 EDProducer: The base class of "modules" whose main purpose is to insert new
 EDProducts into an Event.
 
@@ -11,18 +11,23 @@ EDProducts into an Event.
 
 #include "FWCore/Framework/interface/ProducerBase.h"
 #include "FWCore/Framework/interface/EDConsumerBase.h"
+#include "FWCore/Framework/interface/SharedResourcesAcquirer.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "DataFormats/Provenance/interface/ModuleDescription.h"
 #include "FWCore/ParameterSet/interface/ParameterSetfwd.h"
 
 #include <string>
 #include <vector>
+#include <mutex>
 
 namespace edm {
 
   class ModuleCallingContext;
   class PreallocationConfiguration;
-  
+  class ActivityRegistry;
+  class ProductRegistry;
+  class ThinnedAssociationsHelper;
+
   namespace maker {
     template<typename T> class ModuleHolderT;
   }
@@ -45,6 +50,7 @@ namespace edm {
 
   private:
     bool doEvent(EventPrincipal& ep, EventSetup const& c,
+                 ActivityRegistry* act,
                  ModuleCallingContext const* mcc);
     void doPreallocate(PreallocationConfiguration const&) {}
     void doBeginJob();
@@ -61,6 +67,8 @@ namespace edm {
     void doRespondToCloseInputFile(FileBlock const& fb);
     void doPreForkReleaseResources();
     void doPostForkReacquireResources(unsigned int iChildIndex, unsigned int iNumberOfChildren);
+    void doRegisterThinnedAssociations(ProductRegistry const&,
+                                       ThinnedAssociationsHelper&) { }
     void registerProductsAndCallbacks(EDProducer* module, ProductRegistry* reg) {
       registerProducts(module, reg, moduleDescription_);
     }
@@ -71,10 +79,10 @@ namespace edm {
     virtual void beginJob() {}
     virtual void endJob(){}
 
-    virtual void beginRun(Run const&iR, EventSetup const&iE){}
-    virtual void endRun(Run const& iR, EventSetup const& iE){}
-    virtual void beginLuminosityBlock(LuminosityBlock const& iL, EventSetup const& iE){}
-    virtual void endLuminosityBlock(LuminosityBlock const& iL, EventSetup const& iE){}
+    virtual void beginRun(Run const& /* iR */, EventSetup const& /* iE */){}
+    virtual void endRun(Run const& /* iR */, EventSetup const& /* iE */){}
+    virtual void beginLuminosityBlock(LuminosityBlock const& /* iL */, EventSetup const& /* iE */){}
+    virtual void endLuminosityBlock(LuminosityBlock const& /* iL */, EventSetup const& /* iE */){}
     virtual void respondToOpenInputFile(FileBlock const&) {}
     virtual void respondToCloseInputFile(FileBlock const&) {}
     virtual void preForkReleaseResources() {}
@@ -85,6 +93,8 @@ namespace edm {
     }
     ModuleDescription moduleDescription_;
     std::vector<BranchID> previousParentage_;
+    SharedResourcesAcquirer resourceAcquirer_;
+    std::mutex mutex_;
     ParentageID previousParentageId_;
   };
 }

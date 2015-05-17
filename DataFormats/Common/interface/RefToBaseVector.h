@@ -7,7 +7,7 @@
  */
 #include "DataFormats/Common/interface/CMS_CLASS_VERSION.h"
 #include "DataFormats/Provenance/interface/ProductID.h"
-#include "boost/shared_ptr.hpp"
+#include <memory>
 #include <vector>
 
 namespace edm {
@@ -35,9 +35,7 @@ namespace edm {
     explicit RefToBaseVector(REFV const& );
     template<typename C>
     explicit RefToBaseVector(Handle<C> const& );
-    template<typename T1>
-    explicit RefToBaseVector(Handle<View<T1> > const& );
-    RefToBaseVector(boost::shared_ptr<reftobase::RefVectorHolderBase> p);
+    RefToBaseVector(std::shared_ptr<reftobase::RefVectorHolderBase> p);
     RefToBaseVector& operator=(RefToBaseVector const& iRHS);
     void swap(RefToBaseVector& other);
 
@@ -127,7 +125,7 @@ namespace edm {
 
   template <class T>
   inline
-  RefToBaseVector<T>::RefToBaseVector(boost::shared_ptr<reftobase::RefVectorHolderBase> p) : 
+  RefToBaseVector<T>::RefToBaseVector(std::shared_ptr<reftobase::RefVectorHolderBase> p) : 
     holder_(new reftobase::IndirectVectorHolder<T>(p)) {
   }
 
@@ -279,7 +277,6 @@ namespace edm {
 
 #include "DataFormats/Common/interface/RefVector.h"
 #include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Common/interface/View.h"
 
 namespace edm {
 
@@ -288,12 +285,6 @@ namespace edm {
   RefToBaseVector<T>::RefToBaseVector(const Handle<C> & h ) :
     holder_(new reftobase::VectorHolder<T, RefVector<C, typename refhelper::ValueTrait<C>::value, 
 	    typename refhelper::FindTrait<C, T>::value> >(h.id())) {
-  }
-
-  template<typename T>
-  template<typename T1>
-  RefToBaseVector<T>::RefToBaseVector(const Handle<View<T1> > & h ) :
-    holder_(h->refVector().holder_->cloneEmpty()) {
   }
 
 }

@@ -79,7 +79,7 @@ void TrackProducer::produce(edm::Event& theEvent, const edm::EventSetup& setup)
   }
   
   //put everything in the event
-  putInEvt(theEvent, thePropagator.product(),theMeasTk.product(), outputRHColl, outputTColl, outputTEColl, outputTrajectoryColl, algoResults);
+  putInEvt(theEvent, thePropagator.product(),theMeasTk.product(), outputRHColl, outputTColl, outputTEColl, outputTrajectoryColl, algoResults, theBuilder.product());
   LogDebug("TrackProducer") << "end" << "\n";
 }
 
@@ -121,7 +121,7 @@ std::vector<reco::TransientTrack> TrackProducer::getTransient(edm::Event& theEve
     }
     catch (cms::Exception &e){ edm::LogError("TrackProducer") << "cms::Exception caught during theAlgo.runWithCandidate." << "\n" << e << "\n"; throw; }
   }
-  
+  ttks.reserve(algoResults.size());  
   for (AlgoProductCollection::iterator prod=algoResults.begin();prod!=algoResults.end(); prod++){
     ttks.push_back( reco::TransientTrack(*((*prod).second.first),thePropagator.product()->magneticField() ));
   }

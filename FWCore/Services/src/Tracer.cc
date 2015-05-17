@@ -14,7 +14,13 @@
 #include "FWCore/Framework/interface/Run.h"
 #include "FWCore/Framework/interface/LuminosityBlock.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ServiceRegistry/interface/ConsumesInfo.h"
+#include "FWCore/ServiceRegistry/interface/PathsAndConsumesOfModulesBase.h"
 #include "FWCore/ServiceRegistry/interface/SystemBounds.h"
+#include "FWCore/Utilities/interface/BranchType.h"
+#include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Utilities/interface/ProductKindOfType.h"
+#include "FWCore/Utilities/interface/TimeOfDay.h"
 
 #include "DataFormats/Provenance/interface/EventID.h"
 #include "DataFormats/Provenance/interface/LuminosityBlockID.h"
@@ -27,23 +33,49 @@
 #include "FWCore/ServiceRegistry/interface/GlobalContext.h"
 #include "FWCore/ServiceRegistry/interface/ModuleCallingContext.h"
 #include "FWCore/ServiceRegistry/interface/PathContext.h"
+#include "FWCore/ServiceRegistry/interface/ProcessContext.h"
 #include "FWCore/ServiceRegistry/interface/StreamContext.h"
 #include "DataFormats/Common/interface/HLTPathStatus.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace edm::service;
+
+namespace {
+
+  class TimeStamper {
+  public:
+    TimeStamper(bool enable) :
+      enabled_(enable)
+    { }
+
+    friend
+    std::ostream & operator<<(std::ostream & out, TimeStamper const & timestamp) {
+      if (timestamp.enabled_)
+        out << std::setprecision(2) << edm::TimeOfDay() << "  ";
+      return out;
+    }
+
+  private:
+    bool enabled_;
+  };
+
+}
 
 Tracer::Tracer(ParameterSet const& iPS, ActivityRegistry&iRegistry) :
   indention_(iPS.getUntrackedParameter<std::string>("indention")),
   dumpContextForLabels_(),
-  dumpNonModuleContext_(iPS.getUntrackedParameter<bool>("dumpNonModuleContext"))
+  dumpNonModuleContext_(iPS.getUntrackedParameter<bool>("dumpNonModuleContext")),
+  dumpPathsAndConsumes_(iPS.getUntrackedParameter<bool>("dumpPathsAndConsumes")),
+  printTimestamps_(iPS.getUntrackedParameter<bool>("printTimestamps"))
 {
   for (std::string & label: iPS.getUntrackedParameter<std::vector<std::string>>("dumpContextForLabels"))
     dumpContextForLabels_.insert(std::move(label));
 
   iRegistry.watchPreallocate(this, &Tracer::preallocate);
 
+  iRegistry.watchPreBeginJob(this, &Tracer::preBeginJob);
   iRegistry.watchPostBeginJob(this, &Tracer::postBeginJob);
   iRegistry.watchPostEndJob(this, &Tracer::postEndJob);
 
@@ -134,68 +166,198 @@ Tracer::Tracer(ParameterSet const& iPS, ActivityRegistry&iRegistry) :
 
   iRegistry.watchPreSourceConstruction(this, &Tracer::preSourceConstruction);
   iRegistry.watchPostSourceConstruction(this, &Tracer::postSourceConstruction);
+  
+  iRegistry.preSourceEarlyTerminationSignal_.connect([this](edm::TerminationOrigin iOrigin) {
+    LogAbsolute out("Tracer");
+    out << TimeStamper(printTimestamps_);
+    out << indention_ << indention_ << " early termination before processing transition";
+  });
+  iRegistry.preStreamEarlyTerminationSignal_.connect([this](edm::StreamContext const& iContext, edm::TerminationOrigin iOrigin) {
+    LogAbsolute out("Tracer");
+    out << TimeStamper(printTimestamps_);
+    if(iContext.eventID().luminosityBlock() ==0) {
+      out << indention_ << indention_ << " early termination of run: stream = " << iContext.streamID()
+      <<" run = " << iContext.eventID().run();
+    }else {
+      if(iContext.eventID().event() == 0) {
+        out << indention_ << indention_ << " early termination of stream lumi: stream = " << iContext.streamID()
+        <<" run = " << iContext.eventID().run()
+        << " lumi = " << iContext.eventID().luminosityBlock() ;
+      } else {
+        out << indention_ << indention_ << " early termination of event: stream = " << iContext.streamID()
+        <<" run = " << iContext.eventID().run()
+        << " lumi = " << iContext.eventID().luminosityBlock()
+        << " event = "<< iContext.eventID().event();
+        
+      }
+    }
+    out<< " : time = " << iContext.timestamp().value();
+    
+  });
+  iRegistry.preGlobalEarlyTerminationSignal_.connect([this](edm::GlobalContext const& iContext, edm::TerminationOrigin iOrigin) {
+    LogAbsolute out("Tracer");
+    out << TimeStamper(printTimestamps_);
+    if(iContext.luminosityBlockID().value() ==0) {
+      out << indention_ << indention_ << " early termination of global run " << iContext.luminosityBlockID().run();
+    }else {
+      out << indention_ << indention_ << " early termination of global lumi run = " << iContext.luminosityBlockID().run()
+          << " lumi = " << iContext.luminosityBlockID().luminosityBlock() ;
+      
+    }
+    out<< " : time = " << iContext.timestamp().value();
+  });
 }
 
 void
 Tracer::fillDescriptions(edm::ConfigurationDescriptions & descriptions) {
   edm::ParameterSetDescription desc;
   desc.addUntracked<std::string>("indention", "++")->setComment("Prefix characters for output. The characters are repeated to form the indentation.");
-  desc.addUntracked<std::vector<std::string>>("dumpContextForLabels", {})->setComment("Prints context information to cout for the module transitions associated with these modules' labels");
+  desc.addUntracked<std::vector<std::string>>("dumpContextForLabels", std::vector<std::string>{})->setComment("Prints context information to cout for the module transitions associated with these modules' labels");
   desc.addUntracked<bool>("dumpNonModuleContext", false)->setComment("Prints context information to cout for the transitions not associated with any module label");
+  desc.addUntracked<bool>("dumpPathsAndConsumes", false)->setComment("Prints information to cout about paths, endpaths, products consumed by modules and the dependencies between modules created by the products they consume");
+  desc.addUntracked<bool>("printTimestamps", false)->setComment("Prints a time stamp for every transition");
   descriptions.add("Tracer", desc);
   descriptions.setComment("This service prints each phase the framework is processing, e.g. constructing a module,running a module, etc.");
 }
 
 void
 Tracer::preallocate(service::SystemBounds const& bounds) {
-  LogAbsolute("Tracer") << indention_ << " preallocate: " << bounds.maxNumberOfConcurrentRuns() << " concurrent runs, " 
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << " preallocate: " << bounds.maxNumberOfConcurrentRuns() << " concurrent runs, "
                                                           << bounds.maxNumberOfConcurrentLuminosityBlocks() << " concurrent luminosity sections, " 
                                                           << bounds.maxNumberOfStreams() << " streams";
 }
 
 void 
+Tracer::preBeginJob(PathsAndConsumesOfModulesBase const& pathsAndConsumes, ProcessContext const& pc) {
+  LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_) << indention_ << " starting: begin job";
+  if(dumpPathsAndConsumes_) {
+    out << "\n" << "Process name = " << pc.processName() << "\n";
+    out << "paths:\n";
+    std::vector<std::string> const& paths = pathsAndConsumes.paths();
+    for(auto const& path : paths) {
+      out << "  " << path << "\n";
+    }
+    out << "end paths:\n";
+    std::vector<std::string> const& endpaths = pathsAndConsumes.endPaths();
+    for(auto const& endpath : endpaths) {
+      out << "  " << endpath << "\n";
+    }
+    for(unsigned int j = 0; j < paths.size(); ++j) {
+      std::vector<ModuleDescription const*> const& modulesOnPath = pathsAndConsumes.modulesOnPath(j);
+      out << "modules on path " << paths.at(j) << ":\n";
+      for(auto const& desc : modulesOnPath) {
+        out << "  " << desc->moduleLabel() << "\n";
+      }
+    }
+    for(unsigned int j = 0; j < endpaths.size(); ++j) {
+      std::vector<ModuleDescription const*> const& modulesOnEndPath = pathsAndConsumes.modulesOnEndPath(j);
+      out << "modules on end path " << endpaths.at(j) << ":\n";
+      for(auto const& desc : modulesOnEndPath) {
+        out << "  " << desc->moduleLabel() << "\n";
+      }
+    }
+    std::vector<ModuleDescription const*> const& allModules =  pathsAndConsumes.allModules();
+    out << "All modules and modules in the current process whose products they consume:\n";
+    out << "(This does not include modules from previous processes or the source)\n";
+    for(auto const& module : allModules) {
+      out << "  " << module->moduleName() << "/\'" << module->moduleLabel() << "\'";
+      unsigned int moduleID = module->id();
+      if(pathsAndConsumes.moduleDescription(moduleID) != module) {
+        throw cms::Exception("TestFailure") << "Tracer::preBeginJob, moduleDescription returns incorrect value";
+      }
+      std::vector<ModuleDescription const*> const& modulesWhoseProductsAreConsumedBy =
+        pathsAndConsumes.modulesWhoseProductsAreConsumedBy(moduleID);
+      if(!modulesWhoseProductsAreConsumedBy.empty()) {
+        out << " consumes products from these modules:\n";
+        for(auto const& producingModule : modulesWhoseProductsAreConsumedBy) {
+          out << "    " << producingModule->moduleName() << "/\'" << producingModule->moduleLabel() << "\'\n";
+        }
+      } else {
+        out << "\n";
+      }
+    }
+    out << "All modules (listed by class and label) and all their consumed products.\n";
+    out << "Consumed products are listed by type, label, instance, process.\n";
+    out << "For products not in the event, \'run\' or \'lumi\' is added to indicate the TTree they are from.\n";
+    out << "For products that are declared with mayConsume, \'may consume\' is added.\n";
+    out << "For products consumed for Views, \'element type\' is added\n";
+    out << "For products only read from previous processes, \'skip current process\' is added\n";
+    for(auto const* module : allModules) {
+      out << "  " << module->moduleName() << "/\'" << module->moduleLabel() << "\'";
+      std::vector<ConsumesInfo> consumesInfo = pathsAndConsumes.consumesInfo(module->id());
+      if(!consumesInfo.empty()) {
+        out << " consumes:\n";
+        for(auto const& info : consumesInfo) {
+          out << "    " << info.type() << " \'" << info.label() << "\' \'" << info.instance();
+          out << "\' \'" << info.process() << "\'";
+          if(info.branchType() == InLumi) {
+            out << ", lumi";
+          } else if(info.branchType() == InRun) {
+            out << ", run";
+          }
+          if(!info.alwaysGets()) {
+            out << ", may consume";
+          }
+          if(info.kindOfType() == ELEMENT_TYPE) {
+            out << ", element type";
+          }
+          if(info.skipCurrentProcess()) {
+            out << ", skip current process";
+          }
+          out << "\n";
+        }
+      } else {
+        out << "\n";
+      }
+    }
+  }
+}
+
+void
 Tracer::postBeginJob() {
-  LogAbsolute("Tracer") << indention_ << " finished: begin job";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << " finished: begin job";
 }
 
 void 
 Tracer::postEndJob() {
-  LogAbsolute("Tracer") << indention_ << " finished: end job";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << " finished: end job";
 }
 
 void
 Tracer::preSourceEvent(StreamID sid) {
-  LogAbsolute("Tracer") << indention_ << indention_ << " starting: source event";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << indention_ << " starting: source event";
 }
 
 void
 Tracer::postSourceEvent(StreamID sid) {
-  LogAbsolute("Tracer") << indention_ << indention_ << " finished: source event";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << indention_ << " finished: source event";
 }
 
 void
 Tracer::preSourceLumi() {
-  LogAbsolute("Tracer") << indention_ << indention_ << " starting: source lumi";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << indention_ << " starting: source lumi";
 }
 
 void
 Tracer::postSourceLumi() {
-  LogAbsolute("Tracer") << indention_ << indention_ << " finished: source lumi";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << indention_ << " finished: source lumi";
 }
 
 void
 Tracer::preSourceRun() {
-  LogAbsolute("Tracer") << indention_ << indention_ << " starting: source run";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << indention_ << " starting: source run";
 }
 
 void
 Tracer::postSourceRun() {
-  LogAbsolute("Tracer") << indention_ << indention_ << " finished: source run";
+  LogAbsolute("Tracer") << TimeStamper(printTimestamps_) << indention_ << indention_ << " finished: source run";
 }
 
 void
 Tracer::preOpenFile(std::string const& lfn, bool b) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: open input file: lfn = " << lfn;
   if(dumpNonModuleContext_) out << " usedFallBack = " << b;
 }
@@ -203,6 +365,7 @@ Tracer::preOpenFile(std::string const& lfn, bool b) {
 void
 Tracer::postOpenFile (std::string const& lfn, bool b) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: open input file: lfn = " << lfn;
   if(dumpNonModuleContext_) out << " usedFallBack = " << b;
 }
@@ -210,12 +373,14 @@ Tracer::postOpenFile (std::string const& lfn, bool b) {
 void
 Tracer::preCloseFile(std::string const & lfn, bool b) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: close input file: lfn = " << lfn;
   if(dumpNonModuleContext_) out << " usedFallBack = " << b;
 }
 void
 Tracer::postCloseFile (std::string const& lfn, bool b) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: close input file: lfn = " << lfn;
   if(dumpNonModuleContext_) out << " usedFallBack = " << b;
 }
@@ -224,6 +389,7 @@ void
 Tracer::preModuleBeginStream(StreamContext const& sc, ModuleCallingContext const& mcc) {
   ModuleDescription const& desc = *mcc.moduleDescription();
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: begin stream for module: stream = " << sc.streamID() << " label = '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
     out << "\n" << sc;
@@ -235,6 +401,7 @@ void
 Tracer::postModuleBeginStream(StreamContext const& sc, ModuleCallingContext const& mcc) {
   ModuleDescription const& desc = *mcc.moduleDescription();
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: begin stream for module: stream = " << sc.streamID() << " label = '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
     out << "\n" << sc;
@@ -246,6 +413,7 @@ void
 Tracer::preModuleEndStream(StreamContext const& sc, ModuleCallingContext const& mcc) {
   ModuleDescription const& desc = *mcc.moduleDescription();
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: end stream for module: stream = " << sc.streamID() << " label = '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
     out << "\n" << sc;
@@ -257,6 +425,7 @@ void
 Tracer::postModuleEndStream(StreamContext const& sc, ModuleCallingContext const& mcc) {
   ModuleDescription const& desc = *mcc.moduleDescription();
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: end stream for module: stream = " << sc.streamID() << " label = '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
     out << "\n" << sc;
@@ -267,6 +436,7 @@ Tracer::postModuleEndStream(StreamContext const& sc, ModuleCallingContext const&
 void
 Tracer::preGlobalBeginRun(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: global begin run " << gc.luminosityBlockID().run()
       << " : time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -277,6 +447,7 @@ Tracer::preGlobalBeginRun(GlobalContext const& gc) {
 void
 Tracer::postGlobalBeginRun(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: global begin run " << gc.luminosityBlockID().run()
       << " : time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -287,6 +458,7 @@ Tracer::postGlobalBeginRun(GlobalContext const& gc) {
 void
 Tracer::preGlobalEndRun(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: global end run " << gc.luminosityBlockID().run()
       << " : time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -297,6 +469,7 @@ Tracer::preGlobalEndRun(GlobalContext const& gc) {
 void
 Tracer::postGlobalEndRun(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: global end run " << gc.luminosityBlockID().run()
       << " : time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -307,6 +480,7 @@ Tracer::postGlobalEndRun(GlobalContext const& gc) {
 void
 Tracer::preStreamBeginRun(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: begin run: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -317,6 +491,7 @@ Tracer::preStreamBeginRun(StreamContext const& sc) {
 void
 Tracer::postStreamBeginRun(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: begin run: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -327,6 +502,7 @@ Tracer::postStreamBeginRun(StreamContext const& sc) {
 void
 Tracer::preStreamEndRun(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: end run: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -337,6 +513,7 @@ Tracer::preStreamEndRun(StreamContext const& sc) {
 void
 Tracer::postStreamEndRun(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: end run: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -347,6 +524,7 @@ Tracer::postStreamEndRun(StreamContext const& sc) {
 void
 Tracer::preGlobalBeginLumi(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: global begin lumi: run = " << gc.luminosityBlockID().run()
       << " lumi = " << gc.luminosityBlockID().luminosityBlock() << " time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -357,6 +535,7 @@ Tracer::preGlobalBeginLumi(GlobalContext const& gc) {
 void
 Tracer::postGlobalBeginLumi(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: global begin lumi: run = " << gc.luminosityBlockID().run()
       << " lumi = " << gc.luminosityBlockID().luminosityBlock() << " time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -367,6 +546,7 @@ Tracer::postGlobalBeginLumi(GlobalContext const& gc) {
 void
 Tracer::preGlobalEndLumi(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: global end lumi: run = " << gc.luminosityBlockID().run()
       << " lumi = " << gc.luminosityBlockID().luminosityBlock() << " time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -377,6 +557,7 @@ Tracer::preGlobalEndLumi(GlobalContext const& gc) {
 void
 Tracer::postGlobalEndLumi(GlobalContext const& gc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: global end lumi: run = " << gc.luminosityBlockID().run()
       << " lumi = " << gc.luminosityBlockID().luminosityBlock() << " time = " << gc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -387,6 +568,7 @@ Tracer::postGlobalEndLumi(GlobalContext const& gc) {
 void
 Tracer::preStreamBeginLumi(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: begin lumi: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " lumi = " << sc.eventID().luminosityBlock() << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -397,6 +579,7 @@ Tracer::preStreamBeginLumi(StreamContext const& sc) {
 void
 Tracer::postStreamBeginLumi(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: begin lumi: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " lumi = " << sc.eventID().luminosityBlock() << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -407,6 +590,7 @@ Tracer::postStreamBeginLumi(StreamContext const& sc) {
 void
 Tracer::preStreamEndLumi(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: end lumi: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " lumi = " << sc.eventID().luminosityBlock() << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -417,6 +601,7 @@ Tracer::preStreamEndLumi(StreamContext const& sc) {
 void
 Tracer::postStreamEndLumi(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: end lumi: stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " lumi = " << sc.eventID().luminosityBlock() << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -427,6 +612,7 @@ Tracer::postStreamEndLumi(StreamContext const& sc) {
 void
 Tracer::preEvent(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: processing event : stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " lumi = " << sc.eventID().luminosityBlock() << " event = " << sc.eventID().event() << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -437,6 +623,7 @@ Tracer::preEvent(StreamContext const& sc) {
 void
 Tracer::postEvent(StreamContext const& sc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: processing event : stream = " << sc.streamID() << " run = " << sc.eventID().run()
       << " lumi = " << sc.eventID().luminosityBlock() << " event = " << sc.eventID().event() << " time = " << sc.timestamp().value();
   if(dumpNonModuleContext_) {
@@ -447,6 +634,7 @@ Tracer::postEvent(StreamContext const& sc) {
 void
 Tracer::prePathEvent(StreamContext const& sc, PathContext const& pc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << indention_ << " starting: processing path '" << pc.pathName() << "' : stream = " << sc.streamID();
   if(dumpNonModuleContext_) {
     out << "\n" << sc;
@@ -457,6 +645,7 @@ Tracer::prePathEvent(StreamContext const& sc, PathContext const& pc) {
 void
 Tracer::postPathEvent(StreamContext const& sc, PathContext const& pc, HLTPathStatus const& hlts) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << indention_ << " finished: processing path '" << pc.pathName() << "' : stream = " << sc.streamID();
   if(dumpNonModuleContext_) {
     out << "\n" << sc;
@@ -467,6 +656,7 @@ Tracer::postPathEvent(StreamContext const& sc, PathContext const& pc, HLTPathSta
 void 
 Tracer::preModuleConstruction(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " starting: constructing module with label '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
     out << "\n" << desc;
@@ -476,6 +666,7 @@ Tracer::preModuleConstruction(ModuleDescription const& desc) {
 void 
 Tracer::postModuleConstruction(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_ << " finished: constructing module with label '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
     out << "\n" << desc;
@@ -485,6 +676,7 @@ Tracer::postModuleConstruction(ModuleDescription const& desc) {
 void 
 Tracer::preModuleBeginJob(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_;
   out << " starting: begin job for module with label '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
@@ -495,6 +687,7 @@ Tracer::preModuleBeginJob(ModuleDescription const& desc) {
 void 
 Tracer::postModuleBeginJob(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_;
   out << " finished: begin job for module with label '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
@@ -505,6 +698,7 @@ Tracer::postModuleBeginJob(ModuleDescription const& desc) {
 void 
 Tracer::preModuleEndJob(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_;
   out << " starting: end job for module with label '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
@@ -515,6 +709,7 @@ Tracer::preModuleEndJob(ModuleDescription const& desc) {
 void 
 Tracer::postModuleEndJob(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_ << indention_;
   out << " finished: end job for module with label '" << desc.moduleLabel() << "' id = " << desc.id();
   if(dumpContextForLabels_.find(desc.moduleLabel()) != dumpContextForLabels_.end()) {
@@ -525,6 +720,7 @@ Tracer::postModuleEndJob(ModuleDescription const& desc) {
 void 
 Tracer::preModuleEvent(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 4;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -539,6 +735,7 @@ Tracer::preModuleEvent(StreamContext const& sc, ModuleCallingContext const& mcc)
 void 
 Tracer::postModuleEvent(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 4;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -554,6 +751,7 @@ Tracer::postModuleEvent(StreamContext const& sc, ModuleCallingContext const& mcc
 void
 Tracer::preModuleEventDelayedGet(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 4;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -568,6 +766,7 @@ Tracer::preModuleEventDelayedGet(StreamContext const& sc, ModuleCallingContext c
 void
 Tracer::postModuleEventDelayedGet(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 4;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -583,6 +782,7 @@ Tracer::postModuleEventDelayedGet(StreamContext const& sc, ModuleCallingContext 
 void
 Tracer::preModuleStreamBeginRun(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -597,6 +797,7 @@ Tracer::preModuleStreamBeginRun(StreamContext const& sc, ModuleCallingContext co
 void
 Tracer::postModuleStreamBeginRun(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -611,6 +812,7 @@ Tracer::postModuleStreamBeginRun(StreamContext const& sc, ModuleCallingContext c
 void
 Tracer::preModuleStreamEndRun(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -625,6 +827,7 @@ Tracer::preModuleStreamEndRun(StreamContext const& sc, ModuleCallingContext cons
 void
 Tracer::postModuleStreamEndRun(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -639,6 +842,7 @@ Tracer::postModuleStreamEndRun(StreamContext const& sc, ModuleCallingContext con
 void
 Tracer::preModuleStreamBeginLumi(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -653,6 +857,7 @@ Tracer::preModuleStreamBeginLumi(StreamContext const& sc, ModuleCallingContext c
 void
 Tracer::postModuleStreamBeginLumi(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -667,6 +872,7 @@ Tracer::postModuleStreamBeginLumi(StreamContext const& sc, ModuleCallingContext 
 void
 Tracer::preModuleStreamEndLumi(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -681,6 +887,7 @@ Tracer::preModuleStreamEndLumi(StreamContext const& sc, ModuleCallingContext con
 void
 Tracer::postModuleStreamEndLumi(StreamContext const& sc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -695,6 +902,7 @@ Tracer::postModuleStreamEndLumi(StreamContext const& sc, ModuleCallingContext co
 void
 Tracer::preModuleGlobalBeginRun(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -709,6 +917,7 @@ Tracer::preModuleGlobalBeginRun(GlobalContext const& gc, ModuleCallingContext co
 void
 Tracer::postModuleGlobalBeginRun(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -723,6 +932,7 @@ Tracer::postModuleGlobalBeginRun(GlobalContext const& gc, ModuleCallingContext c
 void
 Tracer::preModuleGlobalEndRun(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -737,6 +947,7 @@ Tracer::preModuleGlobalEndRun(GlobalContext const& gc, ModuleCallingContext cons
 void
 Tracer::postModuleGlobalEndRun(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -751,6 +962,7 @@ Tracer::postModuleGlobalEndRun(GlobalContext const& gc, ModuleCallingContext con
 void
 Tracer::preModuleGlobalBeginLumi(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -765,6 +977,7 @@ Tracer::preModuleGlobalBeginLumi(GlobalContext const& gc, ModuleCallingContext c
 void
 Tracer::postModuleGlobalBeginLumi(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -779,6 +992,7 @@ Tracer::postModuleGlobalBeginLumi(GlobalContext const& gc, ModuleCallingContext 
 void
 Tracer::preModuleGlobalEndLumi(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -793,6 +1007,7 @@ Tracer::preModuleGlobalEndLumi(GlobalContext const& gc, ModuleCallingContext con
 void
 Tracer::postModuleGlobalEndLumi(GlobalContext const& gc, ModuleCallingContext const& mcc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   unsigned int nIndents = mcc.depth() + 3;
   for(unsigned int i = 0; i < nIndents; ++i) {
     out << indention_;
@@ -807,6 +1022,7 @@ Tracer::postModuleGlobalEndLumi(GlobalContext const& gc, ModuleCallingContext co
 void
 Tracer::preSourceConstruction(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_;
   out << " starting: constructing source: " << desc.moduleName();
   if(dumpNonModuleContext_) {
@@ -817,6 +1033,7 @@ Tracer::preSourceConstruction(ModuleDescription const& desc) {
 void
 Tracer::postSourceConstruction(ModuleDescription const& desc) {
   LogAbsolute out("Tracer");
+  out << TimeStamper(printTimestamps_);
   out << indention_;
   out << " finished: constructing source: " << desc.moduleName();
   if(dumpNonModuleContext_) {

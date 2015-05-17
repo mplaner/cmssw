@@ -51,6 +51,18 @@ tevMuonDytTrackVTrackAssocFS.associatormap = 'tpToTevDytTrackAssociationFS'
 tevMuonDytTrackVTrackAssocFS.label_tp_effic = 'mix:MergedTrackTruth'
 tevMuonDytTrackVTrackAssocFS.label_tp_fake = 'mix:MergedTrackTruth'
 
+from Validation.RecoMuon.muonValidation_cff import trkProbeTrackVMuonAssoc 
+trkProbeTrackVMuonAssocFS = trkProbeTrackVMuonAssoc.clone()
+trkProbeTrackVMuonAssocFS.associatormap = 'tpToTkMuonAssociationFS'
+trkProbeTrackVMuonAssocFS.label_tp_effic = 'mix:MergedTrackTruth'
+trkProbeTrackVMuonAssocFS.label_tp_fake = 'mix:MergedTrackTruth'
+
+from Validation.RecoMuon.muonValidation_cff import staSeedTrackVMuonAssoc
+staSeedTrackVMuonAssocFS = staSeedTrackVMuonAssoc.clone() 
+staSeedTrackVMuonAssocFS.associatormap = 'tpToStaSeedAssociationFS' 
+staSeedTrackVMuonAssocFS.label_tp_effic = 'mix:MergedTrackTruth'
+staSeedTrackVMuonAssocFS.label_tp_fake = 'mix:MergedTrackTruth'
+
 from Validation.RecoMuon.muonValidation_cff import staMuonTrackVMuonAssoc
 
 staMuonTrackVMuonAssocFS = staMuonTrackVMuonAssoc.clone()
@@ -112,11 +124,14 @@ from Validation.RecoMuon.muonValidation_cff import *
 
 
 # Muon validation sequence
-muonValidationFastSim_seq = cms.Sequence(trkMuonTrackVTrackAssocFS
+muonValidationFastSim_seq = cms.Sequence(trkProbeTrackVMuonAssocFS+trkMuonTrackVTrackAssocFS
+                                         +staSeedTrackVMuonAssocFS
                                          +staMuonTrackVMuonAssocFS+staUpdMuonTrackVMuonAssocFS+glbMuonTrackVMuonAssocFS
                                          +staRefitMuonTrackVMuonAssocFS+staRefitUpdMuonTrackVMuonAssocFS
                                          +tevMuonFirstTrackVMuonAssocFS+tevMuonPickyTrackVMuonAssocFS+tevMuonDytTrackVMuonAssocFS
+                                         +muonAssociatorByHitsNoSimHitsHelperTrk+muonAssociatorByHitsNoSimHitsHelperStandalone+muonAssociatorByHitsNoSimHitsHelperGlobal+muonAssociatorByHitsNoSimHitsHelperTight
                                          +recoMuonVMuAssoc_trk+recoMuonVMuAssoc_sta+recoMuonVMuAssoc_glb+recoMuonVMuAssoc_tgt
+                                 +muonAssociatorByHitsNoSimHitsHelperTrkPF+muonAssociatorByHitsNoSimHitsHelperStandalonePF+muonAssociatorByHitsNoSimHitsHelperGlobalPF
                                          +recoMuonVMuAssoc_trkPF+recoMuonVMuAssoc_staPF+recoMuonVMuAssoc_glbPF)
 
 # The muon association and validation sequence

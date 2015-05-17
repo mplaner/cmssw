@@ -160,8 +160,8 @@ void KalmanAlignmentAlgorithm::run( const edm::EventSetup & setup, const EventIn
   try
   {
     // Run the refitter algorithm
-    const ConstTrajTrackPairCollection &tracks = eventInfo.trajTrackPairs_;
-    const reco::BeamSpot &beamSpot = eventInfo.beamSpot_;
+    const ConstTrajTrackPairCollection &tracks = eventInfo.trajTrackPairs();
+    const reco::BeamSpot &beamSpot = eventInfo.beamSpot();
     TrackletCollection refittedTracklets = theRefitter->refitTracks( setup, theAlignmentSetups, tracks, &beamSpot );
 
     // Associate tracklets to alignment setups
@@ -186,7 +186,7 @@ void KalmanAlignmentAlgorithm::run( const edm::EventSetup & setup, const EventIn
 
       // Construct reference trajectories
       ReferenceTrajectoryCollection trajectories =
-	itMap->first->trajectoryFactory()->trajectories( setup, tracklets, external, eventInfo.beamSpot_ );
+	itMap->first->trajectoryFactory()->trajectories( setup, tracklets, external, eventInfo.beamSpot() );
 
       ReferenceTrajectoryCollection::iterator itTrajectories;
 
@@ -559,12 +559,12 @@ void KalmanAlignmentAlgorithm::initializeAlignmentSetups( const edm::EventSetup&
       if ( aKFSmoother )
       {
 
-	PropagatorWithMaterial propagator( smootherDir, 0.106, aKFSmoother->propagator()->magneticField() );
+	PropagatorWithMaterial propagator( smootherDir, 0.106, aKFSmoother->alongPropagator()->magneticField() );
 	Chi2MeasurementEstimator estimator( 30. );
 	smoother = new KFTrajectorySmoother( &propagator, updator, &estimator );
 // 	smoother = new KFTrajectorySmoother( &propagator, aKFFitter->updator(), &estimator );
 
-	AnalyticalPropagator externalPropagator( aKFSmoother->propagator()->magneticField(), externalSmootherDir );
+	AnalyticalPropagator externalPropagator( aKFSmoother->alongPropagator()->magneticField(), externalSmootherDir );
 	Chi2MeasurementEstimator externalEstimator( 1000. );
 	externalSmoother = new KFTrajectorySmoother( &externalPropagator, aKFSmoother->updator(), &externalEstimator );
       }

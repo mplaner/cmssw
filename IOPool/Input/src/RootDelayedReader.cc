@@ -4,10 +4,13 @@
 #include "RootDelayedReader.h"
 #include "InputFile.h"
 #include "DataFormats/Common/interface/EDProductGetter.h"
-#include "DataFormats/Common/interface/WrapperOwningHolder.h"
 #include "DataFormats/Common/interface/RefCoreStreamer.h"
 
-#include "TROOT.h"
+#include "FWCore/Framework/interface/SharedResourcesAcquirer.h"
+#include "FWCore/Framework/src/SharedResourcesRegistry.h"
+
+#include "IOPool/Common/interface/getWrapperBasePtr.h"
+
 #include "TBranch.h"
 #include "TClass.h"
 
@@ -17,44 +20,53 @@ namespace edm {
 
   RootDelayedReader::RootDelayedReader(
       RootTree const& tree,
-      boost::shared_ptr<InputFile> filePtr,
+      std::shared_ptr<InputFile> filePtr,
       InputType inputType) :
    tree_(tree),
    filePtr_(filePtr),
    nextReader_(),
-   inputType_(inputType) {
+   resourceAcquirer_(inputType == InputType::Primary ? new SharedResourcesAcquirer(SharedResourcesRegistry::instance()->createAcquirerForSourceDelayedReader()) : static_cast<SharedResourcesAcquirer*>(nullptr)),
+   inputType_(inputType),
+   wrapperBaseTClass_(TClass::GetClass("edm::WrapperBase")) {
   }
 
   RootDelayedReader::~RootDelayedReader() {
   }
 
-  WrapperOwningHolder
-  RootDelayedReader::getProduct_(BranchKey const& k, WrapperInterfaceBase const* interface, EDProductGetter const* ep) const {
+  SharedResourcesAcquirer*
+  RootDelayedReader::sharedResources_() const {
+    return resourceAcquirer_.get();
+  }
+
+  std::unique_ptr<WrapperBase>
+  RootDelayedReader::getProduct_(BranchKey const& k, EDProductGetter const* ep) const {
     iterator iter = branchIter(k);
     if (!found(iter)) {
       if (nextReader_) {
-        return nextReader_->getProduct(k, interface, ep);
+        return nextReader_->getProduct(k, ep);
       } else {
-        return WrapperOwningHolder();
+        return std::unique_ptr<WrapperBase>();
       }
     }
     roottree::BranchInfo const& branchInfo = getBranchInfo(iter);
     TBranch* br = branchInfo.productBranch_;
     if (br == nullptr) {
       if (nextReader_) {
-        return nextReader_->getProduct(k, interface, ep);
+        return nextReader_->getProduct(k, ep);
       } else {
-        return WrapperOwningHolder();
+        return std::unique_ptr<WrapperBase>();
       }
     }
    
     setRefCoreStreamer(ep);
     TClass* cp = branchInfo.classCache_;
     if(nullptr == cp) {
-      branchInfo.classCache_ = gROOT->GetClass(branchInfo.branchDescription_.wrappedName().c_str());
+      branchInfo.classCache_ = TClass::GetClass(branchInfo.branchDescription_.wrappedName().c_str());
       cp = branchInfo.classCache_;
+      branchInfo.offsetToWrapperBase_ = cp->GetBaseClassOffset(wrapperBaseTClass_);
     }
     void* p = cp->New();
+    std::unique_ptr<WrapperBase> edp = getWrapperBasePtr(p, branchInfo.offsetToWrapperBase_); 
     br->SetAddress(&p);
     tree_.getEntry(br, tree_.entryNumberForIndex(ep->transitionIndex()));
     if(tree_.branchType() == InEvent) {
@@ -62,7 +74,6 @@ namespace edm {
       InputFile::reportReadBranch(inputType_, std::string(br->GetName()));
     }
     setRefCoreStreamer(false);
-    WrapperOwningHolder edp(p, interface);
     return edp;
   }
 }

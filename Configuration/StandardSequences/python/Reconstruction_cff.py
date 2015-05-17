@@ -7,6 +7,11 @@ from RecoTracker.Configuration.RecoTracker_cff import *
 from RecoParticleFlow.PFClusterProducer.particleFlowCluster_cff import *
 from TrackingTools.Configuration.TrackingTools_cff import *
 from RecoTracker.MeasurementDet.MeasurementTrackerEventProducer_cfi import *
+from RecoPixelVertexing.PixelLowPtUtilities.siPixelClusterShapeCache_cfi import *
+siPixelClusterShapeCachePreSplitting = siPixelClusterShapeCache.clone(
+    src = 'siPixelClustersPreSplitting'
+    )
+
 # Global  reco
 from RecoEcal.Configuration.RecoEcal_cff import *
 from RecoJets.Configuration.CaloTowersRec_cff import *
@@ -47,9 +52,9 @@ from RecoLocalCalo.Castor.Castor_cff import *
 from RecoLocalCalo.Configuration.hcalGlobalReco_cff import *
 
 globalreco = cms.Sequence(offlineBeamSpot*
-                          MeasurementTrackerEvent* # unclear where to put this
+                          MeasurementTrackerEventPreSplitting* # unclear where to put this
+                          siPixelClusterShapeCachePreSplitting* # unclear where to put this
                           standalonemuontracking*
-                          recopixelvertexing*
                           trackingGlobalReco*
                           vertexreco*
                           hcalGlobalRecoSequence*
@@ -71,7 +76,6 @@ reducedRecHits = cms.Sequence ( reducedEcalRecHitsSequence * reducedHcalRecHitsS
 highlevelreco = cms.Sequence(egammaHighLevelRecoPrePF*
                              particleFlowReco*
                              egammaHighLevelRecoPostPF*
-                             regionalCosmicTracksSeq*
                              muoncosmichighlevelreco*
                              muonshighlevelreco *
                              particleFlowLinks*
@@ -92,14 +96,29 @@ reconstruction         = cms.Sequence(localreco*globalreco*highlevelreco*logErro
 #need a fully expanded sequence copy
 modulesToRemove = list() # copy does not work well
 noTrackingAndDependent = list()
-noTrackingAndDependent.append(siPixelClusters)
+noTrackingAndDependent.append(siPixelClustersPreSplitting)
 noTrackingAndDependent.append(siStripZeroSuppression)
 noTrackingAndDependent.append(siStripClusters)
+noTrackingAndDependent.append(initialStepSeedLayersPreSplitting)
+noTrackingAndDependent.append(initialStepSeedsPreSplitting)
+noTrackingAndDependent.append(initialStepTrackCandidatesPreSplitting)
+noTrackingAndDependent.append(initialStepTracksPreSplitting)
+noTrackingAndDependent.append(firstStepPrimaryVerticesPreSplitting)
+noTrackingAndDependent.append(initialStepTrackRefsForJetsPreSplitting)
+noTrackingAndDependent.append(caloTowerForTrkPreSplitting)
+noTrackingAndDependent.append(ak4CaloJetsForTrkPreSplitting)
+noTrackingAndDependent.append(jetsForCoreTrackingPreSplitting)
+noTrackingAndDependent.append(siPixelClusterShapeCachePreSplitting)
+noTrackingAndDependent.append(siPixelClusters)
+noTrackingAndDependent.append(clusterSummaryProducer)
+noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
+noTrackingAndDependent.append(MeasurementTrackerEventPreSplitting)
 modulesToRemove.append(dt1DRecHits)
 modulesToRemove.append(dt1DCosmicRecHits)
 modulesToRemove.append(csc2DRecHits)
 modulesToRemove.append(rpcRecHits)
-modulesToRemove.append(ecalGlobalUncalibRecHit)
+#modulesToRemove.append(ecalGlobalUncalibRecHit)
+modulesToRemove.append(ecalMultiFitUncalibRecHit)
 modulesToRemove.append(ecalDetIdToBeRecovered)
 modulesToRemove.append(ecalRecHit)
 modulesToRemove.append(ecalCompactTrigPrim)
@@ -115,7 +134,7 @@ modulesToRemove.append(zdcreco)
 modulesToRemove.append(castorreco)
 ##it's OK according to Ronny modulesToRemove.append(CSCHaloData)#needs digis
 reconstruction_fromRECO = reconstruction.copyAndExclude(modulesToRemove+noTrackingAndDependent)
-noTrackingAndDependent.append(siPixelRecHits)
+noTrackingAndDependent.append(siPixelRecHitsPreSplitting)
 noTrackingAndDependent.append(siStripMatchedRecHits)
 noTrackingAndDependent.append(pixelTracks)
 noTrackingAndDependent.append(ckftracks)

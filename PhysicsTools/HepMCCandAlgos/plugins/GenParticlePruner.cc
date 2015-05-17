@@ -7,6 +7,7 @@
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "PhysicsTools/HepMCCandAlgos/interface/PdgEntryReplacer.h"
+#include "DataFormats/Common/interface/Association.h"
 
 namespace helper {
   struct SelectCode {
@@ -97,6 +98,7 @@ GenParticlePruner::GenParticlePruner(const ParameterSet& cfg) :
   selection_(cfg.getParameter<vector<string> >("select")) {
   using namespace ::helper;
   produces<GenParticleCollection>();
+  produces<edm::Association<reco::GenParticleCollection> >();
 }
 
 void GenParticlePruner::flagDaughters(const reco::GenParticle & gen, int keepOrDrop) {
@@ -223,18 +225,24 @@ void GenParticlePruner::produce(Event& evt, const EventSetup& es) {
     if(flags_[i] == keep) {
       indices_.push_back(i);
       flags_[i] = counter++;
+    } else
+    {
+      flags_[i]=-1; //set to invalid ref	
     }
   }
 
   auto_ptr<GenParticleCollection> out(new GenParticleCollection);
   GenParticleRefProd outRef = evt.getRefBeforePut<GenParticleCollection>();
   out->reserve(counter);
+  
   for(vector<size_t>::const_iterator i = indices_.begin(); i != indices_.end(); ++i) {
     size_t index = *i;
     const GenParticle & gen = (*src)[index];
     const LeafCandidate & part = gen;
     out->push_back(GenParticle(part));
     GenParticle & newGen = out->back();
+    //fill status flags
+    newGen.statusFlags() = gen.statusFlags();
     // The "daIndxs" and "moIndxs" keep a list of the keys for the mother/daughter
     // parentage/descendency. In some cases, a circular referencing is encountered,
     // which would result in an infinite loop. The list is checked to
@@ -245,7 +253,15 @@ void GenParticlePruner::produce(Event& evt, const EventSetup& es) {
     addMotherRefs(moIndxs, newGen, outRef, gen.motherRefVector());
   }
 
-  evt.put(out);
+
+    edm::OrphanHandle<reco::GenParticleCollection> oh = evt.put(out);
+    std::auto_ptr<edm::Association<reco::GenParticleCollection> > orig2new(new edm::Association<reco::GenParticleCollection>(oh   ));
+    edm::Association<reco::GenParticleCollection>::Filler orig2newFiller(*orig2new);
+    orig2newFiller.insert(src, flags_.begin(), flags_.end());
+    orig2newFiller.fill();
+    evt.put(orig2new);
+   
+
 }
 
 
@@ -282,7 +298,7 @@ void GenParticlePruner::addMotherRefs(vector<size_t> & moIndxs,
     if ( find(moIndxs.begin(), moIndxs.end(), mom.key()) == moIndxs.end() ) {
       int idx = flags_[mom.key()];
       moIndxs.push_back( mom.key() );
-      if(idx > 0) {
+      if(idx >= 0) {
 	GenParticleRef newMom(outRef, static_cast<size_t>(idx));
 	newGen.addMother(newMom);
       } else {

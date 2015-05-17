@@ -13,13 +13,13 @@
 #include <fstream>
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
+#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
 #include "DataFormats/MuonReco/interface/Muon.h"
@@ -29,12 +29,11 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
-#include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
 
-class EfficiencyAnalyzer : public edm::EDAnalyzer {
+class EfficiencyAnalyzer : public DQMEDAnalyzer {
   
  public:
   /* Constructor */ 
@@ -44,16 +43,11 @@ class EfficiencyAnalyzer : public edm::EDAnalyzer {
   virtual ~EfficiencyAnalyzer() ;
 
   /* Operations */ 
-  void beginJob();
-  void beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup);
-
-
   void analyze(const edm::Event & event, const edm::EventSetup& eventSetup);
-  //  void endJob ();
+  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
 
  private:
   edm::ParameterSet parameters;
-  DQMStore* theDbe;
   MuonServiceProxy *theService;
     
   // Switch for verbosity
@@ -123,7 +117,6 @@ class EfficiencyAnalyzer : public edm::EDAnalyzer {
   MonitorElement* h_passProbes_pfIsodBTightMu_nVtx;
   MonitorElement* h_passProbes_EB_pfIsodBTightMu_nVtx; 
   MonitorElement* h_passProbes_EE_pfIsodBTightMu_nVtx; 
-
 
   int _numPV;
 

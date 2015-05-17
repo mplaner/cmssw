@@ -64,12 +64,10 @@ TrajectoryManager::TrajectoryManager(FSimEvent* aSimEvent,
   use_hardcoded = matEff.getParameter<bool>("use_hardcoded_geometry");
 
   // Initialize Bthe stable particle decay engine 
-  if ( decays.getParameter<bool>("ActivateDecays") && ( decays.getParameter<std::string>("Decayer") == "pythia6" || decays.getParameter<std::string>("Decayer") == "pythia8" ) ) { 
-    decayer = decays.getParameter<std::string>("Decayer");
-    myDecayEngine = new PythiaDecays(decayer);
+  if ( decays.getParameter<bool>("ActivateDecays")) { 
+    myDecayEngine = new PythiaDecays();
     distCut = decays.getParameter<double>("DistCut");
-  } else if (! ( decays.getParameter<std::string>("Decayer") == "pythia6" || decays.getParameter<std::string>("Decayer") == "pythia8" ) )
-    std::cout << "No valid decayer has been selected! No decay performed..." << std::endl;
+  }
   // Initialize the Material Effects updator, if needed
   if ( matEff.getParameter<bool>("PairProduction") || 
        matEff.getParameter<bool>("Bremsstrahlung") ||
@@ -494,8 +492,7 @@ TrajectoryManager::updateWithDaughters(ParticlePropagator& PP, int fsimi, Random
     if ( !myDecayEngine ) return;
 
     // Invoke PYDECY (Pythia6) or Pythia8 to decay the particle and get the daughters
-    const DaughterParticleList& daughters = (decayer == "pythia6") ? myDecayEngine->particleDaughtersPy6(PP, &random->theEngine()) :
-                                                                     myDecayEngine->particleDaughtersPy8(PP, &random->theEngine());
+    const DaughterParticleList& daughters =  myDecayEngine->particleDaughters(PP, &random->theEngine());
 
     // Update the FSimEvent with an end vertex and with the daughters
     if ( daughters.size() ) { 
@@ -596,7 +593,7 @@ TrajectoryManager::makeTrajectoryState( const DetLayer* layer,
 {
   GlobalPoint  pos( pp.X(), pp.Y(), pp.Z());
   GlobalVector mom( pp.Px(), pp.Py(), pp.Pz());
-  ReferenceCountingPointer<TangentPlane> plane = layer->surface().tangentPlane(pos);
+  auto plane = layer->surface().tangentPlane(pos);
   return TrajectoryStateOnSurface
     (GlobalTrajectoryParameters( pos, mom, TrackCharge( pp.charge()), field), *plane);
 }
@@ -613,15 +610,14 @@ TrajectoryManager::makePSimHits( const GeomDet* det,
   if (!comp.empty()) {
     for (std::vector< const GeomDet*>::const_iterator i = comp.begin();
 	 i != comp.end(); i++) {
-      const GeomDetUnit* du = dynamic_cast<const GeomDetUnit*>(*i);
-      if (du != 0)
+      auto du = (*i);
+      if (du->isLeaf())  // not even needed (or it should iterate if really not leaf)
 	theHitMap.insert(theHitMap.end(),makeSinglePSimHit( *du, ts, tkID, el, thick, pID,tTopo));
     }
   }
   else {
-    const GeomDetUnit* du = dynamic_cast<const GeomDetUnit*>(det);
-    if (du != 0)
-      theHitMap.insert(theHitMap.end(),makeSinglePSimHit( *du, ts, tkID, el, thick, pID,tTopo));
+    auto du = (det);
+    theHitMap.insert(theHitMap.end(),makeSinglePSimHit( *du, ts, tkID, el, thick, pID,tTopo));
   }
 
 }
@@ -829,18 +825,18 @@ TrajectoryManager::initializeLayerMap()
 /// ATTENTION: HARD CODED LOGIC! If Famos layer numbering changes this logic needs to 
 /// be adapted to the new numbering!
 
-  std::vector< BarrelDetLayer*>   barrelLayers = 
+  const std::vector< const BarrelDetLayer*>&   barrelLayers = 
     theGeomSearchTracker->barrelLayers();
   LogDebug("FastTracking") << "Barrel DetLayer dump: ";
-  for (std::vector< BarrelDetLayer*>::const_iterator bl=barrelLayers.begin();
+  for (auto bl=barrelLayers.begin();
        bl != barrelLayers.end(); ++bl) {
     LogDebug("FastTracking")<< "radius " << (**bl).specificSurface().radius(); 
   }
 
-  std::vector< ForwardDetLayer*>  posForwardLayers = 
+  const std::vector< const ForwardDetLayer*>&  posForwardLayers = 
     theGeomSearchTracker->posForwardLayers();
   LogDebug("FastTracking") << "Positive Forward DetLayer dump: ";
-  for (std::vector< ForwardDetLayer*>::const_iterator fl=posForwardLayers.begin();
+  for (auto fl=posForwardLayers.begin();
        fl != posForwardLayers.end(); ++fl) {
     LogDebug("FastTracking") << "Z pos "
 			    << (**fl).surface().position().z()
@@ -867,7 +863,7 @@ TrajectoryManager::initializeLayerMap()
     if (cyl != 0) {
       LogDebug("FastTracking") << " cylinder radius " << cyl->radius();
       bool found = false;
-      for (std::vector< BarrelDetLayer*>::const_iterator 
+      for (auto
 	     bl=barrelLayers.begin(); bl != barrelLayers.end(); ++bl) {
 
 	if (fabs( cyl->radius() - (**bl).specificSurface().radius()) < rTolerance) {
@@ -886,7 +882,7 @@ TrajectoryManager::initializeLayerMap()
       LogDebug("FastTracking") << " disk radii " << disk->innerRadius() 
 		 << ", " << disk->outerRadius();
       bool found = false;
-      for (std::vector< ForwardDetLayer*>::const_iterator fl=posForwardLayers.begin();
+      for (auto fl=posForwardLayers.begin();
 	   fl != posForwardLayers.end(); ++fl) {
 	
 	if (fabs( disk->position().z() - (**fl).surface().position().z()) < zTolerance) {
@@ -908,8 +904,8 @@ TrajectoryManager::initializeLayerMap()
   }
 
   // Put the negative layers in the same map but with an offset
-  std::vector< ForwardDetLayer*>  negForwardLayers = theGeomSearchTracker->negForwardLayers();
-  for (std::vector< ForwardDetLayer*>::const_iterator nl=negForwardLayers.begin();
+ const  std::vector< const ForwardDetLayer*>&  negForwardLayers = theGeomSearchTracker->negForwardLayers();
+  for (auto nl=negForwardLayers.begin();
        nl != negForwardLayers.end(); ++nl) {
     for (int i=0; i<=theNegLayerOffset; i++) {
       if (theLayerMap[i] == 0) continue;

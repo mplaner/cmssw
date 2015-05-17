@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-def customizeHLTforMC(process):
+def customizeHLTforMC(process,_fastSim=False):
   """adapt the HLT to run on MC, instead of data
   see Configuration/StandardSequences/Reconstruction_Data_cff.py
   which does the opposite, for RECO"""
@@ -8,11 +8,6 @@ def customizeHLTforMC(process):
   # CSCHaloDataProducer - not used at HLT
   #if 'CSCHaloData' in process.__dict__:
   #  process.CSCHaloData.ExpectedBX = cms.int32(6)
-
-  # EcalUncalibRecHitProducer - not used at HLT
-  #if 'ecalGlobalUncalibRecHit' in process.__dict__:
-  #  process.ecalGlobalUncalibRecHit.doEBtimeCorrection = cms.bool(False)
-  #  process.ecalGlobalUncalibRecHit.doEEtimeCorrection = cms.bool(False)
 
   # HcalRecAlgoESProducer - these flags are not used at HLT (they should stay set to the default value for both data and MC)
   #if 'hcalRecAlgos' in process.__dict__:

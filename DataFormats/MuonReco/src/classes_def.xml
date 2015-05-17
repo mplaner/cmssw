@@ -1,5 +1,8 @@
 <lcgdict>
-  <class name="reco::Muon" ClassVersion="14">
+  <class name="reco::Muon" ClassVersion="17">
+   <version ClassVersion="17" checksum="2296096670"/>
+   <version ClassVersion="16" checksum="1808419014"/>
+   <version ClassVersion="15" checksum="4145317518"/>
    <version ClassVersion="11" checksum="199341143"/>
    <version ClassVersion="12" checksum="1157850969"/>
    <version ClassVersion="13" checksum="73400658"/>
@@ -149,6 +152,18 @@
   </class>
   <class name="edm::Wrapper<edm::ValueMap<reco::MuonRef> >"/>
 
+  <class name="reco::DYTInfo" ClassVersion="10">
+   <version ClassVersion="10" checksum="910544468"/>
+  </class>
+    <class name="std::vector<reco::DYTInfo>"/>
+  <class name="std::vector<reco::DYTInfo>::const_iterator"/>
+  <class name="edm::ValueMap<reco::DYTInfo>"/>
+  <class name="edm::ValueMap<reco::DYTInfo>::const_iterator">
+<field name="values_" transient="true"/>
+    <field name="i_" transient="true"/>
+    <field name="end_" transient="true"/>
+  </class>
+  <class name="edm::Wrapper<edm::ValueMap<reco::DYTInfo> >"/>
 
   <!-- 
   <class name="edm::reftobase::BaseHolder<reco::Muon>" />

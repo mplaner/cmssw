@@ -42,7 +42,7 @@
 #include "DataFormats/Common/interface/DetSetVector.h"
 
 //--- Framework
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 
@@ -59,7 +59,7 @@
 class MagneticField;
 namespace cms
 {
-  class SiPixelRecHitConverter : public edm::EDProducer
+  class SiPixelRecHitConverter : public edm::stream::EDProducer<>
   {
   public:
     //--- Constructor, virtual destructor (just in case)
@@ -75,11 +75,7 @@ namespace cms
     //--- realistic use case...
 
     //--- The top-level event method.
-    virtual void produce(edm::Event& e, const edm::EventSetup& c);
-
-    // Begin Job
-    //virtual void beginJob();
-    virtual void beginJob();
+    virtual void produce(edm::Event& e, const edm::EventSetup& c) override;
 
     //--- Execute the position estimator algorithm(s).
     //--- New interface with DetSetVector

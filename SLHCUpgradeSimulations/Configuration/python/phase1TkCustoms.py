@@ -126,24 +126,14 @@ def customise_Validation(process,pileup):
     return process
 
 def customise_harvesting(process):
-    process.dqmHarvesting.remove(process.jetMETDQMOfflineClient)
     process.dqmHarvesting.remove(process.dataCertificationJetMET)
-    process.dqmHarvesting.remove(process.sipixelEDAClient)
+    ###process.dqmHarvesting.remove(process.sipixelEDAClient)
+    process.sipixelEDAClient.isUpgrade = cms.untracked.bool(True)
     process.dqmHarvesting.remove(process.sipixelCertification)
     return (process)        
 
 def customise_condOverRides(process):
 #    process.load('SLHCUpgradeSimulations.Geometry.fakeConditions_Phase1_R30F12_cff')
-    process.trackerTopologyConstants.pxb_layerStartBit = cms.uint32(20)
-    process.trackerTopologyConstants.pxb_ladderStartBit = cms.uint32(12)
-    process.trackerTopologyConstants.pxb_moduleStartBit = cms.uint32(2)
-    process.trackerTopologyConstants.pxb_layerMask = cms.uint32(15)
-    process.trackerTopologyConstants.pxb_ladderMask = cms.uint32(255)
-    process.trackerTopologyConstants.pxb_moduleMask = cms.uint32(1023)
-    process.trackerTopologyConstants.pxf_diskStartBit = cms.uint32(18)
-    process.trackerTopologyConstants.pxf_bladeStartBit = cms.uint32(12)
-    process.trackerTopologyConstants.pxf_panelStartBit = cms.uint32(10)
-    process.trackerTopologyConstants.pxf_moduleMask = cms.uint32(255)
     return process
 
 def add_detailed_pixel_dqm(process):
@@ -177,7 +167,7 @@ def customise_Reco(process,pileup):
     process.MeasurementTracker.inactivePixelDetectorLabels = cms.VInputTag()
 
     # new layer list (3/4 pixel seeding) in InitialStep and pixelTracks
-    process.pixellayertriplets.layerList = cms.vstring( 'BPix1+BPix2+BPix3',
+    process.PixelLayerTriplets.layerList = cms.vstring( 'BPix1+BPix2+BPix3',
                                                         'BPix2+BPix3+BPix4',
                                                         'BPix1+BPix3+BPix4',
                                                         'BPix1+BPix2+BPix4',
@@ -232,15 +222,16 @@ def customise_Reco(process,pileup):
 
     process.reconstruction.remove(process.castorreco)
     process.reconstruction.remove(process.CastorTowerReco)
-    process.reconstruction.remove(process.ak7BasicJets)
+    process.reconstruction.remove(process.ak7CastorJets)
     process.reconstruction.remove(process.ak7CastorJetID)
 
     #the quadruplet merger configuration     
-    process.load("RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff")
-    process.pixelseedmergerlayers.BPix.TTRHBuilder = cms.string("PixelTTRHBuilderWithoutAngle" )
-    process.pixelseedmergerlayers.BPix.HitProducer = cms.string("siPixelRecHits" )
-    process.pixelseedmergerlayers.FPix.TTRHBuilder = cms.string("PixelTTRHBuilderWithoutAngle" )
-    process.pixelseedmergerlayers.FPix.HitProducer = cms.string("siPixelRecHits" )    
+    # from this PSet the quadruplet merger uses only the layer list so these could probably be removed
+    from RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff import PixelSeedMergerQuadruplets
+    PixelSeedMergerQuadruplets.BPix.TTRHBuilder = cms.string("PixelTTRHBuilderWithoutAngle" )
+    PixelSeedMergerQuadruplets.BPix.HitProducer = cms.string("siPixelRecHits" )
+    PixelSeedMergerQuadruplets.FPix.TTRHBuilder = cms.string("PixelTTRHBuilderWithoutAngle" )
+    PixelSeedMergerQuadruplets.FPix.HitProducer = cms.string("siPixelRecHits" )
     
     # Need these until pixel templates are used
     process.load("SLHCUpgradeSimulations.Geometry.recoFromSimDigis_cff")
@@ -266,7 +257,7 @@ def customise_Reco(process,pileup):
     
     # Make pixelTracks use quadruplets
     process.pixelTracks.SeedMergerPSet = cms.PSet(
-        layerListName = cms.string('PixelSeedMergerQuadruplets'),
+        layerList = PixelSeedMergerQuadruplets,
         addRemainingTriplets = cms.bool(False),
         mergeTriplets = cms.bool(True),
         ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')

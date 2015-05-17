@@ -37,10 +37,53 @@
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 
+#include "TrackingTools/Records/interface/TransientRecHitRecord.h"
+
+
 using namespace edm;
 using namespace std;
+using namespace reco;
 
-// constructor
+std::vector<const TrackingRecHit*> MuonTrackLoader::unpackHit(const TrackingRecHit &hit)
+{
+    // get rec hit det id and rec hit type
+    DetId id = hit.geographicalId();
+    uint16_t detid = id.det();
+
+    std::vector<const TrackingRecHit*> hits;
+
+    if (detid == DetId::Tracker) {
+    	hits.push_back(&hit);
+    } else if (detid == DetId::Muon) {
+        uint16_t subdet = id.subdetId();
+        if (subdet == (uint16_t) MuonSubdetId::DT) {
+            if (hit.dimension() == 1) { // DT rechit (granularity 2)
+                hits.push_back(&hit);
+            } else if (hit.dimension() > 1) { // 4D segment (granularity 0).
+                // Both 2 and 4 dim cases. MB4s have 2D, but formatted in 4D segment
+                // 4D --> 2D
+                std::vector<const TrackingRecHit*> seg2D = hit.recHits();
+                // load 1D hits (2D --> 1D)
+                for (std::vector<const TrackingRecHit*>::const_iterator it = seg2D.begin(); it != seg2D.end(); ++it) {
+                    std::vector<const TrackingRecHit*> hits1D = (*it)->recHits();
+                    copy(hits1D.begin(), hits1D.end(), back_inserter(hits));
+                }
+            }
+        } else if (subdet == (uint16_t) MuonSubdetId::CSC) {
+            if (hit.dimension() == 2) { // CSC rechit (granularity 2)
+                hits.push_back(&hit);
+            } else if (hit.dimension() == 4) { // 4D segment (granularity 0)
+                // load 2D hits (4D --> 1D)
+                hits = hit.recHits();
+            }
+        } else if (subdet == (uint16_t) MuonSubdetId::RPC) {
+            hits.push_back(&hit);
+        }
+    }
+    return hits;
+}
+
+// constructor (obsolete, should use eventSetUp not service..)
 MuonTrackLoader::MuonTrackLoader(ParameterSet &parameterSet, edm::ConsumesCollector& iC, const MuonServiceProxy *service): 
   theService(service){
 
@@ -50,6 +93,8 @@ MuonTrackLoader::MuonTrackLoader(ParameterSet &parameterSet, edm::ConsumesCollec
   theSmoothingStep = parameterSet.getParameter<bool>("DoSmoothing");
   if(theSmoothingStep)
     theSmootherName = parameterSet.getParameter<string>("Smoother");  
+
+  theTrackerRecHitBuilderName = parameterSet.getParameter<std::string>("TTRHBuilder");
   
   // update at vertex
   theUpdatingAtVtx = parameterSet.getParameter<bool>("VertexConstraint");
@@ -152,9 +197,18 @@ MuonTrackLoader::loadTracks(const TrajectoryContainer& trajectories,
   edm::Ref< std::vector<Trajectory> >::key_type iTjRef = 0;
   std::map<unsigned int, unsigned int> tjTkMap;
   
-  if(doSmoothing)
-    theService->eventSetup().get<TrajectoryFitter::Record>().get(theSmootherName,theSmoother);
-  
+  if(doSmoothing) {
+    edm::ESHandle<TrajectorySmoother> aSmoother;
+    theService->eventSetup().get<TrajectoryFitter::Record>().get(theSmootherName,aSmoother);
+    theSmoother.reset(aSmoother->clone());
+    edm::ESHandle<TransientTrackingRecHitBuilder> theTrackerRecHitBuilder;
+    theService->eventSetup().get<TransientRecHitRecord>().get(theTrackerRecHitBuilderName,theTrackerRecHitBuilder);
+    theTrackerRecHitBuilder.product();
+    hitCloner = static_cast<TkTransientTrackingRecHitBuilder const *>(theTrackerRecHitBuilder.product())->cloner();
+    theSmoother->setHitCloner(&hitCloner);
+  }  
+
+
   unsigned int tjCnt = 0;
   for(TrajectoryContainer::const_iterator rawTrajectory = trajectories.begin();
       rawTrajectory != trajectories.end(); ++rawTrajectory, ++tjCnt){
@@ -226,16 +280,31 @@ MuonTrackLoader::loadTracks(const TrajectoryContainer& trajectories,
     }
     
     // Fill the track extra with the rec hit (persistent-)reference
-    for (Trajectory::RecHitContainer::const_iterator recHit = transHits.begin();
-	 recHit != transHits.end(); ++recHit) {
+    unsigned int nHitsAdded = 0;
+    for (Trajectory::RecHitContainer::const_iterator recHit = transHits.begin(); recHit != transHits.end(); ++recHit) {
       TrackingRecHit *singleHit = (**recHit).hit()->clone();
-      track.appendHitPattern( *singleHit);
-      if(theUpdatingAtVtx && updateResult.first) updateResult.second.appendHitPattern(*singleHit);
+      std::vector<const TrackingRecHit*> hits = MuonTrackLoader::unpackHit(*singleHit);
+      for (std::vector<const TrackingRecHit*>::const_iterator it = hits.begin(); it != hits.end(); ++it) {
+          if unlikely(!track.appendHitPattern(**it)){
+              break;
+          }
+      }
+      
+      if(theUpdatingAtVtx && updateResult.first){
+          std::vector<const TrackingRecHit*> hits = MuonTrackLoader::unpackHit(*singleHit);
+          for (std::vector<const TrackingRecHit*>::const_iterator it = hits.begin(); it != hits.end(); ++it) {
+              if unlikely(!updateResult.second.appendHitPattern(**it)){
+                  break;
+              }
+          }
+      }
       recHitCollection->push_back( singleHit );  
-      // set the TrackingRecHitRef (persitent reference of the tracking rec hits)
-      trackExtra.add(TrackingRecHitRef(recHitCollectionRefProd, recHitsIndex++ ));
+      ++nHitsAdded;
     }
-    
+    // set the TrackingRecHitRef (persitent reference of the tracking rec hits)
+    trackExtra.setHits(recHitCollectionRefProd, recHitsIndex, nHitsAdded);
+    recHitsIndex +=nHitsAdded;
+
     // fill the TrackExtraCollection
     trackExtraCollection->push_back(trackExtra);
     
@@ -466,10 +535,23 @@ MuonTrackLoader::loadTracks(const TrajectoryContainer& trajectories,
   edm::Ref< std::vector<Trajectory> >::key_type iTjRef = 0;
   std::map<unsigned int, unsigned int> tjTkMap;
   
-  if(doSmoothing)
-    theService->eventSetup().get<TrajectoryFitter::Record>().get(theSmootherName,theSmoother);
-  
-  
+  if(doSmoothing) {
+    edm::ESHandle<TrajectorySmoother> aSmoother;
+    theService->eventSetup().get<TrajectoryFitter::Record>().get(theSmootherName,aSmoother);
+    theSmoother.reset(aSmoother->clone());
+    edm::ESHandle<TransientTrackingRecHitBuilder> theTrackerRecHitBuilder;
+    try {
+      std::string theTrackerRecHitBuilderName("WithAngleAndTemplate");  // to be moved to cfg in another PR
+      theService->eventSetup().get<TransientRecHitRecord>().get(theTrackerRecHitBuilderName,theTrackerRecHitBuilder);
+      theTrackerRecHitBuilder.product();
+    } catch(...) {
+      std::string theTrackerRecHitBuilderName("hltESPTTRHBWithTrackAngle");  // FIXME FIXME
+      theService->eventSetup().get<TransientRecHitRecord>().get(theTrackerRecHitBuilderName,theTrackerRecHitBuilder);
+    }
+    hitCloner = static_cast<TkTransientTrackingRecHitBuilder const *>(theTrackerRecHitBuilder.product())->cloner();
+    theSmoother->setHitCloner(&hitCloner);
+  }
+
   for(TrajectoryContainer::const_iterator rawTrajectory = trajectories.begin();
       rawTrajectory != trajectories.end(); ++rawTrajectory){
 
@@ -534,16 +616,33 @@ MuonTrackLoader::loadTracks(const TrajectoryContainer& trajectories,
     pair<bool,reco::Track> updateResult(false,reco::Track());
             
     // Fill the track extra with the rec hit (persistent-)reference
+    unsigned int nHitsAdded = 0;
     for (Trajectory::RecHitContainer::const_iterator recHit = transHits.begin();
 	 recHit != transHits.end(); ++recHit) {
 	TrackingRecHit *singleHit = (**recHit).hit()->clone();
-	track.appendHitPattern( *singleHit);
-	if(theUpdatingAtVtx && updateResult.first) updateResult.second.appendHitPattern( *singleHit); // i was already incremented
-	recHitCollection->push_back( singleHit );  
-	// set the TrackingRecHitRef (persitent reference of the tracking rec hits)
-	trackExtra.add(TrackingRecHitRef(recHitCollectionRefProd, recHitsIndex++ ));
+    
+    std::vector<const TrackingRecHit*> hits = MuonTrackLoader::unpackHit(*singleHit);
+    for (std::vector<const TrackingRecHit*>::const_iterator it = hits.begin(); it != hits.end(); ++it) {
+        if unlikely(!track.appendHitPattern(**it)){
+            break;
+        }
     }
     
+    if(theUpdatingAtVtx && updateResult.first){
+        std::vector<const TrackingRecHit*> hits = MuonTrackLoader::unpackHit(*singleHit);
+        for (std::vector<const TrackingRecHit*>::const_iterator it = hits.begin(); it != hits.end(); ++it) {
+            if unlikely(!updateResult.second.appendHitPattern(**it)){
+                break;
+            }
+        }
+    }
+    recHitCollection->push_back( singleHit );
+    ++nHitsAdded;
+    }
+    // set the TrackingRecHitRef (persitent reference of the tracking rec hits)
+    trackExtra.setHits(recHitCollectionRefProd, recHitsIndex, nHitsAdded);
+    recHitsIndex += nHitsAdded;
+
     // fill the TrackExtraCollection
     trackExtraCollection->push_back(trackExtra);
     
@@ -754,3 +853,4 @@ reco::TrackExtra MuonTrackLoader::buildTrackExtra(const Trajectory& trajectory) 
   return trackExtra;
  
 }
+

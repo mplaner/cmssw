@@ -2,6 +2,9 @@
 #include "DQMServices/Core/interface/MonitorElement.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
+#include "DQMServices/Core/interface/MonitorElement.h"
+#include "DQMServices/Core/interface/DQMEDHarvester.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -12,80 +15,82 @@
 #include<fstream>
 #include <math.h>
 
+//#define DebugLog
 
-class DQMHcalIsoTrackPostProcessor : public edm::EDAnalyzer {
- public:
+class DQMHcalIsoTrackPostProcessor : public DQMEDHarvester {
+
+public:
   DQMHcalIsoTrackPostProcessor(const edm::ParameterSet& pset);
   ~DQMHcalIsoTrackPostProcessor() {};
 
-  void analyze(const edm::Event& event, const edm::EventSetup& eventSetup) override {};
-  void endRun(edm::Run const&, edm::EventSetup const&) override;
-  void endJob() override;
+//  void analyze(const edm::Event& event, const edm::EventSetup& eventSetup) override {};
+  virtual void dqmEndJob(DQMStore::IBooker &, DQMStore::IGetter &) override; //performed in the endJob
 
- private:
+private:
 
   std::string subDir_;
   bool saveToFile_;
   std::string outputRootFileName_;
-
 };
 
 
-DQMHcalIsoTrackPostProcessor::DQMHcalIsoTrackPostProcessor(const edm::ParameterSet& pset)
-{
-  subDir_ = pset.getUntrackedParameter<std::string>("subDir");
-  saveToFile_=pset.getParameter<bool>("saveToFile");
+DQMHcalIsoTrackPostProcessor::DQMHcalIsoTrackPostProcessor(const edm::ParameterSet& pset) {
+  subDir_     = pset.getUntrackedParameter<std::string>("subDir");
+  saveToFile_ = pset.getParameter<bool>("saveToFile");
   outputRootFileName_=pset.getParameter<std::string>("outputFile");
 }
 
-void DQMHcalIsoTrackPostProcessor::endRun(edm::Run const& run, edm::EventSetup const& es)
-{
-}
 
-void DQMHcalIsoTrackPostProcessor::endJob()
-{
+void DQMHcalIsoTrackPostProcessor::dqmEndJob(DQMStore::IBooker & ibooker, DQMStore::IGetter & igetter) {
 
-  DQMStore* dqm;
-  dqm = 0;
-  dqm = edm::Service<DQMStore>().operator->();
-
-  if ( ! dqm ) {
-    edm::LogInfo("DQMHcalIsoTrackPostProcessor") << "Cannot create DQMStore instance\n";
+  if (igetter.dirExists(subDir_)) {
+    igetter.cd(subDir_);
+  } else {
+    edm::LogWarning("DQMHcalIsoTrackPostProcessor") << "cannot find directory: " << subDir_ << " , skipping";
     return;
   }
 
-  std::cout<<"endjob"<<std::endl;
-  if(dqm->dirExists(subDir_)) dqm->cd(subDir_);
-  else {
-   edm::LogWarning("DQMHcalIsoTrackPostProcessor") << "cannot find directory: " << subDir_ << " , skipping";
-    return;
+  MonitorElement  *hSumEta[4], *hSumPhi[4], *hPurityEta[3], *hPurityPhi[3];
+  std::string      types[4] = {"L2","L2.5","L3","Off"};
+  char             name[20], title[100];
+  for (int i=0; i<4; ++i) {
+    sprintf (name, "hSum%sEta", types[i].c_str()); 
+    hSumEta[i] = ibooker.book1D(name,name,16,-2,2);
+    hSumEta[i]->getTH1F()->TH1F::Sumw2();
+    hSumPhi[i] = ibooker.book1D(name,name,16,-3.2,3.2);
+    hSumPhi[i]->getTH1F()->TH1F::Sumw2();
+    if (i < 3) {
+      sprintf (name, "hPurity%sEta", types[i].c_str()); 
+      sprintf (title,"Purity of %s sample vs #eta", types[i].c_str()); 
+      hPurityEta[i] = ibooker.book1D(name, title,16,-2,2);
+      sprintf (name, "hPurity%sPhi", types[i].c_str()); 
+      sprintf (title,"Purity of %s sample vs #phi", types[i].c_str()); 
+      hPurityPhi[i] = ibooker.book1D(name, title,16,-3.2,3.2);
+    }
   }
 
-  MonitorElement* hPurityEta=dqm->book1D("hPurityEta","Purity of sample vs eta",16,-2,2);
-  MonitorElement* hPurityPhi=dqm->book1D("hPurityPhi","Purity of sample vs phi",16,-3.2,3.2);
+  std::string hname;
+  for (int i=0; i<4; ++i) {
+    sprintf (name, "/heta%s", types[i].c_str()); 
+    hname = ibooker.pwd() + std::string(name);
+#ifdef DebugLog
+    std::cout << "PostProcesor " << hname << " " << igetter.get(hname) << std::endl;
+#endif
+    hSumEta[i]->getTH1F()->Add(igetter.get(hname)->getTH1F(),1);
+    sprintf (name, "/hphi%s", types[i].c_str()); 
+    hname = ibooker.pwd() + std::string(name);
+#ifdef DebugLog
+    std::cout << "PostProcesor " << hname << " " << igetter.get(hname) << std::endl;
+#endif
+    hSumPhi[i]->getTH1F()->Add(igetter.get(hname)->getTH1F(),1);
+  }
 
-  MonitorElement* hSumOffEta=dqm->book1D("hSumOffEta","hSumOffEta",16,-2,2);
-  MonitorElement* hSumOffPhi=dqm->book1D("hSumOffPhi","hSumOffPhi",16,-3.2,3.2);
-  
-  MonitorElement* hSumL3Eta=dqm->book1D("hSumL3Eta","hSumL3Eta",16,-2,2);
-  MonitorElement* hSumL3Phi=dqm->book1D("hSumL3Phi","hSumL3Phi",16,-3.2,3.2);
+  for (int i=0; i<3; ++i) {
+    hPurityEta[i]->getTH1F()->Divide(hSumEta[i+1]->getTH1F(),hSumEta[i]->getTH1F(),1,1);
+    hPurityPhi[i]->getTH1F()->Divide(hSumPhi[i+1]->getTH1F(),hSumPhi[i]->getTH1F(),1,1);
+  }
 
-  hSumOffEta->getTH1F()->Add(dqm->get(dqm->pwd() + "/hOffEtaFP")->getTH1F(),1);
-  hSumOffPhi->getTH1F()->Add(dqm->get(dqm->pwd() + "/hOffPhiFP")->getTH1F(),1);
-    
-  hSumL3Eta->getTH1F()->Add(dqm->get(dqm->pwd() + "/hl3eta")->getTH1F(),1);
-  hSumL3Phi->getTH1F()->Add(dqm->get(dqm->pwd() + "/hl3phi")->getTH1F(),1);
- 
-
-  hSumOffEta->getTH1F()->TH1F::Sumw2();
-  hSumOffPhi->getTH1F()->TH1F::Sumw2();
-  hSumL3Eta->getTH1F()->TH1F::Sumw2();
-  hSumL3Phi->getTH1F()->TH1F::Sumw2();
-
-  hPurityEta->getTH1F()->Divide(hSumOffEta->getTH1F(),hSumL3Eta->getTH1F(),1,1);
-  hPurityPhi->getTH1F()->Divide(hSumOffPhi->getTH1F(),hSumL3Phi->getTH1F(),1,1);
-
-  if (saveToFile_) dqm->save(outputRootFileName_);
+//if (saveToFile_) igetter.save(outputRootFileName_);
 }
 
 DEFINE_FWK_MODULE(DQMHcalIsoTrackPostProcessor);

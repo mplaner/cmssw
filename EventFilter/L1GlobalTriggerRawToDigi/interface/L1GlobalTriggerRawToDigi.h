@@ -22,7 +22,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -46,7 +46,7 @@ class L1MuTriggerPtScale;
 
 
 // class declaration
-class L1GlobalTriggerRawToDigi : public edm::EDProducer
+class L1GlobalTriggerRawToDigi : public edm::stream::EDProducer<>
 {
 
 public:
@@ -57,11 +57,11 @@ public:
     /// destructor
     virtual ~L1GlobalTriggerRawToDigi();
 
+    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
 private:
 
-    virtual void beginJob();
-
-    virtual void produce(edm::Event&, const edm::EventSetup&);
+    virtual void produce(edm::Event&, const edm::EventSetup&) override;
 
     /// block unpackers
 
@@ -88,8 +88,6 @@ private:
     /// dump FED raw data
     void dumpFedRawData(const unsigned char*, int, std::ostream&);
 
-    ///
-    virtual void endJob();
 
 private:
 

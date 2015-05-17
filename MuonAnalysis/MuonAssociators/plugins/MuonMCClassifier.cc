@@ -2,7 +2,7 @@
 //
 // Package:    MuonMCClassifier
 // Class:      MuonMCClassifier
-// 
+//
 /**\class MuonMCClassifier MuonMCClassifier.cc MuonAnalysis/MuonAssociators/src/MuonMCClassifier.cc
 
 
@@ -19,11 +19,11 @@
   label as Ghost (flip the classification)
 
 
- FLAVOUR: 
+ FLAVOUR:
   - for non-muons: 0
   - for primary muons: 13
   - for non primary muons: flavour of the mother: abs(pdgId) of heaviest quark, or 15 for tau
-     
+
 */
 //
 // Original Author:  Nov 16 16:12 (lxplus231.cern.ch)
@@ -55,7 +55,7 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
-#include "SimMuon/MCTruth/interface/MuonAssociatorByHits.h"
+#include "SimDataFormats/Associations/interface/MuonToTrackingParticleAssociator.h"
 #include "SimTracker/Records/interface/TrackAssociatorRecord.h"
 #include <SimDataFormats/TrackingAnalysis/interface/TrackingVertex.h>
 
@@ -74,18 +74,18 @@ class MuonMCClassifier : public edm::EDProducer {
     private:
         virtual void produce(edm::Event&, const edm::EventSetup&) override;
         /// The RECO objects
-        edm::InputTag muons_;
+        edm::EDGetTokenT<edm::View<reco::Muon> > muonsToken_;
 
-        /// A preselection cut for the muon. 
+        /// A preselection cut for the muon.
         /// I pass through pat::Muon so that I can access muon id selectors
         bool hasMuonCut_;
         StringCutObjectSelector<pat::Muon> muonCut_;
- 
-        /// Track to use
-        MuonAssociatorByHits::MuonTrackType trackType_;
 
-        /// The TrackingParticle objects 
-        edm::InputTag trackingParticles_;
+        /// Track to use
+        reco::MuonTrackType trackType_;
+
+        /// The TrackingParticle objects
+        edm::EDGetTokenT<TrackingParticleCollection> trackingParticlesToken_;
 
         /// The Associations
         std::string associatorLabel_;
@@ -94,8 +94,9 @@ class MuonMCClassifier : public edm::EDProducer {
         double decayRho_, decayAbsZ_;
 
         /// Create a link to the generator level particles
-        bool linkToGenParticles_; 
-        edm::InputTag genParticles_; 
+        bool linkToGenParticles_;
+        edm::InputTag genParticles_;
+        edm::EDGetTokenT<reco::GenParticleCollection> genParticlesToken_;
 
         /// Returns the flavour given a pdg id code
         int flavour(int pdgId) const ;
@@ -118,17 +119,17 @@ class MuonMCClassifier : public edm::EDProducer {
         /// Convert TrackingParticle into GenParticle, save into output collection,
         /// if mother is primary set reference to it,
         /// return index in output collection
-        int convertAndPush(const TrackingParticle &tp, 
-                           reco::GenParticleCollection &out, 
-                           const TrackingParticleRef &momRef, 
+        int convertAndPush(const TrackingParticle &tp,
+                           reco::GenParticleCollection &out,
+                           const TrackingParticleRef &momRef,
                            const edm::Handle<reco::GenParticleCollection> & genParticles) const ;
 };
 
 MuonMCClassifier::MuonMCClassifier(const edm::ParameterSet &iConfig) :
-    muons_(iConfig.getParameter<edm::InputTag>("muons")),
+    muonsToken_(consumes<edm::View<reco::Muon> >(iConfig.getParameter<edm::InputTag>("muons"))),
     hasMuonCut_(iConfig.existsAs<std::string>("muonPreselection")),
     muonCut_(hasMuonCut_ ? iConfig.getParameter<std::string>("muonPreselection") : ""),
-    trackingParticles_(iConfig.getParameter<edm::InputTag>("trackingParticles")),
+    trackingParticlesToken_(consumes<TrackingParticleCollection>(iConfig.getParameter<edm::InputTag>("trackingParticles"))),
     associatorLabel_(iConfig.getParameter< std::string >("associatorLabel")),
     decayRho_(iConfig.getParameter<double>("decayRho")),
     decayAbsZ_(iConfig.getParameter<double>("decayAbsZ")),
@@ -136,27 +137,30 @@ MuonMCClassifier::MuonMCClassifier(const edm::ParameterSet &iConfig) :
     genParticles_(linkToGenParticles_ ? iConfig.getParameter<edm::InputTag>("genParticles") : edm::InputTag("NONE"))
 {
     std::string trackType = iConfig.getParameter< std::string >("trackType");
-    if (trackType == "inner") trackType_ = MuonAssociatorByHits::InnerTk;
-    else if (trackType == "outer") trackType_ = MuonAssociatorByHits::OuterTk;
-    else if (trackType == "global") trackType_ = MuonAssociatorByHits::GlobalTk;
-    else if (trackType == "segments") trackType_ = MuonAssociatorByHits::Segments;
+    if (trackType == "inner") trackType_ = reco::InnerTk;
+    else if (trackType == "outer") trackType_ = reco::OuterTk;
+    else if (trackType == "global") trackType_ = reco::GlobalTk;
+    else if (trackType == "segments") trackType_ = reco::Segments;
     else throw cms::Exception("Configuration") << "Track type '" << trackType << "' not supported.\n";
+    if (linkToGenParticles_) {
+      genParticlesToken_ = consumes<reco::GenParticleCollection>(genParticles_);
+    }
 
-    produces<edm::ValueMap<int> >(); 
-    produces<edm::ValueMap<int> >("ext"); 
-    produces<edm::ValueMap<int> >("flav"); 
-    produces<edm::ValueMap<int> >("hitsPdgId"); 
-    produces<edm::ValueMap<int> >("momPdgId"); 
-    produces<edm::ValueMap<int> >("momFlav"); 
-    produces<edm::ValueMap<int> >("momStatus"); 
-    produces<edm::ValueMap<int> >("gmomPdgId"); 
-    produces<edm::ValueMap<int> >("gmomFlav"); 
+    produces<edm::ValueMap<int> >();
+    produces<edm::ValueMap<int> >("ext");
+    produces<edm::ValueMap<int> >("flav");
+    produces<edm::ValueMap<int> >("hitsPdgId");
+    produces<edm::ValueMap<int> >("momPdgId");
+    produces<edm::ValueMap<int> >("momFlav");
+    produces<edm::ValueMap<int> >("momStatus");
+    produces<edm::ValueMap<int> >("gmomPdgId");
+    produces<edm::ValueMap<int> >("gmomFlav");
     produces<edm::ValueMap<int> >("hmomFlav"); // heaviest mother flavour
     produces<edm::ValueMap<int> >("tpId");
-    produces<edm::ValueMap<float> >("prodRho"); 
-    produces<edm::ValueMap<float> >("prodZ"); 
-    produces<edm::ValueMap<float> >("momRho"); 
-    produces<edm::ValueMap<float> >("momZ"); 
+    produces<edm::ValueMap<float> >("prodRho");
+    produces<edm::ValueMap<float> >("prodZ");
+    produces<edm::ValueMap<float> >("momRho");
+    produces<edm::ValueMap<float> >("momZ");
     produces<edm::ValueMap<float> >("tpAssoQuality");
     if (linkToGenParticles_) {
         produces<reco::GenParticleCollection>("secondaries");
@@ -165,7 +169,7 @@ MuonMCClassifier::MuonMCClassifier(const edm::ParameterSet &iConfig) :
     }
 }
 
-MuonMCClassifier::~MuonMCClassifier() 
+MuonMCClassifier::~MuonMCClassifier()
 {
 }
 
@@ -173,25 +177,24 @@ void
 MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     edm::LogVerbatim("MuonMCClassifier") <<"\n sono in MuonMCClassifier !";
-  
-    edm::Handle<edm::View<reco::Muon> > muons; 
-    iEvent.getByLabel(muons_, muons);
+
+    edm::Handle<edm::View<reco::Muon> > muons;
+    iEvent.getByToken(muonsToken_, muons);
 
     edm::Handle<TrackingParticleCollection> trackingParticles;
-    iEvent.getByLabel(trackingParticles_, trackingParticles);
+    iEvent.getByToken(trackingParticlesToken_, trackingParticles);
 
     edm::Handle<reco::GenParticleCollection> genParticles;
     if (linkToGenParticles_) {
-        iEvent.getByLabel(genParticles_, genParticles);
+        iEvent.getByToken(genParticlesToken_, genParticles);
     }
 
-    edm::ESHandle<TrackAssociatorBase> associatorBase;
-    iSetup.get<TrackAssociatorRecord>().get(associatorLabel_, associatorBase);
-    const MuonAssociatorByHits * assoByHits = dynamic_cast<const MuonAssociatorByHits *>(associatorBase.product());
-    if (assoByHits == 0) throw cms::Exception("Configuration") << "The Track Associator with label '" << associatorLabel_ << "' is not a MuonAssociatorByHits.\n";
+    edm::Handle<reco::MuonToTrackingParticleAssociator> associatorBase;
+    iEvent.getByLabel(associatorLabel_, associatorBase);
+    const reco::MuonToTrackingParticleAssociator * assoByHits = associatorBase.product();
 
-    MuonAssociatorByHits::MuonToSimCollection recSimColl;
-    MuonAssociatorByHits::SimToMuonCollection simRecColl;
+    reco::MuonToSimCollection recSimColl;
+    reco::SimToMuonCollection simRecColl;
     edm::LogVerbatim("MuonMCClassifier") <<"\n ***************************************************************** ";
     edm::LogVerbatim("MuonMCClassifier") <<  " RECO MUON association, type:  "<< trackType_;
     edm::LogVerbatim("MuonMCClassifier") <<  " ***************************************************************** \n";
@@ -199,7 +202,10 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::RefToBaseVector<reco::Muon> selMuons;
     if (!hasMuonCut_) {
         // all muons
-        selMuons = muons->refVector();
+        for (size_t i = 0, n = muons->size(); i < n; ++i) {
+            edm::RefToBase<reco::Muon> rmu = muons->refAt(i);
+            selMuons.push_back(rmu);
+        }
     } else {
         // filter, fill refvectors, associate
         // I pass through pat::Muon so that I can access muon id selectors
@@ -214,21 +220,21 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
         allTPs.push_back(TrackingParticleRef(trackingParticles,i));
     }
 
-    assoByHits->associateMuons(recSimColl, simRecColl, selMuons, trackType_, allTPs, &iEvent, &iSetup);
+    assoByHits->associateMuons(recSimColl, simRecColl, selMuons, trackType_, allTPs);
 
     // for global muons without hits on muon detectors, look at the linked standalone muon
-    MuonAssociatorByHits::MuonToSimCollection UpdSTA_recSimColl;
-    MuonAssociatorByHits::SimToMuonCollection UpdSTA_simRecColl;
-    if (trackType_ == MuonAssociatorByHits::GlobalTk) {
+    reco::MuonToSimCollection UpdSTA_recSimColl;
+    reco::SimToMuonCollection UpdSTA_simRecColl;
+    if (trackType_ == reco::GlobalTk) {
       edm::LogVerbatim("MuonMCClassifier") <<"\n ***************************************************************** ";
       edm::LogVerbatim("MuonMCClassifier") <<  " STANDALONE (UpdAtVtx) MUON association ";
       edm::LogVerbatim("MuonMCClassifier") <<  " ***************************************************************** \n";
-      assoByHits->associateMuons(UpdSTA_recSimColl, UpdSTA_simRecColl, selMuons, MuonAssociatorByHits::OuterTk, 
-				 allTPs, &iEvent, &iSetup);
+      assoByHits->associateMuons(UpdSTA_recSimColl, UpdSTA_simRecColl, selMuons, reco::OuterTk,
+				 allTPs);
     }
 
-    typedef MuonAssociatorByHits::MuonToSimCollection::const_iterator r2s_it;
-    typedef MuonAssociatorByHits::SimToMuonCollection::const_iterator s2r_it;
+    typedef reco::MuonToSimCollection::const_iterator r2s_it;
+    typedef reco::SimToMuonCollection::const_iterator s2r_it;
 
     size_t nmu = muons->size();
     edm::LogVerbatim("MuonMCClassifier") <<"\n There are "<<nmu<<" reco::Muons.";
@@ -269,7 +275,7 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
             } else {
                 edm::LogWarning("MuonMCClassifier") << "\n***WARNING:  This I do NOT understand: why no match back? *** \n";
             }
-        } else if ((trackType_ == MuonAssociatorByHits::GlobalTk) &&
+        } else if ((trackType_ == reco::GlobalTk) &&
                     mu->isGlobalMuon()) {
             // perform a second attempt, matching with the standalone muon
             r2s_it matchSta = UpdSTA_recSimColl.find(mu);
@@ -285,13 +291,13 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
                     edm::LogWarning("MuonMCClassifier") << "\n***WARNING:  This I do NOT understand: why no match back in UpdSTA? *** \n";
                 }
             }
-        } 
+        }
         if (tp.isNonnull()) {
             bool isGhost = muMatchBack != mu;
             if (isGhost) edm::LogVerbatim("MuonMCClassifier") <<"\t This seems a GHOST ! classif[i] will be < 0";
 
             hitsPdgId[i] = tp->pdgId();
-            prodRho[i]   = tp->vertex().Rho(); 
+            prodRho[i]   = tp->vertex().Rho();
             prodZ[i]     = tp->vertex().Z();
 	    edm::LogVerbatim("MuonMCClassifier") <<"\t TP pdgId = "<<hitsPdgId[i] << ", vertex rho = " << prodRho[i] << ", z = " << prodZ[i];
 
@@ -315,7 +321,7 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
                          nMom.isNonnull() && abs(nMom->pdgId()) >= 100; // stop when we're no longer looking at hadrons or mesons
                          nMom = nMom->numberOfMothers() > 0 ? nMom->motherRef() : reco::GenParticleRef()) {
                         int flav = flavour(nMom->pdgId());
-                        if (hmomFlav[i] < flav) hmomFlav[i] = flav; 
+                        if (hmomFlav[i] < flav) hmomFlav[i] = flav;
                         edm::LogVerbatim("MuonMCClassifier") << "\t\t backtracking flavour: mom pdgId = "<<nMom->pdgId()<< ", flavour = " << flav << ", heaviest so far = " << hmomFlav[i];
                     }
                 }
@@ -325,7 +331,7 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
                     momPdgId[i] = simMom->pdgId();
                     momRho[i] = simMom->vertex().Rho();
                     momZ[i]   = simMom->vertex().Z();
-                    edm::LogVerbatim("MuonMCClassifier") << "\t Particle pdgId = "<<hitsPdgId[i] << " produced at rho = " << prodRho[i] << ", z = " << prodZ[i] << 
+                    edm::LogVerbatim("MuonMCClassifier") << "\t Particle pdgId = "<<hitsPdgId[i] << " produced at rho = " << prodRho[i] << ", z = " << prodZ[i] <<
                                                             ", has SIM mother pdgId = " << momPdgId[i] << " produced at rho = " << simMom->vertex().Rho() << ", z = " << simMom->vertex().Z();
                     if (!simMom->genParticles().empty()) {
                         momStatus[i] = simMom->genParticles()[0]->status();
@@ -397,18 +403,18 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
                     if (genParticles.id() != tp->genParticles().id()) {
                         throw cms::Exception("Configuration") << "Product ID mismatch between the genParticle collection (" << genParticles_ << ", id " << genParticles.id() << ") and the references in the TrackingParticles (id " << tp->genParticles().id() << ")\n";
                     }
-                    muToPrimary[i] = tp->genParticles()[0].key(); 
+                    muToPrimary[i] = tp->genParticles()[0].key();
                 } else {
                     // Don't put the same trackingParticle twice!
                     int &indexPlus1 = tpToSecondaries[tp]; // will create a 0 if the tp is not in the list already
                     if (indexPlus1 == 0) indexPlus1 = convertAndPush(*tp, *secondaries, getTpMother(tp), genParticles) + 1;
-                    muToSecondary[i] = indexPlus1 - 1; 
+                    muToSecondary[i] = indexPlus1 - 1;
                 }
             }
             edm::LogVerbatim("MuonMCClassifier") <<"\t Extended classification code = " << ext[i];
 	}
     }
-    
+
     writeValueMap(iEvent, muons, classif,   "");
     writeValueMap(iEvent, muons, ext,       "ext");
     writeValueMap(iEvent, muons, flav,      "flav");
@@ -428,7 +434,7 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     if (linkToGenParticles_) {
         edm::OrphanHandle<reco::GenParticleCollection> secHandle = iEvent.put(secondaries, "secondaries");
-        edm::RefProd<reco::GenParticleCollection> priRP(genParticles); 
+        edm::RefProd<reco::GenParticleCollection> priRP(genParticles);
         edm::RefProd<reco::GenParticleCollection> secRP(secHandle);
         std::auto_ptr<edm::Association<reco::GenParticleCollection> > outPri(new edm::Association<reco::GenParticleCollection>(priRP));
         std::auto_ptr<edm::Association<reco::GenParticleCollection> > outSec(new edm::Association<reco::GenParticleCollection>(secRP));
@@ -439,16 +445,16 @@ MuonMCClassifier::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
         iEvent.put(outPri, "toPrimaries");
         iEvent.put(outSec, "toSecondaries");
     }
-}    
+}
 
 template<typename T>
 void
 MuonMCClassifier::writeValueMap(edm::Event &iEvent,
         const edm::Handle<edm::View<reco::Muon> > & handle,
         const std::vector<T> & values,
-        const std::string    & label) const 
+        const std::string    & label) const
 {
-    using namespace edm; 
+    using namespace edm;
     using namespace std;
     auto_ptr<ValueMap<T> > valMap(new ValueMap<T>());
     typename edm::ValueMap<T>::Filler filler(*valMap);
@@ -473,15 +479,15 @@ MuonMCClassifier::flavour(int pdgId) const {
 }
 
 // push secondary in collection.
-// if it has a primary mother link to it. 
-int MuonMCClassifier::convertAndPush(const TrackingParticle &tp, 
+// if it has a primary mother link to it.
+int MuonMCClassifier::convertAndPush(const TrackingParticle &tp,
                                      reco::GenParticleCollection &out,
-                                     const TrackingParticleRef & simMom, 
+                                     const TrackingParticleRef & simMom,
                                      const edm::Handle<reco::GenParticleCollection> & genParticles) const {
     out.push_back(reco::GenParticle(tp.charge(), tp.p4(), tp.vertex(), tp.pdgId(), tp.status(), true));
     if (simMom.isNonnull() && !simMom->genParticles().empty()) {
          if (genParticles.id() != simMom->genParticles().id()) {
-            throw cms::Exception("Configuration") << "Product ID mismatch between the genParticle collection (" << genParticles_ << ", id " << genParticles.id() << ") and the references in the TrackingParticles (id " << simMom->genParticles().id() << ")\n";  
+            throw cms::Exception("Configuration") << "Product ID mismatch between the genParticle collection (" << genParticles_ << ", id " << genParticles.id() << ") and the references in the TrackingParticles (id " << simMom->genParticles().id() << ")\n";
          }
          out.back().addMother(simMom->genParticles()[0]);
     }

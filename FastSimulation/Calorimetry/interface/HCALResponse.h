@@ -42,6 +42,10 @@ public:
 
   // legacy methods using simple formulae
   double getHCALEnergyResponse(double e, int hit, RandomEngineAndDistribution const*);
+
+  // correct HF response for SL
+  void correctHF(double e, int type);
+  vec1 & getCorrHF() {return corrHF;}   
   
 private:
 
@@ -87,7 +91,7 @@ private:
   double respFactorEM;
 
   // Tabulated energy, et/pt and eta points
-  vec1 eGridHD[3];
+  vec1 eGridHD[4];
   vec1 eGridEM;
   vec1 eGridMU;
   vec1 etaGridMU;
@@ -111,6 +115,11 @@ private:
   // crystal ball generator
   DoubleCrystalBallGenerator cball;
 
+  // HF correction for SL
+  int maxEta, maxEne;
+  vec1 energyHF;
+  vec1 corrHFg, corrHFh;
+  vec1 corrHF;
 };
 #endif
 

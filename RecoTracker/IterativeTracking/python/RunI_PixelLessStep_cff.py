@@ -4,31 +4,27 @@ import FWCore.ParameterSet.Config as cms
 # Large impact parameter tracking using TIB/TID/TEC stereo layer seeding #
 ##########################################################################
 
-
-pixelLessStepClusters = cms.EDProducer("TrackClusterRemover",
-    clusterLessSolution = cms.bool(True),
-    oldClusterRemovalInfo = cms.InputTag("mixedTripletStepClusters"),
-    trajectories = cms.InputTag("mixedTripletStepTracks"),
-    overrideTrkQuals = cms.InputTag('mixedTripletStep'),
-    TrackQuality = cms.string('highPurity'),
+from RecoLocalTracker.SubCollectionProducers.trackClusterRemover_cfi import *
+pixelLessStepClusters = trackClusterRemover.clone(
+    maxChi2                                  = cms.double(9.0),
+    trajectories                             = cms.InputTag("mixedTripletStepTracks"),
+    pixelClusters                            = cms.InputTag("siPixelClusters"),
+    stripClusters                            = cms.InputTag("siStripClusters"),
+    oldClusterRemovalInfo                    = cms.InputTag("mixedTripletStepClusters"),
+    overrideTrkQuals                         = cms.InputTag('mixedTripletStep'),
+    TrackQuality                             = cms.string('highPurity'),
     minNumberOfLayersWithMeasBeforeFiltering = cms.int32(0),
-    pixelClusters = cms.InputTag("siPixelClusters"),
-    stripClusters = cms.InputTag("siStripClusters"),
-    Common = cms.PSet(
-        maxChi2 = cms.double(9.0)
-    )
 )
 
 # SEEDING LAYERS
-pixelLessStepSeedLayers = cms.ESProducer("SeedingLayersESProducer",
-    ComponentName = cms.string('pixelLessStepSeedLayers'),
+pixelLessStepSeedLayers = cms.EDProducer("SeedingLayersEDProducer",
     layerList = cms.vstring('TIB1+TIB2',
         'TID1_pos+TID2_pos','TID2_pos+TID3_pos',
         'TEC1_pos+TEC2_pos','TEC2_pos+TEC3_pos','TEC3_pos+TEC4_pos','TEC3_pos+TEC5_pos','TEC4_pos+TEC5_pos',
         'TID1_neg+TID2_neg','TID2_neg+TID3_neg',
         'TEC1_neg+TEC2_neg','TEC2_neg+TEC3_neg','TEC3_neg+TEC4_neg','TEC3_neg+TEC5_neg','TEC4_neg+TEC5_neg'),
     TIB = cms.PSet(
-        TTRHBuilder = cms.string('WithTrackAngle'),
+        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         matchedRecHits = cms.InputTag("siStripMatchedRecHits","matchedRecHit"),
         skipClusters = cms.InputTag('pixelLessStepClusters')
     ),
@@ -36,7 +32,7 @@ pixelLessStepSeedLayers = cms.ESProducer("SeedingLayersESProducer",
         matchedRecHits = cms.InputTag("siStripMatchedRecHits","matchedRecHit"),
         skipClusters = cms.InputTag('pixelLessStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'),
+        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(1),
         maxRing = cms.int32(2)
     ),
@@ -44,7 +40,7 @@ pixelLessStepSeedLayers = cms.ESProducer("SeedingLayersESProducer",
         matchedRecHits = cms.InputTag("siStripMatchedRecHits","matchedRecHit"),
         skipClusters = cms.InputTag('pixelLessStepClusters'),
         useRingSlector = cms.bool(True),
-        TTRHBuilder = cms.string('WithTrackAngle'),
+        TTRHBuilder = cms.string('WithTrackAngle'), clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutTight')),
         minRing = cms.int32(1),
         maxRing = cms.int32(2)
     )
@@ -64,18 +60,16 @@ pixelLessStepSeeds.SeedComparitorPSet = cms.PSet(
         FilterAtHelixStage = cms.bool(True),
         FilterPixelHits = cms.bool(False),
         FilterStripHits = cms.bool(True),
-        ClusterShapeHitFilterName = cms.string('ClusterShapeHitFilter')
+        ClusterShapeHitFilterName = cms.string('ClusterShapeHitFilter'),
+        ClusterShapeCacheSrc = cms.InputTag("siPixelClusterShapeCache") # not really needed here since FilterPixelHits=False
     )
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-pixelLessStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'pixelLessStepTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+pixelLessStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     maxLostHits = 0,
     minimumNumberOfHits = 4,
     minPt = 0.1
-    )
     )
 
 import TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProducer_cfi
@@ -86,11 +80,10 @@ pixelLessStepChi2Est = TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESPr
 )
 
 # TRACK BUILDING
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
-pixelLessStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
-    ComponentName = 'pixelLessStepTrajectoryBuilder',
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+pixelLessStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone(
     MeasurementTrackerName = '',
-    trajectoryFilterName = 'pixelLessStepTrajectoryFilter',
+    trajectoryFilter = cms.PSet(refToPSet_ = cms.string('pixelLessStepTrajectoryFilter')),
     minNrOfHitsForRebuild = 4,
     maxCand = 2,
     alwaysUseInvalidHits = False,
@@ -107,7 +100,7 @@ pixelLessStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckf
     ### these two parameters are relevant only for the CachingSeedCleanerBySharedInput
     numHitsForSeedCleaner = cms.int32(50),
     #onlyPixelHitsForSeedCleaner = cms.bool(True),
-    TrajectoryBuilder = 'pixelLessStepTrajectoryBuilder'
+    TrajectoryBuilderPSet = cms.PSet(refToPSet_ = cms.string('pixelLessStepTrajectoryBuilder'))
 )
 
 from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import trajectoryCleanerBySharedHits
@@ -123,7 +116,7 @@ pixelLessStepTrackCandidates.TrajectoryCleaner = 'pixelLessStepTrajectoryCleaner
 import RecoTracker.TrackProducer.TrackProducer_cfi
 pixelLessStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.clone(
     src = 'pixelLessStepTrackCandidates',
-    AlgorithmName = cms.string('iter5'),
+    AlgorithmName = cms.string('pixelLessStep'),
     Fitter = cms.string('FlexibleKFFittingSmoother')
     )
 
@@ -178,6 +171,7 @@ pixelLessStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.m
 
 
 PixelLessStep = cms.Sequence(pixelLessStepClusters*
+                             pixelLessStepSeedLayers*
                              pixelLessStepSeeds*
                              pixelLessStepTrackCandidates*
                              pixelLessStepTracks*

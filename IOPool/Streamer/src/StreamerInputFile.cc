@@ -20,7 +20,7 @@ namespace edm {
   }
 
   StreamerInputFile::StreamerInputFile(std::string const& name,
-                                       boost::shared_ptr<EventSkipperByID> eventSkipperByID) :
+                                       std::shared_ptr<EventSkipperByID> eventSkipperByID) :
     startMsg_(),
     currentEvMsg_(),
     headerBuf_(1000*1000),
@@ -41,7 +41,7 @@ namespace edm {
   }
 
   StreamerInputFile::StreamerInputFile(std::vector<std::string> const& names,
-                                       boost::shared_ptr<EventSkipperByID> eventSkipperByID) :
+                                       std::shared_ptr<EventSkipperByID> eventSkipperByID) :
     startMsg_(),
     currentEvMsg_(),
     headerBuf_(1000*1000),
@@ -256,7 +256,7 @@ namespace edm {
       eventRead = true;
       if(eventSkipperByID_) {
         EventHeader *evh = (EventHeader *)(&eventBuf_[0]);
-        if(eventSkipperByID_->skipIt(convert32(evh->run_), convert32(evh->lumi_), convert32(evh->event_))) {
+        if(eventSkipperByID_->skipIt(convert32(evh->run_), convert32(evh->lumi_), convert64(evh->event_))) {
           eventRead = false;
         }
       }

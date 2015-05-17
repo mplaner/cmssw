@@ -6,6 +6,7 @@
 //------------------------------------------//
 
 #include <iostream>
+#include <vector>
 #include "Gtypes.h"
 #include "TROOT.h"
 #include "TStyle.h"
@@ -26,8 +27,6 @@ const Int_t linestylelist[7]={1,1,1,1,1,1,1};
 const Int_t stylelist[7]={1,1,1,1,1,1,1};
 const Style_t markerstylelist[7]={kFullSquare,kFullCircle,kOpenCircle,kOpenTriangleUp,kOpenCircle,kOpenTriangleUp,kOpenCircle};
         
-using namespace std;
-
 void MultiHistoOverlap(TString namesandlabels, Int_t nOfFiles, const TString& outDir="./"){
 
   gROOT->Reset();
@@ -66,16 +65,17 @@ void MultiHistoOverlap(TString namesandlabels, Int_t nOfFiles, const TString& ou
 
  Int_t NOfFiles =  FileList->GetSize();  
  if ( NOfFiles!=nOfFiles ){
-   cout<<"&MSG-e: NOfFiles = "<<nOfFiles<<endl;  
+   std::cout<<"&MSG-e: NOfFiles = "<<nOfFiles<<std::endl;  
    return;
  }  
  
 
- TString LegLabels[nOfFiles];    
+ std::vector<TString> LegLabels;
+ LegLabels.reserve(nOfFiles);    
  for(Int_t j=0; j < nOfFiles; j++) {       
    TObjString* legend = (TObjString*)LabelList->At(j);    
-   LegLabels[j] = legend->String();    
-   cout<<"LegLabels["<<j<<"]"<<LegLabels[j]<<endl;  
+   LegLabels.push_back(legend->String());
+   std::cout<<"LegLabels["<<j<<"]"<<LegLabels[j]<<std::endl;  
  }
 
  TLegend *leg=0; 

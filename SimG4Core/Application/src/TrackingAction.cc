@@ -18,8 +18,10 @@
 
 //#define DebugLog
 
+//using namespace std;
+
 TrackingAction::TrackingAction(EventAction * e, const edm::ParameterSet & p) 
-  : eventAction_(e),currentTrack_(0),
+  : eventAction_(e),currentTrack_(0),g4Track_(0),
   detailedTiming(p.getUntrackedParameter<bool>("DetailedTiming",false)),
   checkTrack(p.getUntrackedParameter<bool>("CheckTrack",false)),
   trackMgrVerbose(p.getUntrackedParameter<int>("G4TrackManagerVerbosity",0)) 
@@ -31,7 +33,7 @@ TrackingAction::~TrackingAction() {}
 
 void TrackingAction::PreUserTrackingAction(const G4Track * aTrack)
 {
-  CurrentG4Track::setTrack(aTrack);
+  g4Track_ = aTrack;
 
   if (currentTrack_ != 0) {
     throw SimG4Exception("TrackingAction: currentTrack is a mess...");
@@ -54,7 +56,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track * aTrack)
   m_beginOfTrackSignal(&bt);
 
   TrackInformation * trkInfo = (TrackInformation *)aTrack->GetUserInformation();
-  if(trkInfo->isPrimary()) {
+  if(trkInfo && trkInfo->isPrimary()) {
     eventAction_->prepareForNewPrimary();
   }
   /*
@@ -65,6 +67,7 @@ void TrackingAction::PreUserTrackingAction(const G4Track * aTrack)
     << worldSolid->Inside(aTrack->GetVertexPosition()) 
     << " compared to " << kOutside << G4endl;
   */
+  // VI: why this check is TrackingAction?
   if (worldSolid->Inside(aTrack->GetVertexPosition()) == kOutside) {
     //      G4cout << "Kill Track " << aTrack->GetTrackID() << G4endl;
     G4Track* theTrack = (G4Track *)(aTrack);
@@ -74,7 +77,6 @@ void TrackingAction::PreUserTrackingAction(const G4Track * aTrack)
 
 void TrackingAction::PostUserTrackingAction(const G4Track * aTrack)
 {
-  CurrentG4Track::postTracking(aTrack);
   if (eventAction_->trackContainer() != 0) {
 
     TrackInformationExtractor extractor;
@@ -106,6 +108,13 @@ void TrackingAction::PostUserTrackingAction(const G4Track * aTrack)
       if(checkTrack) { currentTrack_->checkAtEnd(aTrack); }
 
       eventAction_->addTrack(currentTrack_, true, withAncestor);
+      /*
+      cout << "TrackingAction addTrack "  
+	   << currentTrack_->trackID() << " E(GeV)= " << aTrack->GetKineticEnergy()
+	   << "  " << aTrack->GetDefinition()->GetParticleName()
+	   << " added= " << withAncestor 
+	   << " at " << aTrack->GetPosition() << endl;
+      */
 #ifdef DebugLog
       math::XYZVectorD pos((aTrack->GetStep()->GetPostStepPoint()->GetPosition()).x(),
 			   (aTrack->GetStep()->GetPostStepPoint()->GetPosition()).y(),

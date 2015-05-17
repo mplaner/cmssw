@@ -13,7 +13,6 @@ Test of the EventProcessor class.
 #include "FWCore/PluginManager/interface/PresenceFactory.h"
 #include "FWCore/PluginManager/interface/ProblemTracker.h"
 #include "FWCore/PythonParameterSet/interface/PythonProcessDesc.h"
-#include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 //I need to open a 'back door' in order to test the functionality
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
 #define private public
@@ -367,25 +366,25 @@ namespace {
         iAR.watchPostBeginJob(this, &Listener::postBeginJob);
         iAR.watchPostEndJob(this, &Listener::postEndJob);
 
-        iAR.watchPreProcessEvent(this, &Listener::preEventProcessing);
-        iAR.watchPostProcessEvent(this, &Listener::postEventProcessing);
+        iAR.watchPreEvent(this, &Listener::preEventProcessing);
+        iAR.watchPostEvent(this, &Listener::postEventProcessing);
 
-        iAR.watchPreModule(this, &Listener::preModule);
-        iAR.watchPostModule(this, &Listener::postModule);
+        iAR.watchPreModuleEvent(this, &Listener::preModule);
+        iAR.watchPostModuleEvent(this, &Listener::postModule);
       }
 
     void postBeginJob() {++postBeginJob_;}
     void postEndJob() {++postEndJob_;}
 
-    void preEventProcessing(edm::EventID const&, edm::Timestamp const&) {
+    void preEventProcessing(edm::StreamContext const&) {
       ++preEventProcessing_;}
-    void postEventProcessing(edm::Event const&, edm::EventSetup const&) {
+    void postEventProcessing(edm::StreamContext const&) {
       ++postEventProcessing_;}
 
-    void preModule(edm::ModuleDescription const&) {
+    void preModule(edm::StreamContext const&, edm::ModuleCallingContext const&) {
       ++preModule_;
     }
-    void postModule(edm::ModuleDescription const&) {
+    void postModule(edm::StreamContext const&, edm::ModuleCallingContext const&) {
       ++postModule_;
     }
 
@@ -410,8 +409,8 @@ testeventprocessor::activityRegistryTest() {
       "   ivalue = cms.int32(-3))\n"
       "process.p1 = cms.Path(process.m1)\n");
 
-  boost::shared_ptr<edm::ParameterSet> parameterSet = PythonProcessDesc(configuration).parameterSet();
-  boost::shared_ptr<edm::ProcessDesc> processDesc(new edm::ProcessDesc(parameterSet));
+  std::shared_ptr<edm::ParameterSet> parameterSet = PythonProcessDesc(configuration).parameterSet();
+  auto processDesc = std::make_shared<edm::ProcessDesc>(parameterSet);
 
   //We don't want any services, we just want an ActivityRegistry to be created
   // We then use this ActivityRegistry to 'spy on' the signals being produced

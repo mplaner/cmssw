@@ -17,7 +17,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/PluginManager/interface/PluginManager.h"
 #include "FWCore/PluginManager/interface/standard.h"
-#include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 #include "FWCore/Services/src/SiteLocalConfigService.h"
 #include "FWCore/Utilities/interface/Adler32Calculator.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -82,7 +81,7 @@ int main(int argc, char* argv[]) {
   int rc = 0;
   try {
     std::auto_ptr<edm::SiteLocalConfig> slcptr(new edm::service::SiteLocalConfigService(edm::ParameterSet()));
-    boost::shared_ptr<edm::serviceregistry::ServiceWrapper<edm::SiteLocalConfig> > slc(new edm::serviceregistry::ServiceWrapper<edm::SiteLocalConfig>(slcptr));
+    auto slc = std::make_shared<edm::serviceregistry::ServiceWrapper<edm::SiteLocalConfig> >(slcptr);
     edm::ServiceToken slcToken = edm::ServiceRegistry::createContaining(slc);
     edm::ServiceRegistry::Operate operate(slcToken);
 
@@ -126,7 +125,6 @@ int main(int argc, char* argv[]) {
         std::cout << "exception caught in EdmFileUtil while configuring the PluginManager\n" << e.what();
         return 1;
       }
-      edm::RootAutoLibraryLoader::enable();
     }
 
     edm::InputFileCatalog catalog(in, catalogIn, true);

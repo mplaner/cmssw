@@ -14,7 +14,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -22,25 +22,27 @@
 #include "DataFormats/RecoCandidate/interface/RecoEcalCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoEcalCandidateFwd.h"
 
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+
 namespace edm {
   class ConfigurationDescriptions;
 }
 
-class EgammaHLTClusterShapeProducer : public edm::EDProducer {
+class EgammaHLTClusterShapeProducer : public edm::global::EDProducer<> {
 public:
   explicit EgammaHLTClusterShapeProducer(const edm::ParameterSet&);
   ~EgammaHLTClusterShapeProducer();
   
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-  virtual void produce(edm::Event&, const edm::EventSetup&);
+  void produce(edm::StreamID sid, edm::Event&, const edm::EventSetup&) const override;
+
 private:
   // ----------member data ---------------------------
   
-  edm::EDGetTokenT<reco::RecoEcalCandidateCollection> recoEcalCandidateProducer_;
-  edm::InputTag ecalRechitEBTag_;
-  edm::InputTag ecalRechitEETag_;
-  bool EtaOrIeta_;
+  const edm::EDGetTokenT<reco::RecoEcalCandidateCollection> recoEcalCandidateProducer_;
+  const edm::EDGetTokenT<EcalRecHitCollection>  ecalRechitEBToken_;
+  const edm::EDGetTokenT<EcalRecHitCollection>  ecalRechitEEToken_;
+  const bool EtaOrIeta_;
 
-  edm::ParameterSet conf_;
 };
 

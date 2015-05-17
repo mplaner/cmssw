@@ -25,17 +25,18 @@
 #include "G4ParticleTable.hh"
 #include "G4VProcess.hh"
 
+#include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-
-#include "G4SystemOfUnits.hh"
 
 //#define DebugLog
 //#define plotDebug
 
 HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
-               SensitiveDetectorCatalog & clg, 
+               const SensitiveDetectorCatalog & clg,
                edm::ParameterSet const & p, const SimTrackManager* manager) : 
   CaloSD(name, cpv, clg, p, manager,
          p.getParameter<edm::ParameterSet>("HCalSD").getParameter<int>("TimeSliceUnit"),
@@ -311,7 +312,7 @@ HCalSD::HCalSD(G4String name, const DDCompactView & cpv,
       if (notIn) {
         namx = log.material().name().name();
         matNames.push_back(namx);
-        G4Material* mat;
+        G4Material* mat = nullptr;
         for (matite = matTab->begin(); matite != matTab->end(); ++matite) {
           if ((*matite)->GetName() == namx) {
             mat = (*matite);

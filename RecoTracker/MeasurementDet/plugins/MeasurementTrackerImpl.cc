@@ -47,6 +47,12 @@ using namespace std;
 
 namespace {
 
+  class StrictWeakOrdering{
+    public:
+     bool operator() ( uint32_t p,const uint32_t& i) const {return p < i;}
+  };
+
+
   struct CmpTKD {
     bool operator()(MeasurementDet const* rh, MeasurementDet const * lh) {
       return rh->fastGeomDet().geographicalId().rawId() < lh->fastGeomDet().geographicalId().rawId();
@@ -80,12 +86,11 @@ MeasurementTrackerImpl::MeasurementTrackerImpl(const edm::ParameterSet&         
                                        const SiPixelQuality *pixelQuality,
                                        const SiPixelFedCabling *pixelCabling,
                                        int   pixelQualityFlags,
-                                       int   pixelQualityDebugFlags,
-				       bool isRegional) :
+                                       int   pixelQualityDebugFlags) :
   MeasurementTracker(trackerGeom,geometricSearchTracker),
   pset_(conf),
   name_(conf.getParameter<std::string>("ComponentName")),
-  theStDetConditions(hitMatcher,stripCPE,isRegional),
+  theStDetConditions(hitMatcher,stripCPE),
   thePxDetConditions(pixelCPE)
 {
   this->initialize();
@@ -100,13 +105,24 @@ MeasurementTrackerImpl::~MeasurementTrackerImpl()
 
 void MeasurementTrackerImpl::initialize()
 {  
-  addPixelDets( theTrackerGeom->detsPXB());
-  addPixelDets( theTrackerGeom->detsPXF());
-
-  addStripDets( theTrackerGeom->detsTIB());
-  addStripDets( theTrackerGeom->detsTID());
-  addStripDets( theTrackerGeom->detsTOB());
-  addStripDets( theTrackerGeom->detsTEC());  
+  if(theTrackerGeom->detsPXB().size()!=0) 
+    {if(GeomDetEnumerators::isTrackerPixel(theTrackerGeom->geomDetSubDetector(theTrackerGeom->detsPXB().front()->geographicalId().subdetId()))) 
+	addPixelDets( theTrackerGeom->detsPXB()); else addStripDets( theTrackerGeom->detsPXB());} else addPixelDets( theTrackerGeom->detsPXB());
+  if(theTrackerGeom->detsPXF().size()!=0) 
+    {if(GeomDetEnumerators::isTrackerPixel(theTrackerGeom->geomDetSubDetector(theTrackerGeom->detsPXF().front()->geographicalId().subdetId()))) 
+	addPixelDets( theTrackerGeom->detsPXF()); else addStripDets( theTrackerGeom->detsPXF());} else addPixelDets( theTrackerGeom->detsPXF());
+  if(theTrackerGeom->detsTIB().size()!=0) 
+    {if(GeomDetEnumerators::isTrackerPixel(theTrackerGeom->geomDetSubDetector(theTrackerGeom->detsTIB().front()->geographicalId().subdetId()))) 
+	addPixelDets( theTrackerGeom->detsTIB()); else addStripDets( theTrackerGeom->detsTIB());} else addStripDets( theTrackerGeom->detsTIB());
+  if(theTrackerGeom->detsTID().size()!=0) 
+    {if(GeomDetEnumerators::isTrackerPixel(theTrackerGeom->geomDetSubDetector(theTrackerGeom->detsTID().front()->geographicalId().subdetId()))) 
+	addPixelDets( theTrackerGeom->detsTID()); else addStripDets( theTrackerGeom->detsTID());} else addStripDets( theTrackerGeom->detsTID());
+  if(theTrackerGeom->detsTOB().size()!=0) 
+    {if(GeomDetEnumerators::isTrackerPixel(theTrackerGeom->geomDetSubDetector(theTrackerGeom->detsTOB().front()->geographicalId().subdetId()))) 
+	addPixelDets( theTrackerGeom->detsTOB()); else addStripDets( theTrackerGeom->detsTOB());} else addStripDets( theTrackerGeom->detsTOB());
+  if(theTrackerGeom->detsTEC().size()!=0) 
+    {if(GeomDetEnumerators::isTrackerPixel(theTrackerGeom->geomDetSubDetector(theTrackerGeom->detsTEC().front()->geographicalId().subdetId()))) 
+	addPixelDets( theTrackerGeom->detsTEC()); else addStripDets( theTrackerGeom->detsTEC());} else addStripDets( theTrackerGeom->detsTEC());
 
   // fist all stripdets
   sortTKD(theStripDets);
@@ -172,14 +188,14 @@ void MeasurementTrackerImpl::addStripDets( const TrackingGeometry::DetContainer&
   for (TrackerGeometry::DetContainer::const_iterator gd=dets.begin();
        gd != dets.end(); gd++) {
 
-    const GeomDetUnit* gdu = dynamic_cast<const GeomDetUnit*>(*gd);
+    auto gdu = (*gd);
 
     //    StripSubdetector stripId( (**gd).geographicalId());
     //     bool isDetUnit( gdu != 0);
     //     cout << "StripSubdetector glued? " << stripId.glued() 
     // 	 << " is DetUnit? " << isDetUnit << endl;
 
-    if (gdu != 0) {
+    if (gdu->isLeaf()) {
       addStripDet(*gd);
     }
     else {

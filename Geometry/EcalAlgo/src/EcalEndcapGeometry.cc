@@ -22,7 +22,7 @@ EcalEndcapGeometry::EcalEndcapGeometry( void )
     m_borderMgr( nullptr ),
     m_borderPtrVec( nullptr ),
     m_avgZ( -1 ),
-    m_check( nullptr ),
+    m_check( false ),
     m_cellVec( k_NumberOfCellsForCorners )
 {
   m_xlo[0] = 999.;
@@ -48,9 +48,9 @@ EcalEndcapGeometry::~EcalEndcapGeometry()
         if(v) delete v;
         v = nullptr;
     }
-    delete m_borderPtrVec ;
+    delete m_borderPtrVec.load() ;
   }
-  delete m_borderMgr ;
+  delete m_borderMgr.load() ;
 }
 
 unsigned int

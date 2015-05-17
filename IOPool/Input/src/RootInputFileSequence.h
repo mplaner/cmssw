@@ -18,15 +18,18 @@ RootInputFileSequence: This is an InputSource
 #include "DataFormats/Provenance/interface/ProcessHistoryID.h"
 
 #include <memory>
+#include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace CLHEP {
-  class RandFlat;
+  class HepRandomEngine;
 }
 
 namespace edm {
 
+  class BranchID;
   class DuplicateChecker;
   class FileCatalogItem;
   class InputFileCatalog;
@@ -46,11 +49,11 @@ namespace edm {
     RootInputFileSequence(RootInputFileSequence const&) = delete; // Disallow copying and moving
     RootInputFileSequence& operator=(RootInputFileSequence const&) = delete; // Disallow copying and moving
 
-    typedef boost::shared_ptr<RootFile> RootFileSharedPtr;
+    typedef std::shared_ptr<RootFile> RootFileSharedPtr;
     void readEvent(EventPrincipal& cache);
-    boost::shared_ptr<LuminosityBlockAuxiliary> readLuminosityBlockAuxiliary_();
+    std::shared_ptr<LuminosityBlockAuxiliary> readLuminosityBlockAuxiliary_();
     void readLuminosityBlock_(LuminosityBlockPrincipal& lumiPrincipal);
-    boost::shared_ptr<RunAuxiliary> readRunAuxiliary_();
+    std::shared_ptr<RunAuxiliary> readRunAuxiliary_();
     void readRun_(RunPrincipal& runPrincipal);
     std::unique_ptr<FileBlock> readFile_();
     void closeFile_();
@@ -59,23 +62,25 @@ namespace edm {
     bool containedInCurrentFile(RunNumber_t run, LuminosityBlockNumber_t lumi, EventNumber_t event) const;
     bool skipEvents(int offset);
     bool goToEvent(EventID const& eventID);
-    bool skipToItem(RunNumber_t run, LuminosityBlockNumber_t lumi, EventNumber_t event, bool currentFileFirst = true);
+    bool skipToItem(RunNumber_t run, LuminosityBlockNumber_t lumi, EventNumber_t event, size_t fileNameHash = 0U, bool currentFileFirst = true);
     bool skipToItemInNewFile(RunNumber_t run, LuminosityBlockNumber_t lumi, EventNumber_t event);
+    bool skipToItemInNewFile(RunNumber_t run, LuminosityBlockNumber_t lumi, EventNumber_t event, size_t fileNameHash);
     void rewind_();
-    void readOneRandom(EventPrincipal& cache);
-    bool readOneRandomWithID(EventPrincipal& cache, LuminosityBlockID const& id);
-    bool readOneSequential(EventPrincipal& cache);
-    bool readOneSequentialWithID(EventPrincipal& cache, LuminosityBlockID const& id);
-    void readOneSpecified(EventPrincipal& cache, EventID const& id);
+    void readOneRandom(EventPrincipal& cache, size_t& fileNameHash, CLHEP::HepRandomEngine*);
+    bool readOneRandomWithID(EventPrincipal& cache, size_t& fileNameHash, LuminosityBlockID const& id, CLHEP::HepRandomEngine*);
+    bool readOneSequential(EventPrincipal& cache, size_t& fileNameHash);
+    bool readOneSequentialWithID(EventPrincipal& cache, size_t& fileNameHash, LuminosityBlockID const& id);
+    void readOneSpecified(EventPrincipal& cache, size_t& fileNameHash, SecondaryEventIDAndFileInfo const& id);
 
     void dropUnwantedBranches_(std::vector<std::string> const& wantedBranches);
-    boost::shared_ptr<ProductRegistry const> fileProductRegistry() const;
-    boost::shared_ptr<BranchIDListHelper const> fileBranchIDListHelper() const;
+    std::shared_ptr<ProductRegistry const> fileProductRegistry() const;
+    std::shared_ptr<BranchIDListHelper const> fileBranchIDListHelper() const;
     ProcessHistoryRegistry const& processHistoryRegistry() const;
     ProcessHistoryRegistry& processHistoryRegistryForUpdate();
     static void fillDescription(ParameterSetDescription & desc);
     ProcessingController::ForwardState forwardState() const;
     ProcessingController::ReverseState reverseState() const;
+    void initAssociationsFromSecondary(std::set<BranchID> const&);
   private:
     void initFile(bool skipBadFiles);
     bool nextFile();
@@ -83,7 +88,7 @@ namespace edm {
     void rewindFile();
     std::vector<FileCatalogItem> const& fileCatalogItems() const;
 
-    boost::shared_ptr<ProductRegistry const> productRegistry() const;
+    std::shared_ptr<ProductRegistry const> productRegistry() const;
     ProcessConfiguration const& processConfiguration() const;
     ProductRegistry & productRegistryUpdate() const;
     int remainingEvents() const;
@@ -94,6 +99,8 @@ namespace edm {
     InputFileCatalog const& catalog_;
     bool firstFile_;
     std::string lfn_;
+    size_t lfnHash_;
+    std::unique_ptr<std::unordered_multimap<size_t, size_t> > findFileForSpecifiedID_;
     std::vector<FileCatalogItem>::const_iterator fileIterBegin_;
     std::vector<FileCatalogItem>::const_iterator fileIterEnd_;
     std::vector<FileCatalogItem>::const_iterator fileIter_;
@@ -101,21 +108,22 @@ namespace edm {
     RootFileSharedPtr rootFile_;
     BranchDescription::MatchMode branchesMustMatch_;
 
-    std::unique_ptr<CLHEP::RandFlat> flatDistribution_;
-    std::vector<boost::shared_ptr<IndexIntoFile> > indexesIntoFiles_;
+    std::vector<std::shared_ptr<IndexIntoFile> > indexesIntoFiles_;
     std::vector<ProcessHistoryID> orderedProcessHistoryIDs_;
+    std::vector<BranchID> associationsFromSecondary_;
 
     unsigned int nStreams_; 
-    boost::shared_ptr<EventSkipperByID> eventSkipperByID_;
+    std::shared_ptr<EventSkipperByID> eventSkipperByID_;
     int eventsRemainingInFile_;
     int initialNumberOfEventsToSkip_;
     bool noEventSort_;
     bool skipBadFiles_;
+    bool bypassVersionCheck_;
     unsigned int treeCacheSize_;
     int const treeMaxVirtualSize_;
     RunNumber_t setRun_;
     ProductSelectorRules productSelectorRules_;
-    boost::shared_ptr<DuplicateChecker> duplicateChecker_;
+    std::shared_ptr<DuplicateChecker> duplicateChecker_;
     bool dropDescendants_;
     bool labelRawDataLikeMC_;
     bool usingGoToEvent_;

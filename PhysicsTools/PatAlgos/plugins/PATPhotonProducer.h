@@ -20,17 +20,33 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
+
 #include "CommonTools/Utils/interface/EtComparator.h"
 
 #include "DataFormats/PatCandidates/interface/Photon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHit.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 
 #include "PhysicsTools/PatAlgos/interface/MultiIsolator.h"
 #include "PhysicsTools/PatAlgos/interface/EfficiencyLoader.h"
 #include "PhysicsTools/PatAlgos/interface/KinResolutionsLoader.h"
 
+#include "Geometry/CaloTopology/interface/CaloSubdetectorTopology.h"
+#include "Geometry/CaloTopology/interface/CaloTopology.h"
+
 
 #include "DataFormats/PatCandidates/interface/UserData.h"
 #include "PhysicsTools/PatAlgos/interface/PATUserDataHelper.h"
+
+#include "RecoEgamma/EgammaTools/interface/EcalClusterLocal.h"
+#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 
 namespace pat {
 
@@ -49,7 +65,24 @@ namespace pat {
 
       // configurables
       edm::EDGetTokenT<edm::View<reco::Photon> > photonToken_;
+      edm::EDGetTokenT<reco::GsfElectronCollection> electronToken_;
+      edm::EDGetTokenT<reco::ConversionCollection> hConversionsToken_;
+      edm::EDGetTokenT<reco::BeamSpot> beamLineToken_;
+
       bool embedSuperCluster_;
+      bool          embedSeedCluster_;
+      bool          embedBasicClusters_;
+      bool          embedPreshowerClusters_;
+      bool          embedRecHits_;
+
+      edm::InputTag reducedBarrelRecHitCollection_;
+      edm::EDGetTokenT<EcalRecHitCollection> reducedBarrelRecHitCollectionToken_;
+      edm::InputTag reducedEndcapRecHitCollection_;
+      edm::EDGetTokenT<EcalRecHitCollection> reducedEndcapRecHitCollectionToken_;      
+      
+      bool addPFClusterIso_;
+      edm::EDGetTokenT<edm::ValueMap<float> > ecalPFClusterIsoT_;
+      edm::EDGetTokenT<edm::ValueMap<float> > hcalPFClusterIsoT_;
 
       bool addGenMatch_;
       bool embedGenMatch_;
@@ -91,6 +124,11 @@ namespace pat {
 
       bool useUserData_;
       pat::PATUserDataHelper<pat::Photon>      userDataHelper_;
+      
+      const CaloTopology * ecalTopology_;
+      const CaloGeometry * ecalGeometry_;
+      EcalClusterLocal ecl_;
+
 
   };
 

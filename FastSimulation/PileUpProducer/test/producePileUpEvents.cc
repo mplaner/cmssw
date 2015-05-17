@@ -1,6 +1,6 @@
 // user include files
 //#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -18,7 +18,6 @@
 //#include "FastSimulation/Event/interface/FSimVertex.h"
 #include "FastSimulation/Particle/interface/ParticleTable.h"
 #include "FastSimDataFormats/PileUpEvents/interface/PUEvent.h"
-#include "FastSimulation/Utilities/interface/RandomEngineAndDistribution.h"
 
 #include <vector>
 #include <string>
@@ -26,7 +25,7 @@
 #include "TTree.h"
 #include "TProcessID.h"
 
-class producePileUpEvents : public edm::EDProducer {
+class producePileUpEvents : public edm::stream::EDProducer <>{
 
 public :
   explicit producePileUpEvents(const edm::ParameterSet&);
@@ -136,7 +135,7 @@ void producePileUpEvents::beginRun(edm::Run const&, edm::EventSetup const& es)
   // init Particle data table (from Pythia)
   edm::ESHandle < HepPDT::ParticleDataTable > pdt;
   es.getData(pdt);
-  if ( !ParticleTable::instance() ) ParticleTable::instance(&(*pdt));
+  
   mySimEvent->initializePdt(&(*pdt));
 
 }
@@ -144,7 +143,7 @@ void producePileUpEvents::beginRun(edm::Run const&, edm::EventSetup const& es)
 void
 producePileUpEvents::produce(edm::Event& iEvent, const edm::EventSetup& iSetup )
 {
-
+  ParticleTable::Sentry(mySimEvent->theTable());
   ++totalPU;
   if ( totalPU/1000*1000 == totalPU ) 
     std::cout << "Number of events produced "
@@ -162,8 +161,7 @@ producePileUpEvents::produce(edm::Event& iEvent, const edm::EventSetup& iSetup )
   const HepMC::GenEvent* myGenEvent = evtSource->GetEvent();
   edm::EventID id(1,1,totalPU);
 
-  RandomEngineAndDistribution random(iEvent.streamID());
-  mySimEvent->fill(*myGenEvent,id, &random);
+  mySimEvent->fill(*myGenEvent,id);
   
   //  mySimEvent->print();
   

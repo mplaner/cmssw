@@ -53,9 +53,6 @@ PFEGammaFilters::PFEGammaFilters(float ph_Et,
   ele_maxEeleOverPout(ele_protectionsForJetMET.getParameter<double>("maxEeleOverPout")), 
   ele_maxDPhiIN(ele_protectionsForJetMET.getParameter<double>("maxDPhiIN"))
 {
-
-  ele_iso_mvaID_= new ElectronMVAEstimator(ele_iso_path_mvaWeightFile);
-
 }
 
 bool PFEGammaFilters::passPhotonSelection(const reco::Photon & photon) {
@@ -101,18 +98,18 @@ bool PFEGammaFilters::passElectronSelection(const reco::GsfElectron & electron,
     double isoDr03 = electron.dr03TkSumPt() + electron.dr03EcalRecHitSumEt() + electron.dr03HcalTowerSumEt();
     double eleEta = fabs(electron.eta());
     if (eleEta <= 1.485 && isoDr03 < ele_iso_combIso_eb_) {
-      if( ele_iso_mvaID_->mva( electron, nVtx ) > ele_iso_mva_eb_ ) 
+      if( electron.mva_Isolated() > ele_iso_mva_eb_ ) 
 	passEleSelection = true;
     }
     else if (eleEta > 1.485  && isoDr03 < ele_iso_combIso_ee_) {
-      if( ele_iso_mvaID_->mva( electron, nVtx ) > ele_iso_mva_ee_ ) 
+      if( electron.mva_Isolated() > ele_iso_mva_ee_ ) 
 	passEleSelection = true;
     }
 
   }
 
   //  cout << " My OLD MVA " << pfcand.mva_e_pi() << " MyNEW MVA " << electron.mva() << endl;
-  if(electron.mva() > ele_noniso_mva_) {
+  if(electron.mva_e_pi() > ele_noniso_mva_) {
     passEleSelection = true; 
   }
   
@@ -121,7 +118,7 @@ bool PFEGammaFilters::passElectronSelection(const reco::GsfElectron & electron,
 
 bool PFEGammaFilters::isElectron(const reco::GsfElectron & electron) {
  
-  unsigned int nmisshits = electron.gsfTrack()->trackerExpectedHitsInner().numberOfLostHits();
+  unsigned int nmisshits = electron.gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS);
   if(nmisshits > ele_missinghits_)
     return false;
 
@@ -194,7 +191,7 @@ bool PFEGammaFilters::isElectronSafeForJetMET(const reco::GsfElectron & electron
       unsigned int Algo = whichTrackAlgo(trackref);
       // iter0, iter1, iter2, iter3 = Algo < 3
       // algo 4,5,6,7
-      int nexhits = trackref->trackerExpectedHitsInner().numberOfLostHits();  
+      int nexhits = trackref->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS); 
       
       bool trackIsFromPrimaryVertex = false;
       for (Vertex::trackRef_iterator trackIt = primaryVertex.tracks_begin(); trackIt != primaryVertex.tracks_end(); ++trackIt) {
@@ -327,16 +324,16 @@ bool PFEGammaFilters::isPhotonSafeForJetMET(const reco::Photon & photon, const r
       reco::TrackRef trackref = pfele.trackRef();
       
       if(debugSafeForJetMET)
-	cout << "PFEGammaFilters::isPhotonSafeForJetMET photon track:pt " << trackref->pt() << " SingleLegSize " << pfcandextra->singleLegConvTrackRef().size() << endl;
+	cout << "PFEGammaFilters::isPhotonSafeForJetMET photon track:pt " << trackref->pt() << " SingleLegSize " << pfcandextra->singleLegConvTrackRefMva().size() << endl;
    
       
       //const std::vector<reco::TrackRef>&  mySingleLeg = 
       bool singleLegConv = false;
-      for(unsigned int iconv =0; iconv<pfcandextra->singleLegConvTrackRef().size(); iconv++) {
+      for(unsigned int iconv =0; iconv<pfcandextra->singleLegConvTrackRefMva().size(); iconv++) {
 	if(debugSafeForJetMET)
-	  cout << "PFEGammaFilters::SingleLeg track:pt " << (pfcandextra->singleLegConvTrackRef()[iconv])->pt() << endl;
+	  cout << "PFEGammaFilters::SingleLeg track:pt " << (pfcandextra->singleLegConvTrackRefMva()[iconv].first)->pt() << endl;
 	
-	if(pfcandextra->singleLegConvTrackRef()[iconv] == trackref) {
+	if(pfcandextra->singleLegConvTrackRefMva()[iconv].first == trackref) {
 	  singleLegConv = true;
 	  if(debugSafeForJetMET)
 	    cout << "PFEGammaFilters::isPhotonSafeForJetMET: SingleLeg conv track " << endl;
@@ -368,21 +365,24 @@ unsigned int PFEGammaFilters::whichTrackAlgo(const reco::TrackRef& trackRef) {
   unsigned int Algo = 0; 
   switch (trackRef->algo()) {
   case TrackBase::ctf:
-  case TrackBase::iter0:
-  case TrackBase::iter1:
-  case TrackBase::iter2:
+  case TrackBase::initialStep:
+  case TrackBase::lowPtTripletStep:
+  case TrackBase::pixelPairStep:
+  case TrackBase::jetCoreRegionalStep:
+  case TrackBase::muonSeededStepInOut:
+  case TrackBase::muonSeededStepOutIn:
     Algo = 0;
     break;
-  case TrackBase::iter3:
+  case TrackBase::detachedTripletStep:
     Algo = 1;
     break;
-  case TrackBase::iter4:
+  case TrackBase::mixedTripletStep:
     Algo = 2;
     break;
-  case TrackBase::iter5:
+  case TrackBase::pixelLessStep:
     Algo = 3;
     break;
-  case TrackBase::iter6:
+  case TrackBase::tobTecStep:
     Algo = 4;
     break;
   default:

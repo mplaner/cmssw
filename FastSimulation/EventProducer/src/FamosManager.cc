@@ -37,6 +37,7 @@
 #include "FastSimulation/Calorimetry/interface/CalorimetryManager.h"
 #include "FastSimulation/CaloGeometryTools/interface/CaloGeometryHelper.h"  
 #include "SimDataFormats/CrossingFrame/interface/CrossingFrame.h"
+#include "FastSimulation/ShowerDevelopment/interface/FastHFShowerLibrary.h"
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -56,8 +57,7 @@ FamosManager::FamosManager(edm::ParameterSet const & p)
 {
   // Initialize the FSimEvent
   mySimEvent = 
-    new FSimEvent(p.getParameter<edm::ParameterSet>("VertexGenerator"),
-		  p.getParameter<edm::ParameterSet>("ParticleFilter"));
+    new FSimEvent(p.getParameter<edm::ParameterSet>("ParticleFilter"));
 
   /// Initialize the TrajectoryManager
   myTrajectoryManager = 
@@ -94,8 +94,7 @@ FamosManager::setupGeometryAndField(edm::Run const& run, const edm::EventSetup &
   edm::ESHandle < HepPDT::ParticleDataTable > pdt;
   es.getData(pdt);
   mySimEvent->initializePdt(&(*pdt));
-  ParticleTable::instance(&(*pdt));
-
+  
   // Initialize the full (misaligned) tracker geometry 
   // (only if tracking is requested)
   std::string misAligned = m_Alignment ? "MisAligned" : "";
@@ -143,6 +142,8 @@ FamosManager::setupGeometryAndField(edm::Run const& run, const edm::EventSetup &
     es.get<CaloTopologyRecord>().get(theCaloTopology);     
     myCalorimetry->getCalorimeter()->setupTopology(*theCaloTopology);
     myCalorimetry->getCalorimeter()->initialize(bField000);
+
+    myCalorimetry->getHFShowerLibrary()->initHFShowerLibrary(es);
   }
 
   m_pRunNumber = run.run();
@@ -157,7 +158,6 @@ FamosManager::reconstruct(const HepMC::GenEvent* evt,
 			  const TrackerTopology *tTopo,
                           RandomEngineAndDistribution const* random)
 {
-
   //  myGenEvent = evt;
   
   if (evt != 0 || particles != 0) {
@@ -167,10 +167,10 @@ FamosManager::reconstruct(const HepMC::GenEvent* evt,
 
     // Fill the event from the original generated event
     if (evt ) 
-      mySimEvent->fill(*evt,id, random);
+      mySimEvent->fill(*evt,id);
     
     else 
-      mySimEvent->fill(*particles,id, random);
+      mySimEvent->fill(*particles,id);
     
     //    mySimEvent->printMCTruth(*evt);
     /*
@@ -209,7 +209,7 @@ FamosManager::reconstruct(const HepMC::GenEvent* evt,
 void FamosManager::reconstruct(const reco::GenParticleCollection* particles, const TrackerTopology *tTopo, RandomEngineAndDistribution const* random){
   iEvent++;
   edm::EventID id(m_pRunNumber,1U,iEvent);
-  mySimEvent->fill(*particles, id, random);
+  mySimEvent->fill(*particles, id);
   myTrajectoryManager->reconstruct(tTopo, random);
   if ( myCalorimetry ) myCalorimetry->reconstruct(random);
 }

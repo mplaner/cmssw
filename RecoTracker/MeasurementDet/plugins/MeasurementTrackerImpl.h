@@ -29,10 +29,6 @@
 #include <unordered_map>
 #include <vector>
 
-class StrictWeakOrdering{
- public:
-  bool operator() ( uint32_t p,const uint32_t& i) const {return p < i;}
-};
 
 class TkStripMeasurementDet;
 class TkPixelMeasurementDet;
@@ -42,7 +38,7 @@ class SiStripRecHitMatcher;
 class GluedGeomDet;
 class SiPixelFedCabling;
 
-class MeasurementTrackerImpl : public MeasurementTracker {
+class dso_hidden MeasurementTrackerImpl final : public MeasurementTracker {
 public:
    enum QualityFlags { BadModules=1, // for everybody
                        /* Strips: */ BadAPVFibers=2, BadStrips=4, MaskBad128StripBlocks=8, 
@@ -60,8 +56,7 @@ public:
                      const SiPixelQuality *pixelQuality,
                      const SiPixelFedCabling *pixelCabling,
                      int   pixelQualityFlags,
-                     int   pixelQualityDebugFlags,
-		     bool  isRegional=false);
+                     int   pixelQualityDebugFlags);
 
   virtual ~MeasurementTrackerImpl();
  
@@ -70,13 +65,12 @@ public:
   const GeometricSearchTracker* geometricSearchTracker() const {return theGeometricSearchTracker;}
 
   /// MeasurementDetSystem interface  (won't be overloaded anymore)
-  virtual MeasurementDetWithData 
+  MeasurementDetWithData 
   idToDet(const DetId& id, const MeasurementTrackerEvent &data) const {
     return MeasurementDetWithData(*idToDetBare(id, data), data);
   }
 
-  /// This interface  (will be overloaded by the OnDemand one)
-  virtual const MeasurementDet * 
+  const MeasurementDet * 
   idToDetBare(const DetId& id, const MeasurementTrackerEvent &data) const {
     return findDet(id);
   }

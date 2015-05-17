@@ -23,7 +23,6 @@
 #include <map>
 
 using namespace std;
-using namespace ctfseeding;
 
 typedef PixelRecoRange<float> Range;
 
@@ -39,9 +38,9 @@ namespace {
 
 constexpr double nSigmaRZ = 3.4641016151377544; // sqrt(12.)
 constexpr double nSigmaPhi = 3.;
-static float fnSigmaRZ = std::sqrt(12.f);
+static const float fnSigmaRZ = std::sqrt(12.f);
 
-PixelTripletLargeTipGenerator::PixelTripletLargeTipGenerator(const edm::ParameterSet& cfg)
+PixelTripletLargeTipGenerator::PixelTripletLargeTipGenerator(const edm::ParameterSet& cfg, edm::ConsumesCollector& iC)
   : thePairGenerator(0),
     theLayerCache(0),
     useFixedPreFiltering(cfg.getParameter<bool>("useFixedPreFiltering")),
@@ -55,14 +54,17 @@ PixelTripletLargeTipGenerator::PixelTripletLargeTipGenerator(const edm::Paramete
 }
 
 void PixelTripletLargeTipGenerator::init(const HitPairGenerator & pairs,
-					 const std::vector<SeedingLayer> &layers,
 					 LayerCacheType *layerCache)
 {
   thePairGenerator = pairs.clone();
-  theLayers = layers;
   theLayerCache = layerCache;
 }
 
+void PixelTripletLargeTipGenerator::setSeedingLayers(SeedingLayerSetsHits::SeedingLayerSet pairLayers,
+                                                     std::vector<SeedingLayerSetsHits::SeedingLayer> thirdLayers) {
+  thePairGenerator->setSeedingLayers(pairLayers);
+  theLayers = thirdLayers;
+}
 
 namespace {
   inline
@@ -105,17 +107,22 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
   std::vector<NodeInfo > layerTree; // re-used throughout
   std::vector<unsigned int> foundNodes; // re-used throughout
   foundNodes.reserve(100);
+  #ifdef __clang__
+  std::vector<KDTreeLinkerAlgo<unsigned int>> hitTree(size);
+  std::vector<LayerRZPredictions> mapPred(size);
+  #else
   KDTreeLinkerAlgo<unsigned int> hitTree[size];
+  LayerRZPredictions mapPred[size];
+  #endif
 
   float rzError[size]; //save maximum errors
   float maxphi = Geom::ftwoPi(), minphi = -maxphi; //increase to cater for any range
 
-  LayerRZPredictions mapPred[size];
 
   const RecHitsSortedInPhi * thirdHitMap[size];
 
   for(int il = 0; il < size; il++) {
-    thirdHitMap[il] = &(*theLayerCache)(&theLayers[il], region, ev, es);
+    thirdHitMap[il] = &(*theLayerCache)(theLayers[il], region, ev, es);
     auto const & hits = *thirdHitMap[il];
  
     const DetLayer *layer = theLayers[il].detLayer();
@@ -300,7 +307,7 @@ void PixelTripletLargeTipGenerator::hitTriplets(const TrackingRegion& region,
       MatchedHitRZCorrectionFromBending l2rzFixup(doublets.hit(ip,HitDoublets::outer)->det()->geographicalId(), tTopo);
       MatchedHitRZCorrectionFromBending l3rzFixup = predRZ.rzPositionFixup;
 
-      thirdHitMap[il] = &(*theLayerCache)(&theLayers[il], region, ev, es);
+      thirdHitMap[il] = &(*theLayerCache)(theLayers[il], region, ev, es);
       auto const & hits = *thirdHitMap[il];
       for (auto KDdata : foundNodes) {
 	GlobalPoint p3 = hits.gp(KDdata); 

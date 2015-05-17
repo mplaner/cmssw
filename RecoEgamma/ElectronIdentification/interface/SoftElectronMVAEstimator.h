@@ -12,7 +12,8 @@
 class SoftElectronMVAEstimator {
  public:
   struct Configuration{
-	std::vector<std::string> vweightsfiles;
+    std::vector<std::string> vweightsfiles;
+    edm::EDGetTokenT<reco::VertexCollection> vtxCollection;
   };
   SoftElectronMVAEstimator(const Configuration & );
   ~SoftElectronMVAEstimator() ;
@@ -27,7 +28,7 @@ class SoftElectronMVAEstimator {
     std::vector<std::string> mvaWeightFiles_;
     std::vector<TMVA::Reader*> fmvaReader;
     TMVA::Reader*    tmvaReader_;
-
+    
     Float_t                    fbrem;
     Float_t                    EtotOvePin;
     Float_t                    EBremOverDeltaP;
@@ -49,7 +50,7 @@ class SoftElectronMVAEstimator {
     Float_t                    OneMinusE1x5E5x5;
 
     Float_t                    HoE;
-    Float_t                    EoP;
+    //Float_t                    EoP; //Not being used
     Float_t                    eleEoPout;
 
     Float_t 			spp;

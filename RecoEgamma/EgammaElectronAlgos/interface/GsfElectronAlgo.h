@@ -48,7 +48,7 @@ class EcalClusterFunctionBaseClass ;
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgoRcd.h"
 
 #include "RecoEgamma/ElectronIdentification/interface/SoftElectronMVAEstimator.h"
-
+#include "RecoEgamma/ElectronIdentification/interface/ElectronMVAEstimator.h"
 
 #include <list>
 #include <string>
@@ -204,7 +204,8 @@ class GsfElectronAlgo {
       const EcalRecHitsConfiguration &,
       EcalClusterFunctionBaseClass * superClusterErrorFunction,
       EcalClusterFunctionBaseClass * crackCorrectionFunction,
-      const SoftElectronMVAEstimator::Configuration & mvaCfg,	
+      const SoftElectronMVAEstimator::Configuration & mva_NIso_Cfg,
+      const ElectronMVAEstimator::Configuration & mva_Iso_Cfg,	
       const RegressionHelper::Configuration & regCfg
       ) ;
 
@@ -219,7 +220,7 @@ class GsfElectronAlgo {
     void displayInternalElectrons( const std::string & title ) const ;
     void clonePreviousElectrons() ;
     void completeElectrons() ; // do not redo cloned electrons done previously
-    void addPflowInfo() ;
+    void addPflowInfo() ; // now deprecated
     void setAmbiguityData( bool ignoreNotPreselected = true ) ;
     void removeNotPreselectedElectrons() ;
     void removeAmbiguousElectrons() ;
@@ -247,10 +248,15 @@ class GsfElectronAlgo {
     void setPflowPreselectionFlag( reco::GsfElectron * ele ) ;
     bool isPreselected( reco::GsfElectron * ele ) ;
     void calculateShowerShape( const reco::SuperClusterRef &, bool pflow, reco::GsfElectron::ShowerShape & ) ;
+    void calculateShowerShape_full5x5( const reco::SuperClusterRef &, bool pflow, reco::GsfElectron::ShowerShape & ) ;
 
 
     // associations
     const reco::SuperClusterRef getTrSuperCluster( const reco::GsfTrackRef & trackRef ) ;
+    
+    // Pixel match variables
+    void setPixelMatchInfomation(reco::GsfElectron*) ;
+    
  } ;
 
 #endif // GsfElectronAlgo_H

@@ -1,36 +1,5 @@
-// -*-C++-*-
 #ifndef L1TRCT_H
 #define L1TRCT_H
-
-/*
- * \file L1TRCT.h
- *
- * \author P. Wittich
- *
- * Revision 1.7  2009/11/19 14:34:14  puigh
- * modify beginJob
- *
- * Revision 1.6  2008/11/08 08:45:42  asavin
- * changing the fine grain to HfPlusTau
- *
- * Revision 1.5  2008/07/02 16:53:20  asavin
- * new L1TRCT.h
- *
- * Revision 1.4  2008/03/01 00:40:00  lat
- * DQM core migration.
- *
- * Revision 1.3  2007/09/03 15:14:42  wittich
- * updated RCT with more diagnostic and local coord histos
- *
- * Revision 1.2  2007/02/23 21:58:43  wittich
- * change getByType to getByLabel and add InputTag
- *
- * Revision 1.1  2007/02/19 22:49:53  wittich
- * - Add RCT monitor
- *
- *
- *
-*/
 
 // system include files
 #include <memory>
@@ -58,6 +27,8 @@
 #include "DQMServices/Core/interface/DQMStore.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
 
+#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
+
 
 // GCT and RCT data formats
 #include "DataFormats/L1CaloTrigger/interface/L1CaloCollections.h"
@@ -66,7 +37,7 @@
 // class declaration
 //
 
-class L1TRCT : public edm::EDAnalyzer {
+class L1TRCT : public DQMEDAnalyzer {
 
 public:
 
@@ -78,20 +49,14 @@ public:
 
 protected:
 // Analyze
- void analyze(const edm::Event& e, const edm::EventSetup& c);
+  void analyze(const edm::Event& e, const edm::EventSetup& c);
 
-// BeginRun
-  void beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup);
-
-// BeginJob
- void beginJob(void);
-
-// EndJob
-void endJob(void);
-
+  virtual void dqmBeginRun(const edm::Run&, const edm::EventSetup&);
+  virtual void beginLuminosityBlock(const edm::LuminosityBlock&, const edm::EventSetup&);
+  virtual void bookHistograms(DQMStore::IBooker &ibooker, edm::Run const&, edm::EventSetup const&) override ;
+ 
 private:
   // ----------member data ---------------------------
-  DQMStore * dbe;
 
   // trigger type information
   MonitorElement *triggerType_;
@@ -107,7 +72,6 @@ private:
 
   // Region rank
   MonitorElement* rctRegionRank_;
-
 
   MonitorElement* rctOverFlowEtaPhi_;
   MonitorElement* rctTauVetoEtaPhi_;
@@ -130,6 +94,8 @@ private:
   MonitorElement* rctNonIsoEmOccEtaPhi_;
   MonitorElement* rctIsoEmRank_;
   MonitorElement* rctNonIsoEmRank_;
+  MonitorElement* runId_;
+  MonitorElement* lumisecId_;
 
 
   int nev_; // Number of events processed

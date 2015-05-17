@@ -160,8 +160,11 @@ gedGsfElectronsTmp = cms.EDProducer("GEDGsfElectronProducer",
    # Iso Values 
    useIsolationValues = cms.bool(False),
  SoftElecMVAFilesString = cms.vstring(
-    "RecoEgamma/ElectronIdentification/data/TMVA_BDTSoftElectrons_27Jan2014.weights.xml"
+    "RecoEgamma/ElectronIdentification/data/TMVA_BDTSoftElectrons_7Feb2014.weights.xml"
                                 ),
+ ElecMVAFilesString = cms.vstring(
+     "RecoEgamma/ElectronIdentification/data/TMVA_BDTSimpleCat_17Feb2011.weights.xml"
+                                 ),
 )
 
 

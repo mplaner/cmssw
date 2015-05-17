@@ -11,13 +11,13 @@
 //---------------------------------------------------------------------------
 
 // Framework
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
 // Data Formats
 #include "FastSimDataFormats/External/interface/FastTrackerClusterCollection.h"
 //Strip and Pixel Cluster Collection
-#include "DataFormats/SiStripCluster/interface/SiStripClusterCollection.h"
+#include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
 #include "DataFormats/SiPixelCluster/interface/SiPixelCluster.h"
 #include "SimDataFormats/TrackerDigiSimLink/interface/StripDigiSimLink.h"
 #include "SimDataFormats/TrackerDigiSimLink/interface/PixelDigiSimLink.h"
@@ -33,7 +33,7 @@ namespace edm {
   class EventSetup;
 }
 
-class SiClusterTranslator : public edm::EDProducer
+class SiClusterTranslator : public edm::stream::EDProducer <>
 {
  public:
   //--- Constructor, virtual destructor (just in case)

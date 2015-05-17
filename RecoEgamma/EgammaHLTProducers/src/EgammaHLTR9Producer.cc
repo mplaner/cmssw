@@ -14,16 +14,11 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
-EgammaHLTR9Producer::EgammaHLTR9Producer(const edm::ParameterSet& config) : conf_(config)
-{
- // use configuration file to setup input/output collection names
-  recoEcalCandidateProducer_ = consumes<reco::RecoEcalCandidateCollection>(conf_.getParameter<edm::InputTag>("recoEcalCandidateProducer"));
-  ecalRechitEBTag_ = conf_.getParameter< edm::InputTag > ("ecalRechitEB");
-  ecalRechitEETag_ = conf_.getParameter< edm::InputTag > ("ecalRechitEE");
-  ecalRechitEBToken_ = consumes<EcalRecHitCollection>(ecalRechitEBTag_);
-  ecalRechitEEToken_ = consumes<EcalRecHitCollection>(ecalRechitEETag_);
-
-  useSwissCross_   = conf_.getParameter< bool > ("useSwissCross");
+EgammaHLTR9Producer::EgammaHLTR9Producer(const edm::ParameterSet& config):
+  recoEcalCandidateProducer_(consumes<reco::RecoEcalCandidateCollection> (config.getParameter<edm::InputTag>("recoEcalCandidateProducer"))),
+  ecalRechitEBToken_(consumes<EcalRecHitCollection>(config.getParameter< edm::InputTag > ("ecalRechitEB"))),
+  ecalRechitEEToken_(consumes<EcalRecHitCollection>(config.getParameter< edm::InputTag > ("ecalRechitEE"))),
+  useSwissCross_(config.getParameter< bool > ("useSwissCross")) {
 
   //register your products
   produces < reco::RecoEcalCandidateIsolationMap >();
@@ -45,13 +40,13 @@ void EgammaHLTR9Producer::fillDescriptions(edm::ConfigurationDescriptions& descr
 }
 
 
-void EgammaHLTR9Producer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void EgammaHLTR9Producer::produce(edm::StreamID sid, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   
   // Get the HLT filtered objects
   edm::Handle<reco::RecoEcalCandidateCollection> recoecalcandHandle;
   iEvent.getByToken(recoEcalCandidateProducer_,recoecalcandHandle);
 
-  EcalClusterLazyTools lazyTools(iEvent, iSetup, ecalRechitEBTag_, ecalRechitEETag_);
+  EcalClusterLazyTools lazyTools(iEvent, iSetup, ecalRechitEBToken_, ecalRechitEEToken_);
   
   reco::RecoEcalCandidateIsolationMap r9Map;
    

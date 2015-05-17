@@ -26,9 +26,6 @@ namespace edm {
   }
 
   Event::~Event() {
-   // anything left here must be the result of a failure
-   // let's record them as failed attempts in the event principal
-    for_all(putProducts_, principal_get_adapter_detail::deleter());
   }
 
   Event::CacheIdentifier_t
@@ -161,14 +158,12 @@ namespace edm {
       if(!sameAsPrevious) {
         ProductProvenance prov(pit->second->branchID(), gotBranchIDVector);
         *previousParentageId = prov.parentageID();
-        ep.put(*pit->second, pit->first, prov);
+  	ep.put(*pit->second, std::move(pit->first), prov);
         sameAsPrevious = true;
       } else {
         ProductProvenance prov(pit->second->branchID(), *previousParentageId);
-        ep.put(*pit->second, pit->first, prov);
+  	ep.put(*pit->second, std::move(pit->first), prov);
       }
-      // Ownership has passed, so clear the pointer.
-      pit->first.reset(); 
       ++pit;
     }
 
@@ -194,6 +189,15 @@ namespace edm {
   BasicHandle
   Event::getByLabelImpl(std::type_info const&, std::type_info const& iProductType, const InputTag& iTag) const {
     BasicHandle h = provRecorder_.getByLabel_(TypeID(iProductType), iTag, moduleCallingContext_);
+    if(h.isValid()) {
+      addToGotBranchIDs(*(h.provenance()));
+    }
+    return h;
+  }
+
+  BasicHandle
+  Event::getImpl(std::type_info const&, ProductID const& pid) const {
+    BasicHandle h = this->getByProductID_(pid);
     if(h.isValid()) {
       addToGotBranchIDs(*(h.provenance()));
     }

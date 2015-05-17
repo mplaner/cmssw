@@ -1,12 +1,10 @@
 #include "FWCore/Services/src/InitRootHandlers.h"
 
 #include "DataFormats/Common/interface/RefCoreStreamer.h"
-#include "DataFormats/Streamer/interface/StreamedProductStreamer.h"
 #include "FWCore/MessageLogger/interface/ELseverityLevel.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/PluginManager/interface/PluginCapabilities.h"
-#include "FWCore/RootAutoLibraryLoader/interface/RootAutoLibraryLoader.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/DictionaryTools.h"
@@ -17,15 +15,18 @@
 #include <sstream>
 #include <string.h>
 
-#include "Cintex/Cintex.h"
-#include "G__ci.h"
 #include "TROOT.h"
 #include "TError.h"
 #include "TFile.h"
+#include "TInterpreter.h"
 #include "TH1.h"
 #include "TSystem.h"
 #include "TUnixSystem.h"
 #include "TTree.h"
+#include "TVirtualStreamerInfo.h"
+
+#include "TThread.h"
+#include "TClassTable.h"
 
 namespace {
   enum class SeverityLevel {
@@ -37,6 +38,8 @@ namespace {
   };
   
   static thread_local bool s_ignoreWarnings = false;
+
+  static bool s_ignoreEverything = false;
 
   void RootErrorHandlerImpl(int level, char const* location, char const* message) {
 
@@ -54,6 +57,10 @@ namespace {
       el_severity = SeverityLevel::kError;
     } else if (level >= kWarning) {
       el_severity = s_ignoreWarnings ? SeverityLevel::kInfo : SeverityLevel::kWarning;
+    }
+
+    if(s_ignoreEverything) {
+      el_severity = SeverityLevel::kInfo;
     }
 
   // Adapt C-strings to std::strings
@@ -112,11 +119,18 @@ namespace {
           (el_message.find("already in TClassTable") != std::string::npos) ||
           (el_message.find("matrix not positive definite") != std::string::npos) ||
           (el_message.find("not a TStreamerInfo object") != std::string::npos) ||
+          (el_message.find("Problems declaring payload") != std::string::npos) ||
+          (el_message.find("Announced number of args different from the real number of argument passed") != std::string::npos) || // Always printed if gDebug>0 - regardless of whether warning message is real.
           (el_location.find("Fit") != std::string::npos) ||
           (el_location.find("TDecompChol::Solve") != std::string::npos) ||
           (el_location.find("THistPainter::PaintInit") != std::string::npos) ||
           (el_location.find("TUnixSystem::SetDisplay") != std::string::npos) ||
-          (el_location.find("TGClient::GetFontByName") != std::string::npos)) {
+          (el_location.find("TGClient::GetFontByName") != std::string::npos) ||
+	        (el_message.find("nbins is <=0 - set to nbins = 1") != std::string::npos) ||
+	        (el_message.find("nbinsy is <=0 - set to nbinsy = 1") != std::string::npos) ||
+          (level < kError and
+           (el_location.find("CINTTypedefBuilder::Setup")!= std::string::npos) and
+           (el_message.find("possible entries are in use!") != std::string::npos))) {
         el_severity = SeverityLevel::kInfo;
       }
 
@@ -201,8 +215,10 @@ namespace edm {
       : RootHandlers(),
         unloadSigHandler_(pset.getUntrackedParameter<bool> ("UnloadRootSigHandler")),
         resetErrHandler_(pset.getUntrackedParameter<bool> ("ResetRootErrHandler")),
-        autoLibraryLoader_(pset.getUntrackedParameter<bool> ("AutoLibraryLoader")) {
-
+        loadAllDictionaries_(pset.getUntrackedParameter<bool>("LoadAllDictionaries")),
+        autoLibraryLoader_(loadAllDictionaries_ or pset.getUntrackedParameter<bool> ("AutoLibraryLoader"))
+    {
+      
       if(unloadSigHandler_) {
       // Deactivate all the Root signal handlers and restore the system defaults
         gSystem->ResetSignal(kSigChild);
@@ -243,23 +259,19 @@ namespace edm {
 
       // Enable automatic Root library loading.
       if(autoLibraryLoader_) {
-        RootAutoLibraryLoader::enable();
+        gInterpreter->SetClassAutoloading(1);
       }
-
-      // Enable Cintex.
-      ROOT::Cintex::Cintex::Enable();
 
       // Set ROOT parameters.
       TTree::SetMaxTreeSize(kMaxLong64);
       TH1::AddDirectory(kFALSE);
-      G__SetCatchException(0);
+      //G__SetCatchException(0);
 
       // Set custom streamers
       setRefCoreStreamer();
-      setStreamedProductStreamer();
 
       // Load the library containing dictionaries for std:: classes, if not already loaded.
-      if (!TypeWithDict(typeid(std::vector<std::vector<unsigned int> >)).hasDictionary()) {
+      if (!hasDictionary(typeid(std::vector<std::vector<unsigned int> >))) {
          edmplugin::PluginCapabilities::get()->load(dictionaryPlugInPrefix() + "std::vector<std::vector<unsigned int> >");
       }
 
@@ -271,13 +283,31 @@ namespace edm {
 
     InitRootHandlers::~InitRootHandlers () {
       // close all open ROOT files
-      // We get a new iterator each time,
-      // because closing a file can invalidate the iterator
-      while(gROOT->GetListOfFiles()->GetSize()) {
-        TIter iter(gROOT->GetListOfFiles());
-        TFile* f = dynamic_cast<TFile*>(iter.Next());
-        if(f) f->Close();
+      TIter iter(gROOT->GetListOfFiles());
+      TObject *obj = nullptr;
+      while(nullptr != (obj = iter.Next())) {
+        TFile* f = dynamic_cast<TFile*>(obj);
+        if(f) {
+          // We get a new iterator each time,
+          // because closing a file can invalidate the iterator
+          f->Close();
+          iter = TIter(gROOT->GetListOfFiles());
+        }
       }
+    }
+    
+    void InitRootHandlers::willBeUsingThreads() {
+      //Tell Root we want to be multi-threaded
+      TThread::Initialize();
+      //When threading, also have to keep ROOT from logging all TObjects into a list
+      TObject::SetObjectStat(false);
+      
+      //Have to avoid having Streamers modify themselves after they have been used
+      TVirtualStreamerInfo::Optimize(false);
+    }
+    
+    void InitRootHandlers::initializeThisThreadForUse() {
+      static thread_local TThread guard;
     }
 
     void InitRootHandlers::fillDescriptions(ConfigurationDescriptions& descriptions) {
@@ -289,6 +319,8 @@ namespace edm {
           ->setComment("If True, ROOT messages (e.g. errors, warnings) are handled by this service, rather than by ROOT.");
       desc.addUntracked<bool>("AutoLibraryLoader", true)
           ->setComment("If True, enables automatic loading of data dictionaries.");
+      desc.addUntracked<bool>("LoadAllDictionaries",false)
+          ->setComment("If True, loads all ROOT dictionaries.");
       desc.addUntracked<bool>("AbortOnSignal",true)
       ->setComment("If True, do an abort when a signal occurs that causes a crash. If False, ROOT will do an exit which attempts to do a clean shutdown.");
       desc.addUntracked<int>("DebugLevel",0)
