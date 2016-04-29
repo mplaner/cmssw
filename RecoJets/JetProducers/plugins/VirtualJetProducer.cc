@@ -17,6 +17,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Utilities/interface/isFinite.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "DataFormats/Common/interface/View.h"
 #include "DataFormats/Common/interface/Handle.h"
@@ -60,7 +61,7 @@ namespace reco {
 }                                                                                        
 
 //______________________________________________________________________________
-const char *VirtualJetProducer::JetType::names[] = {
+const char *const VirtualJetProducer::JetType::names[] = {
   "BasicJet","GenJet","CaloJet","PFJet","TrackJet","PFClusterJet"
 };
 
@@ -69,7 +70,7 @@ const char *VirtualJetProducer::JetType::names[] = {
 VirtualJetProducer::JetType::Type
 VirtualJetProducer::JetType::byName(const string &name)
 {
-  const char **pos = std::find(names, names + LastJetType, name);
+  const char *const *pos = std::find(names, names + LastJetType, name);
   if (pos == names + LastJetType) {
     std::string errorMessage="Requested jetType not supported: "+name+"\n";
     throw cms::Exception("Configuration",errorMessage);
@@ -182,18 +183,15 @@ VirtualJetProducer::VirtualJetProducer(const edm::ParameterSet& iConfig)
   }
 
   if ( doPUOffsetCorr_ ) {
-    if ( jetTypeE != JetType::CaloJet && jetTypeE != JetType::BasicJet) {
-        throw cms::Exception("InvalidInput") << "Can only offset correct jets of type CaloJet or BasicJet";
-     }
-     
+
      if(iConfig.exists("subtractorName")) puSubtractorName_  =  iConfig.getParameter<string> ("subtractorName");
      else puSubtractorName_ = std::string();
      
      if(puSubtractorName_.empty()){
        edm::LogWarning("VirtualJetProducer") << "Pile Up correction on; however, pile up type is not specified. Using default... \n";
-       subtractor_ =  boost::shared_ptr<PileUpSubtractor>(new PileUpSubtractor(iConfig));
+       subtractor_ =  boost::shared_ptr<PileUpSubtractor>(new PileUpSubtractor(iConfig, consumesCollector()));
      }else{
-       subtractor_ =  boost::shared_ptr<PileUpSubtractor>(PileUpSubtractorFactory::get()->create( puSubtractorName_, iConfig));
+       subtractor_ =  boost::shared_ptr<PileUpSubtractor>(PileUpSubtractorFactory::get()->create( puSubtractorName_, iConfig, consumesCollector()));
      }
   }
 
@@ -284,6 +282,7 @@ VirtualJetProducer::VirtualJetProducer(const edm::ParameterSet& iConfig)
   if (!srcPVs_.label().empty()) input_vertex_token_ = consumes<reco::VertexCollection>(srcPVs_);
   input_candidateview_token_ = consumes<reco::CandidateView>(src_);
   input_candidatefwdptr_token_ = consumes<std::vector<edm::FwdPtr<reco::PFCandidate> > >(src_);
+  input_packedcandidatefwdptr_token_ = consumes<std::vector<edm::FwdPtr<pat::PackedCandidate> > >(src_);
   
 }
 
@@ -309,8 +308,10 @@ void VirtualJetProducer::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
   if ( useDeterministicSeed_ ) {
     fastjet::GhostedAreaSpec gas;
     std::vector<int> seeds(2);
-    seeds[0] = std::max(iEvent.id().run(),minSeed_ + 3) + 3 * iEvent.id().event();
-    seeds[1] = std::max(iEvent.id().run(),minSeed_ + 5) + 5 * iEvent.id().event();
+    unsigned int runNum_uint = static_cast <unsigned int> (iEvent.id().run());
+    unsigned int evNum_uint = static_cast <unsigned int> (iEvent.id().event()); 
+    seeds[0] = std::max(runNum_uint,minSeed_ + 3) + 3 * evNum_uint;
+    seeds[1] = std::max(runNum_uint,minSeed_ + 5) + 5 * evNum_uint;
     gas.set_random_status(seeds);
   }
 
@@ -340,20 +341,45 @@ void VirtualJetProducer::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
   edm::Handle<reco::CandidateView> inputsHandle;
   
   edm::Handle< std::vector<edm::FwdPtr<reco::PFCandidate> > > pfinputsHandleAsFwdPtr; 
+  edm::Handle< std::vector<edm::FwdPtr<pat::PackedCandidate> > > packedinputsHandleAsFwdPtr; 
   
   bool isView = iEvent.getByToken(input_candidateview_token_, inputsHandle);
   if ( isView ) {
+    if ( inputsHandle->size() == 0) {
+      output( iEvent, iSetup );
+      return;
+    }
     for (size_t i = 0; i < inputsHandle->size(); ++i) {
       inputs_.push_back(inputsHandle->ptrAt(i));
     }
   } else {
-    iEvent.getByToken(input_candidatefwdptr_token_, pfinputsHandleAsFwdPtr);
-    for (size_t i = 0; i < pfinputsHandleAsFwdPtr->size(); ++i) {
-      if ( (*pfinputsHandleAsFwdPtr)[i].ptr().isAvailable() ) {
-	inputs_.push_back( (*pfinputsHandleAsFwdPtr)[i].ptr() );
+    bool isPF = iEvent.getByToken(input_candidatefwdptr_token_, pfinputsHandleAsFwdPtr);
+    if ( isPF ) {
+      if ( pfinputsHandleAsFwdPtr->size() == 0) {
+	output( iEvent, iSetup );
+	return;
       }
-      else if ( (*pfinputsHandleAsFwdPtr)[i].backPtr().isAvailable() ) {
-	inputs_.push_back( (*pfinputsHandleAsFwdPtr)[i].backPtr() );
+      for (size_t i = 0; i < pfinputsHandleAsFwdPtr->size(); ++i) {
+	if ( (*pfinputsHandleAsFwdPtr)[i].ptr().isAvailable() ) {
+	  inputs_.push_back( (*pfinputsHandleAsFwdPtr)[i].ptr() );
+	}
+	else if ( (*pfinputsHandleAsFwdPtr)[i].backPtr().isAvailable() ) {
+	  inputs_.push_back( (*pfinputsHandleAsFwdPtr)[i].backPtr() );
+	}
+      }
+    } else {
+      iEvent.getByToken(input_packedcandidatefwdptr_token_, packedinputsHandleAsFwdPtr);
+      if ( packedinputsHandleAsFwdPtr->size() == 0) {
+	output( iEvent, iSetup );
+	return;
+      }
+      for (size_t i = 0; i < packedinputsHandleAsFwdPtr->size(); ++i) {
+	if ( (*packedinputsHandleAsFwdPtr)[i].ptr().isAvailable() ) {
+	  inputs_.push_back( (*packedinputsHandleAsFwdPtr)[i].ptr() );
+	}
+	else if ( (*packedinputsHandleAsFwdPtr)[i].backPtr().isAvailable() ) {
+	  inputs_.push_back( (*packedinputsHandleAsFwdPtr)[i].backPtr() );
+	}
       }
     }
   }
@@ -404,6 +430,13 @@ void VirtualJetProducer::produce(edm::Event& iEvent,const edm::EventSetup& iSetu
   output( iEvent, iSetup );
   LogDebug("VirtualJetProducer") << "Wrote jets\n";
   
+  // Clear the work vectors so that memory is free for other modules.
+  // Use the trick of swapping with an empty vector so that the memory
+  // is actually given back rather than silently kept.
+  decltype(fjInputs_)().swap(fjInputs_);
+  decltype(fjJets_)().swap(fjJets_);
+  decltype(inputs_)().swap(inputs_);  
+
   return;
 }
 
@@ -415,12 +448,14 @@ void VirtualJetProducer::inputTowers( )
     inEnd = inputs_.end(), i = inBegin;
   for (; i != inEnd; ++i ) {
     reco::CandidatePtr input = *i;
+    // std::cout << "CaloTowerVI jets " << input->pt() << " " << input->et() << ' '<< input->energy() << ' ' << (isAnomalousTower(input) ? " bad" : " ok") << std::endl; 
     if (edm::isNotFinite(input->pt()))           continue;
     if (input->et()    <inputEtMin_)  continue;
     if (input->energy()<inputEMin_)   continue;
     if (isAnomalousTower(input))      continue;
-    if (input->pt() == 0) {
-      edm::LogError("NullTransverseMomentum") << "dropping input candidate with pt=0";
+    // Change by SRR : this is no longer an error nor warning, this can happen with PU mitigation algos.
+    // Also switch to something more numerically safe. 
+    if (input->pt() < 100 * std::numeric_limits<double>::epsilon() ) { 
       continue;
     }
     if (makeCaloJet(jetTypeE)&&doPVCorrection_) {
@@ -583,16 +618,21 @@ void VirtualJetProducer::writeJets( edm::Event & iEvent, edm::EventSetup const& 
       fastjet::ClusterSequenceAreaBase const* clusterSequenceWithArea =
         dynamic_cast<fastjet::ClusterSequenceAreaBase const *> ( &*fjClusterSeq_ );
 
-      
-      for(int ie = 0; ie < nEta; ++ie){
-        double eta = puCenters_[ie];
-        double etamin=eta-puWidth_;
-        double etamax=eta+puWidth_;
-        fastjet::RangeDefinition range_rho(etamin,etamax);
-        fastjet::BackgroundEstimator bkgestim(*clusterSequenceWithArea,range_rho);
-        bkgestim.set_excluded_jets(fjexcluded_jets);
-        rhos->push_back(bkgestim.rho());
-        sigmas->push_back(bkgestim.sigma());
+      if (clusterSequenceWithArea ==nullptr ){
+	if (fjJets_.size() > 0) {
+	  throw cms::Exception("LogicError")<<"fjClusterSeq is not initialized while inputs are present\n ";
+	}
+      } else {
+	for(int ie = 0; ie < nEta; ++ie){
+	  double eta = puCenters_[ie];
+	  double etamin=eta-puWidth_;
+	  double etamax=eta+puWidth_;
+	  fastjet::RangeDefinition range_rho(etamin,etamax);
+	  fastjet::BackgroundEstimator bkgestim(*clusterSequenceWithArea,range_rho);
+	  bkgestim.set_excluded_jets(fjexcluded_jets);
+	  rhos->push_back(bkgestim.rho());
+	  sigmas->push_back(bkgestim.sigma());
+	}
       }
       iEvent.put(rhos,"rhos");
       iEvent.put(sigmas,"sigmas");
@@ -609,11 +649,17 @@ void VirtualJetProducer::writeJets( edm::Event & iEvent, edm::EventSetup const& 
 	edm::LogWarning("StrangeNEmtpyJets") << "n_empty_jets is : " << clusterSequenceWithArea->n_empty_jets(*fjRangeDef_) << " with range " << fjRangeDef_->description() << ".";
 	}
       */
-      clusterSequenceWithArea->get_median_rho_and_sigma(*fjRangeDef_,false,*rho,*sigma,mean_area);
-      if((*rho < 0)|| (edm::isNotFinite(*rho))) {
-	edm::LogError("BadRho") << "rho value is " << *rho << " area:" << mean_area << " and n_empty_jets: " << clusterSequenceWithArea->n_empty_jets(*fjRangeDef_) << " with range " << fjRangeDef_->description()
-				<<". Setting rho to rezo.";
-	*rho = 0;
+      if (clusterSequenceWithArea ==nullptr ){
+	if (fjJets_.size() > 0) {
+	  throw cms::Exception("LogicError")<<"fjClusterSeq is not initialized while inputs are present\n ";
+	}
+      } else {
+	clusterSequenceWithArea->get_median_rho_and_sigma(*fjRangeDef_,false,*rho,*sigma,mean_area);
+	if((*rho < 0)|| (edm::isNotFinite(*rho))) {
+	  edm::LogError("BadRho") << "rho value is " << *rho << " area:" << mean_area << " and n_empty_jets: " << clusterSequenceWithArea->n_empty_jets(*fjRangeDef_) << " with range " << fjRangeDef_->description()
+				  <<". Setting rho to rezo.";
+	  *rho = 0;
+	}
       }
       iEvent.put(rho,"rho");
       iEvent.put(sigma,"sigma");
@@ -697,6 +743,7 @@ void VirtualJetProducer::writeJets( edm::Event & iEvent, edm::EventSetup const& 
     
     
     // std::cout << "area " << ijet << " " << jetArea << " " << Area<T>::get(jet) << std::endl;
+    // std::cout << "JetVI " << ijet << jet.pt() << " " << jet.et() << ' '<< jet.energy() << ' '<< jet.mass() << std::endl;
 
     // add to the list
     jets->push_back(jet);        

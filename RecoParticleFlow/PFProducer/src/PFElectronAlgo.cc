@@ -267,9 +267,9 @@ bool PFElectronAlgo::SetLinks(const reco::PFBlockRef&  blockRef,
 		dynamic_cast<const reco::PFBlockElementTrack*>((&elements[(trackIs[iEle])])); 	
 	      reco::TrackRef refKf = kfEle->trackRef();
 	      
-	      int nexhits = refKf->trackerExpectedHitsInner().numberOfLostHits();  
+	      int nexhits = refKf->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS);
 	      
-	      unsigned int Algo = 0;
+	      reco::TrackBase::TrackAlgorithm Algo = reco::TrackBase::undefAlgorithm;
 	      if (refKf.isNonnull()) 
 		Algo = refKf->algo(); 
 	      
@@ -281,7 +281,16 @@ bool PFElectronAlgo::SetLinks(const reco::PFBlockRef&  blockRef,
 		}
 	      }
 	      
-	      if(Algo < 9 && nexhits == 0 && trackIsFromPrimaryVertex) {
+	      if((Algo == reco::TrackBase::undefAlgorithm ||
+	          Algo == reco::TrackBase::ctf ||
+	          Algo == reco::TrackBase::rs ||
+	          Algo == reco::TrackBase::cosmics ||
+	          Algo == reco::TrackBase::initialStep ||
+	          Algo == reco::TrackBase::lowPtTripletStep ||
+	          Algo == reco::TrackBase::pixelPairStep ||
+	          Algo == reco::TrackBase::detachedTripletStep ||
+	          Algo == reco::TrackBase::mixedTripletStep)
+	         && nexhits == 0 && trackIsFromPrimaryVertex) {
 		localactive[ecalKf_index] = false;
 	      } else {
 		fifthStepKfTrack_.push_back(make_pair(ecalKf_index,trackIs[iEle]));
@@ -1007,8 +1016,7 @@ bool PFElectronAlgo::SetLinks(const reco::PFBlockRef&  blockRef,
 	      double  DR = sqrt(deta_trk*deta_trk+
 				dphi_trk*dphi_trk);
 	      
-	      reco::HitPattern kfHitPattern = trkref->hitPattern();
-	      int NValPixelHit = kfHitPattern.numberOfValidPixelHits();
+	      int NValPixelHit = trkref->hitPattern().numberOfValidPixelHits();
 	      
 	      if(DR < coneTrackIsoForEgammaSC_ && NValPixelHit >=3) {
 		sumNTracksInTheCone++;
@@ -1756,7 +1764,7 @@ void PFElectronAlgo::SetIDOutputs(const reco::PFBlockRef&  blockRef,
 		unsigned int Algo = whichTrackAlgo(trackref);
 		// iter0, iter1, iter2, iter3 = Algo < 3
 		// algo 4,5,6,7
-		int nexhits = trackref->trackerExpectedHitsInner().numberOfLostHits();  
+		int nexhits = trackref->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS);
 		
 		bool trackIsFromPrimaryVertex = false;
 		for (Vertex::trackRef_iterator trackIt = primaryVertex.tracks_begin(); trackIt != primaryVertex.tracks_end(); ++trackIt) {
@@ -2667,21 +2675,24 @@ unsigned int PFElectronAlgo::whichTrackAlgo(const reco::TrackRef& trackRef) {
   unsigned int Algo = 0; 
   switch (trackRef->algo()) {
   case TrackBase::ctf:
-  case TrackBase::iter0:
-  case TrackBase::iter1:
-  case TrackBase::iter2:
+  case TrackBase::initialStep:
+  case TrackBase::lowPtTripletStep:
+  case TrackBase::pixelPairStep:
+  case TrackBase::jetCoreRegionalStep:
+  case TrackBase::muonSeededStepInOut:
+  case TrackBase::muonSeededStepOutIn:
     Algo = 0;
     break;
-  case TrackBase::iter3:
+  case TrackBase::detachedTripletStep:
     Algo = 1;
     break;
-  case TrackBase::iter4:
+  case TrackBase::mixedTripletStep:
     Algo = 2;
     break;
-  case TrackBase::iter5:
+  case TrackBase::pixelLessStep:
     Algo = 3;
     break;
-  case TrackBase::iter6:
+  case TrackBase::tobTecStep:
     Algo = 4;
     break;
   default:

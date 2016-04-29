@@ -5,7 +5,9 @@ process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 process.load("IOMC.EventVertexGenerators.VtxSmearedGauss_cfi")
 process.load("Geometry.CMSCommonData.cmsExtendedGeometryHFLibraryXML_cfi")
 process.load("Geometry.TrackerNumberingBuilder.trackerNumberingGeometry_cfi")
-process.load("Configuration.StandardSequences.MagneticField_cff")
+process.load("Geometry.HcalCommonData.hcalParameters_cfi")
+process.load("Geometry.HcalCommonData.hcalDDDSimConstants_cfi")
+process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("Configuration.EventContent.EventContent_cff")
 process.load("SimG4Core.Application.g4SimHits_cfi")
 process.load("SimG4CMS.Calo.HFPMTHitAnalyzer_cfi")
@@ -17,7 +19,7 @@ process.MessageLogger = cms.Service("MessageLogger",
         'HcalSim', 'HFShower'),
     debugModules = cms.untracked.vstring('*'),
     cout = cms.untracked.PSet(
-        threshold = cms.untracked.string('DEBUG'),
+        threshold = cms.untracked.string('INFO'),
         INFO = cms.untracked.PSet(
             limit = cms.untracked.int32(0)
         ),
@@ -40,7 +42,7 @@ process.MessageLogger = cms.Service("MessageLogger",
             limit = cms.untracked.int32(0)
         ),
         HFShower = cms.untracked.PSet(
-            limit = cms.untracked.int32(0)
+            limit = cms.untracked.int32(-1)
         )
     )
 )
@@ -49,6 +51,10 @@ process.load("IOMC.RandomEngine.IOMC_cff")
 process.RandomNumberGeneratorService.generator.initialSeed = 456789
 process.RandomNumberGeneratorService.g4SimHits.initialSeed = 9876
 process.RandomNumberGeneratorService.VtxSmeared.initialSeed = 123456789
+
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run1_mc', '')
 
 process.Timing = cms.Service("Timing")
 
@@ -104,4 +110,7 @@ process.g4SimHits.HFShower.TrackEM          = False
 process.g4SimHits.HFShower.OnlyLong         = False
 process.g4SimHits.HFShower.EminLibrary      = 0.0
 process.g4SimHits.HFShower.ApplyFiducialCut = True
-
+process.g4SimHits.HFShowerLibrary.FileName  = 'SimG4CMS/Calo/data/hfshowerlibrary_lhep_140_edm.root'
+process.g4SimHits.HFShowerLibrary.BranchPost= '_R.obj'
+process.g4SimHits.HFShowerLibrary.BranchPre = 'HFShowerPhotons_hfshowerlib_'
+process.g4SimHits.HFShowerLibrary.BranchEvt = 'HFShowerLibraryEventInfos_hfshowerlib_HFShowerLibraryEventInfo'

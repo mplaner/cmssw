@@ -4,7 +4,6 @@
  */
 
 // Framework
-#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
@@ -56,7 +55,7 @@ L2MuonIsolationProducer::L2MuonIsolationProducer(const ParameterSet& par) :
   optOutputDecision = haveIsolator;
   if (optOutputDecision){
     std::string type = isolatorPSet.getParameter<std::string>("ComponentName");
-    theDepositIsolator = MuonIsolatorFactory::get()->create(type,isolatorPSet);
+    theDepositIsolator = MuonIsolatorFactory::get()->create(type, isolatorPSet, consumesCollector());
   }
   if (optOutputDecision) produces<edm::ValueMap<bool> >();
   produces<reco::IsoDepositMap>();
@@ -119,11 +118,6 @@ void L2MuonIsolationProducer::fillDescriptions(edm::ConfigurationDescriptions& d
   desc.add<edm::ParameterSetDescription>("IsolatorPSet",isolatorPSet);
   desc.add<bool>("WriteIsolatorFloat",false);
   descriptions.add("hltL2MuonIsolations", desc);
-}
-
-///beginJob
-void L2MuonIsolationProducer::beginJob(){
-
 }
 
 /// build deposits

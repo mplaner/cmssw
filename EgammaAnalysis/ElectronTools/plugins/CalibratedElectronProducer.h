@@ -4,7 +4,6 @@
 #define CalibratedElectronProducer_h
 
 #include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Common/interface/EDProduct.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectronFwd.h"
@@ -52,6 +51,7 @@ class CalibratedElectronProducer: public edm::EDProducer
         bool verbose ;
         bool synchronization ;
         double lumiRatio;
+	bool applyExtraHighEnergyProtection;
 
         const CaloTopology * ecalTopology_;
         const CaloGeometry * caloGeometry_;

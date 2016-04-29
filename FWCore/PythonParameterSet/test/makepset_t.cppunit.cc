@@ -12,7 +12,7 @@
 
 #include "cppunit/extensions/HelperMacros.h"
 
-#include "boost/shared_ptr.hpp"
+#include <memory>
 
 #include <algorithm>
 #include <iostream>
@@ -78,7 +78,7 @@ void testmakepset::secsourceAux() {
   "    fileName = cms.string('file:CumHits.root')\n"
   ")\n"
   "process.mix = cms.EDFilter('MixingModule',\n"
-  "    input = cms.SecSource('PoolSource',\n"
+  "    input = cms.SecSource('EmbeddedRootSource',\n"
   "        fileNames = cms.untracked.vstring('file:pileup.root')\n"
   "    ),\n"
   "    max_bunch = cms.int32(3),\n"
@@ -93,14 +93,14 @@ void testmakepset::secsourceAux() {
 
   // Create the ParameterSet object from this configuration string.
   PythonProcessDesc builder(config);
-  boost::shared_ptr<edm::ParameterSet> ps = builder.parameterSet();
+  std::shared_ptr<edm::ParameterSet> ps = builder.parameterSet();
 
   CPPUNIT_ASSERT(0 != ps.get());
 
   // Make sure this ParameterSet object has the right contents
   edm::ParameterSet const& mixingModuleParams = ps->getParameterSet("mix");
   edm::ParameterSet const& secondarySourceParams = mixingModuleParams.getParameterSet("input");
-  CPPUNIT_ASSERT(secondarySourceParams.getParameter<std::string>("@module_type") == "PoolSource");
+  CPPUNIT_ASSERT(secondarySourceParams.getParameter<std::string>("@module_type") == "EmbeddedRootSource");
   CPPUNIT_ASSERT(secondarySourceParams.getParameter<std::string>("@module_label") == "input");
   CPPUNIT_ASSERT(secondarySourceParams.getUntrackedParameter<std::vector<std::string> >("fileNames")[0] == "file:pileup.root");
 }
@@ -147,7 +147,7 @@ void testmakepset::usingBlockAux() {
   std::string config(kTest);
   // Create the ParameterSet object from this configuration string.
   PythonProcessDesc builder(config);
-  boost::shared_ptr<edm::ParameterSet> ps = builder.parameterSet();
+  std::shared_ptr<edm::ParameterSet> ps = builder.parameterSet();
 
   CPPUNIT_ASSERT(0 != ps.get());
 
@@ -196,7 +196,7 @@ void testmakepset::fileinpathAux() {
 
   // Create the ParameterSet object from this configuration string.
   PythonProcessDesc builder(config);
-  boost::shared_ptr<edm::ParameterSet> ps = builder.parameterSet();
+  std::shared_ptr<edm::ParameterSet> ps = builder.parameterSet();
   CPPUNIT_ASSERT(0 != ps.get());
 
   edm::ParameterSet const& innerps = ps->getParameterSet("main");
@@ -207,7 +207,7 @@ void testmakepset::fileinpathAux() {
   char *releaseBase = getenv("CMSSW_RELEASE_BASE");
   bool localArea = (releaseBase != 0 && strlen(releaseBase) != 0);
   if(localArea) {
-    CPPUNIT_ASSERT(fip.isLocal() == true);
+    CPPUNIT_ASSERT(fip.location() == edm::FileInPath::Local);
   }
   CPPUNIT_ASSERT(fip.relativePath()  == "FWCore/ParameterSet/python/Config.py");
   CPPUNIT_ASSERT(ufip.relativePath() == "FWCore/ParameterSet/python/Types.py");
@@ -220,7 +220,7 @@ void testmakepset::fileinpathAux() {
   std::string tmpout = fullpath.substr(0, fullpath.find("FWCore/ParameterSet/python/Config.py")) + "tmp.py";
 
   edm::FileInPath topo = innerps.getParameter<edm::FileInPath>("topo");
-  CPPUNIT_ASSERT(topo.isLocal() == false);
+  CPPUNIT_ASSERT(topo.location() != edm::FileInPath::Local);
   CPPUNIT_ASSERT(topo.relativePath() == "Geometry/TrackerSimData/data/trackersens.xml");
   fullpath = topo.fullPath();
   CPPUNIT_ASSERT(!fullpath.empty());
@@ -254,14 +254,14 @@ void testmakepset::fileinpathAux() {
   // Create the ParameterSet object from this configuration string.
   PythonProcessDesc builder2(config2);
   unlink(tmpout.c_str());
-  boost::shared_ptr<edm::ParameterSet> ps2 = builder2.parameterSet();
+  std::shared_ptr<edm::ParameterSet> ps2 = builder2.parameterSet();
 
   CPPUNIT_ASSERT(0 != ps2.get());
 
   edm::ParameterSet const& innerps2 = ps2->getParameterSet("main");
   edm::FileInPath fip2 = innerps2.getParameter<edm::FileInPath>("fip2");
   if (localArea) {
-    CPPUNIT_ASSERT(fip2.isLocal() == true);
+    CPPUNIT_ASSERT(fip2.location() == edm::FileInPath::Local);
   }
   CPPUNIT_ASSERT(fip2.relativePath() == "tmp.py");
   std::string fullpath2 = fip2.fullPath();
@@ -332,7 +332,7 @@ void testmakepset::typesTest() {
    std::string config2(kTest);
    // Create the ParameterSet object from this configuration string.
    PythonProcessDesc builder2(config2);
-   boost::shared_ptr<edm::ParameterSet> ps2 = builder2.parameterSet();
+   std::shared_ptr<edm::ParameterSet> ps2 = builder2.parameterSet();
    edm::ParameterSet const& test = ps2->getParameterSet("p");
 
    CPPUNIT_ASSERT(1 == test.getParameter<int>("i"));

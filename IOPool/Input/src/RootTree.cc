@@ -25,7 +25,7 @@ namespace edm {
       return branch;
     }
   }
-  RootTree::RootTree(boost::shared_ptr<InputFile> filePtr,
+  RootTree::RootTree(std::shared_ptr<InputFile> filePtr,
                      BranchType const& branchType,
                      unsigned int nIndexes,
                      unsigned int maxVirtualSize,
@@ -56,7 +56,8 @@ namespace edm {
     cacheSize_(cacheSize),
     treeAutoFlush_(0),
     enablePrefetching_(enablePrefetching),
-    enableTriggerCache_(branchType_ == InEvent),
+    //enableTriggerCache_(branchType_ == InEvent),
+    enableTriggerCache_(false), // Disable, for now. Using the trigger cache in the multithreaded environment causes the assert on line 331 to fire occasionally.
     rootDelayedReader_(new RootDelayedReader(*this, filePtr, inputType)),
     branchEntryInfoBranch_(metaTree_ ? getProductProvenanceBranch(metaTree_, branchType_) : (tree_ ? getProductProvenanceBranch(tree_, branchType_) : 0)),
     infoTree_(dynamic_cast<TTree*>(filePtr_.get() != nullptr ? filePtr->Get(BranchTypeToInfoTreeName(branchType).c_str()) : nullptr)) // backward compatibility
@@ -367,6 +368,22 @@ namespace edm {
     }
   }
 
+  bool
+  RootTree::skipEntries(unsigned int& offset) {
+    entryNumber_ += offset;
+    bool retval = (entryNumber_ < entries_);
+    if(retval) {
+      offset = 0;
+    } else {
+      // Not enough entries in the file to skip.
+      // The +1 is needed because entryNumber_ is -1 at the initialization of the tree, not 0.
+      long long overshoot = entryNumber_ + 1 - entries_;
+      entryNumber_ = entries_;
+      offset = overshoot;
+    }
+    return retval;
+  }
+
   void
   RootTree::startTraining() {
     if (cacheSize_ == 0) {
@@ -388,7 +405,10 @@ namespace edm {
     rawTreeCache_->StopLearningPhase();
     treeCache_->StartLearningPhase();
     treeCache_->SetEntryRange(switchOverEntry_, tree_->GetEntries());
-    treeCache_->AddBranch(poolNames::branchListIndexesBranchName().c_str(), kTRUE);
+    // Make sure that 'branchListIndexes' branch exist in input file
+    if (filePtr_->Get(poolNames::branchListIndexesBranchName().c_str()) != nullptr) {
+      treeCache_->AddBranch(poolNames::branchListIndexesBranchName().c_str(), kTRUE);
+    }
     treeCache_->AddBranch(BranchTypeToAuxiliaryBranchName(branchType_).c_str(), kTRUE);
     trainedSet_.clear();
     triggerSet_.clear();

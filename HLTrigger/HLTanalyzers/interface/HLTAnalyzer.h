@@ -18,10 +18,10 @@
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 
-#include "FWCore/ParameterSet/interface/Registry.h"
-
 #include "Geometry/Records/interface/IdealGeometryRecord.h"
+#include "Geometry/Records/interface/HcalRecNumberingRecord.h"
 #include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"  
+#include "Geometry/CaloTopology/interface/CaloTowerTopology.h"
 
 #include "CondFormats/DataRecord/interface/L1CaloGeometryRecord.h"  
 
@@ -185,6 +185,8 @@ private:
   edm::EDGetTokenT<reco::RecoEcalCandidateIsolationMap>  IsoPhoTrackIsolToken_;
   edm::EDGetTokenT<reco::SuperClusterCollection>         HFECALClustersToken_;
   edm::EDGetTokenT<reco::RecoEcalCandidateCollection>    HFElectronsToken_;
+  edm::EDGetTokenT<EcalRecHitCollection>                 EcalRecHitEBToken_;
+  edm::EDGetTokenT<EcalRecHitCollection>                 EcalRecHitEEToken_;
 
     // ECAL Activity
   edm::EDGetTokenT<reco::RecoEcalCandidateCollection>    ECALActivityToken_;

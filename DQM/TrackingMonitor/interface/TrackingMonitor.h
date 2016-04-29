@@ -21,6 +21,8 @@ Monitoring source for general quantities related to tracks.
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
+#include <DQMServices/Core/interface/DQMEDAnalyzer.h>
+
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHitBuilder.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
@@ -35,7 +37,6 @@ Monitoring source for general quantities related to tracks.
 
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 
-class DQMStore;
 class TrackAnalyzer;
 class TrackBuildingAnalyzer;
 class VertexMonitor;
@@ -43,20 +44,20 @@ class GetLumi;
 class TProfile;
 class GenericTriggerEventFlag;
 
-class TrackingMonitor : public edm::EDAnalyzer 
+class TrackingMonitor : public DQMEDAnalyzer 
 {
     public:
         explicit TrackingMonitor(const edm::ParameterSet&);
         ~TrackingMonitor();
         virtual void beginJob(void);
-        virtual void endJob(void);
 
 	virtual void setMaxMinBin(std::vector<double> & ,std::vector<double> &  ,std::vector<int> &  ,double, double, int, double, double, int);
 	virtual void setNclus(const edm::Event&, std::vector<int> & );
 
         virtual void beginLuminosityBlock(const edm::LuminosityBlock& lumi, const edm::EventSetup&  eSetup);
         virtual void analyze(const edm::Event&, const edm::EventSetup&);
-        virtual void beginRun(const edm::Run&, const edm::EventSetup&); 
+	void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+	//        virtual void beginRun(const edm::Run&, const edm::EventSetup&); 
         virtual void endRun(const edm::Run&, const edm::EventSetup&);
 
     private:
@@ -68,7 +69,7 @@ class TrackingMonitor : public edm::EDAnalyzer
 
         std::string histname;  //for naming the histograms according to algorithm used
 
-        DQMStore * dqmStore_;
+	//        DQMStore * dqmStore_;
 
         edm::ParameterSet conf_;
 
@@ -127,7 +128,7 @@ class TrackingMonitor : public edm::EDAnalyzer
 	MonitorElement* NumberOfRecHitsPerTrackVsLS;
 
 	// Monitoring PU
-	MonitorElement* NumberOfTracksVsGoodPVtx;
+	MonitorElement *NumberOfTracksVsGoodPVtx, *NumberOfTracksVsPUPVtx;
 	MonitorElement* NumberOfTracksVsBXlumi;
 
 	// add in order to deal with LS transitions

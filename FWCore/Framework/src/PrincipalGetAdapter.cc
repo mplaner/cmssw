@@ -22,18 +22,12 @@ namespace edm {
     //putProducts_(),
     principal_(pcpl),
     md_(md),
-    consumer_(nullptr)
+    consumer_(nullptr),
+    resourcesAcquirer_(nullptr)
   {
   }
 
   PrincipalGetAdapter::~PrincipalGetAdapter() {
-  }
-
-
-  void
-  principal_get_adapter_detail::deleter::operator()(std::pair<WrapperOwningHolder, BranchDescription const*> const p) const {
-    WrapperOwningHolder* edp = const_cast<WrapperOwningHolder*>(&p.first);
-    edp->reset();
   }
 
   void
@@ -103,6 +97,11 @@ namespace edm {
     << "The index of the token was "<<token.index()<<".\n";
   }
   
+  void
+  PrincipalGetAdapter::labelsForToken(EDGetToken const& iToken, ProductLabels& oLabels) const {
+    consumer_->labelsForToken(iToken,oLabels);
+  }
+
   BasicHandle
   PrincipalGetAdapter::makeFailToGetException(KindOfType kindOfType,
                                               TypeID const& productType,
@@ -149,7 +148,7 @@ namespace edm {
   PrincipalGetAdapter::getByLabel_(TypeID const& typeID,
                                    InputTag const& tag,
                                    ModuleCallingContext const* mcc) const {
-    return principal_.getByLabel(PRODUCT_TYPE, typeID, tag, consumer_, mcc);
+    return principal_.getByLabel(PRODUCT_TYPE, typeID, tag, consumer_, resourcesAcquirer_, mcc);
   }
 
   BasicHandle
@@ -158,7 +157,7 @@ namespace edm {
   	                           std::string const& instance,
   	                           std::string const& process,
                                    ModuleCallingContext const* mcc) const {
-    return principal_.getByLabel(PRODUCT_TYPE, typeID, label, instance, process, consumer_, mcc);
+    return principal_.getByLabel(PRODUCT_TYPE, typeID, label, instance, process, consumer_, resourcesAcquirer_, mcc);
   }
   
   BasicHandle
@@ -174,7 +173,7 @@ namespace edm {
       throwAmbiguousException(id, token);
     }
     bool ambiguous = false;
-    BasicHandle h = principal_.getByToken(kindOfType, id, index, skipCurrentProcess, ambiguous, mcc);
+    BasicHandle h = principal_.getByToken(kindOfType, id, index, skipCurrentProcess, ambiguous, resourcesAcquirer_, mcc);
     if (ambiguous) {
       // This deals with ambiguities where the process is not specified
       throwAmbiguousException(id, token);
@@ -188,7 +187,7 @@ namespace edm {
   PrincipalGetAdapter::getMatchingSequenceByLabel_(TypeID const& typeID,
                                                    InputTag const& tag,
                                                    ModuleCallingContext const* mcc) const {
-    return principal_.getByLabel(ELEMENT_TYPE, typeID, tag, consumer_, mcc);
+    return principal_.getByLabel(ELEMENT_TYPE, typeID, tag, consumer_, resourcesAcquirer_, mcc);
   }
 
   BasicHandle
@@ -203,6 +202,7 @@ namespace edm {
                                   instance,
                                   process,
                                   consumer_,
+                                  resourcesAcquirer_,
                                   mcc);
     return h;
   }
@@ -211,7 +211,7 @@ namespace edm {
   PrincipalGetAdapter::getManyByType_(TypeID const& tid,
                                       BasicHandleVec& results,
                                       ModuleCallingContext const* mcc) const {
-    principal_.getManyByType(tid, results, consumer_, mcc);
+    principal_.getManyByType(tid, results, consumer_, resourcesAcquirer_, mcc);
   }
 
   ProcessHistory const&
@@ -228,10 +228,10 @@ namespace edm {
       throw edm::Exception(edm::errors::InsertFailure)
 	<< "Illegal attempt to 'put' an unregistered product.\n"
 	<< "No product is registered for\n"
-	<< "  process name:                '" << md_.processName() << "'\n"
-	<< "  module label:                '" << md_.moduleLabel() << "'\n"
 	<< "  product friendly class name: '" << type.friendlyClassName() << "'\n"
+  << "  module label:                '" << md_.moduleLabel() << "'\n"
 	<< "  product instance name:       '" << productInstanceName << "'\n"
+  << "  process name:                '" << md_.processName() << "'\n"
 
 	<< "The ProductRegistry contains:\n"
 	<< principal_.productRegistry()

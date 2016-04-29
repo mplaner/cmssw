@@ -92,7 +92,7 @@ ListIds::analyze(const edm::Event& evt, const edm::EventSetup& setup){
   std::string attribute = "TkDDDStructure";
   CmsTrackerStringToEnum theCmsTrackerStringToEnum;
   DDSpecificsFilter filter;
-  filter.setCriteria(DDValue(attribute, "any", 0), DDSpecificsFilter::not_equals);
+  filter.setCriteria(DDValue(attribute, "any", 0), DDCompOp::not_equals);
   DDFilteredView fv(*hDdd); 
   fv.addFilter(filter);
   if (theCmsTrackerStringToEnum.type(dddGetString(attribute, fv)) != GeometricDet::Tracker) {
@@ -126,7 +126,7 @@ ListIds::analyze(const edm::Event& evt, const edm::EventSetup& setup){
   setup.get<TrackerDigiGeometryRecord>().get( hGeo );
 
   std::cout << std::fixed << std::setprecision(3);
-  const std::vector<GeomDet*> & dets = hGeo->dets();
+  auto const & dets = hGeo->dets();
   for (unsigned int i = 0; i < dets.size(); ++i) {
     const GeomDet & det = *dets[i];
 

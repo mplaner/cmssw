@@ -13,13 +13,15 @@
 #include "DataFormats/Provenance/interface/BranchListIndex.h"
 #include "DataFormats/Provenance/interface/BranchType.h"
 #include "FWCore/Utilities/interface/ProductHolderIndex.h"
+#include "FWCore/Utilities/interface/TypeID.h"
 
 #include "boost/array.hpp"
-#include "boost/shared_ptr.hpp"
+#include <memory>
 
 #include <iosfwd>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace edm {
@@ -101,7 +103,7 @@ namespace edm {
        return transient_.constProductList_;
     }
 
-    boost::shared_ptr<ProductHolderIndexHelper> const& productLookup(BranchType branchType) const;
+    std::shared_ptr<ProductHolderIndexHelper> const& productLookup(BranchType branchType) const;
 
     // returns the appropriate ProductHolderIndex else ProductHolderIndexInvalid if no BranchID is available
     ProductHolderIndex indexFrom(BranchID const& iID) const;
@@ -109,12 +111,16 @@ namespace edm {
     bool productProduced(BranchType branchType) const {return transient_.productProduced_[branchType];}
     bool anyProductProduced() const {return transient_.anyProductProduced_;}
 
-    std::vector<std::string> const& missingDictionaries() const {
+    std::vector<TypeID> const& missingDictionaries() const {
       return transient_.missingDictionaries_;
     }
 
-    std::vector<std::string>& missingDictionariesForUpdate() {
+    std::vector<TypeID>& missingDictionariesForUpdate() {
       return transient_.missingDictionaries_;
+    }
+
+    std::vector<std::pair<std::string, std::string> > const& aliasToOriginal() const {
+      return transient_.aliasToOriginal_;
     }
 
     ProductHolderIndex const& getNextIndexValue(BranchType branchType) const;
@@ -132,9 +138,9 @@ namespace edm {
       boost::array<bool, NumBranchTypes> productProduced_;
       bool anyProductProduced_;
 
-      boost::shared_ptr<ProductHolderIndexHelper> eventProductLookup_;
-      boost::shared_ptr<ProductHolderIndexHelper> lumiProductLookup_;
-      boost::shared_ptr<ProductHolderIndexHelper> runProductLookup_;
+      std::shared_ptr<ProductHolderIndexHelper> eventProductLookup_;
+      std::shared_ptr<ProductHolderIndexHelper> lumiProductLookup_;
+      std::shared_ptr<ProductHolderIndexHelper> runProductLookup_;
 
       ProductHolderIndex eventNextIndexValue_;
       ProductHolderIndex lumiNextIndexValue_;
@@ -142,7 +148,9 @@ namespace edm {
 
       std::map<BranchID, ProductHolderIndex> branchIDToIndex_;
 
-      std::vector<std::string> missingDictionaries_;
+      std::vector<TypeID> missingDictionaries_;
+
+      std::vector<std::pair<std::string, std::string> > aliasToOriginal_;
     };
 
   private:

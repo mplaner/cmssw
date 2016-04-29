@@ -6,10 +6,7 @@
  *
  */
 
-//need to open a 'back door' to be able to setup the ServiceRegistry
-#define private public
 #include "FWCore/ServiceRegistry/interface/ServiceRegistry.h"
-#undef private
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "FWCore/ServiceRegistry/test/stubs/DummyService.h"
 
@@ -115,8 +112,7 @@ testServiceRegistry::externalServiceTest()
 
    {
       std::auto_ptr<DummyService> dummyPtr(new DummyService);
-      boost::shared_ptr<edm::serviceregistry::ServiceWrapper<DummyService> >
-	  wrapper(new edm::serviceregistry::ServiceWrapper<DummyService>(dummyPtr));
+      auto wrapper = std::make_shared<edm::serviceregistry::ServiceWrapper<DummyService> >(dummyPtr);
       edm::ServiceToken token(edm::ServiceRegistry::createContaining(wrapper));
 
       wrapper->get().value_ = 2;

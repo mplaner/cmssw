@@ -29,7 +29,7 @@ namespace cond {
 	bool exists();
 	void create();
 	bool select( const std::string& name );
-	bool select( const std::string& name, cond::TimeType& timeType, std::string& objectType, 
+	bool select( const std::string& name, cond::TimeType& timeType, std::string& objectType, cond::SynchronizationType& synchronizationType,
 		     cond::Time_t& endOfValidity, std::string& description, cond::Time_t& lastValidatedTime );
 	bool getMetadata( const std::string& name, std::string& description, 
 			  boost::posix_time::ptime& insertionTime, boost::posix_time::ptime& modificationTime );
@@ -39,6 +39,7 @@ namespace cond {
 	void update( const std::string& name, cond::Time_t& endOfValidity, const std::string& description, 
 		     cond::Time_t lastValidatedTime, const boost::posix_time::ptime& updateTime );
 	void updateValidity( const std::string& name, cond::Time_t lastValidatedTime, const boost::posix_time::ptime& updateTime );
+	void setValidationMode(){}
       private:
 	coral::ISchema& m_schema;
       };
@@ -51,7 +52,6 @@ namespace cond {
       column( HASH, std::string, PAYLOAD_HASH_SIZE );
       column( OBJECT_TYPE, std::string );
       column( DATA, cond::Binary );
-      //column( STREAMER, std::string );
       column( STREAMER_INFO, cond::Binary );
       column( VERSION, std::string );
       column( INSERTION_TIME, boost::posix_time::ptime );
@@ -63,12 +63,14 @@ namespace cond {
 	bool exists();
 	void create();
 	bool select( const cond::Hash& payloadHash);
-	bool select( const cond::Hash& payloadHash, std::string& objectType, cond::Binary& payloadData);
+	bool select( const cond::Hash& payloadHash, std::string& objectType, 
+		     cond::Binary& payloadData, cond::Binary& streamerInfoData);
 	bool getType( const cond::Hash& payloadHash, std::string& objectType );
 	bool insert( const cond::Hash& payloadHash, const std::string& objectType, 
-		     const cond::Binary& payloadData, const boost::posix_time::ptime& insertionTime);
+		     const cond::Binary& payloadData, const cond::Binary& streamerInfoData, 
+		     const boost::posix_time::ptime& insertionTime);
 	cond::Hash insertIfNew( const std::string& objectType, const cond::Binary& payloadData, 
-				const boost::posix_time::ptime& insertionTime );
+				const cond::Binary& streamerInfoData, const boost::posix_time::ptime& insertionTime );
       private:
 	coral::ISchema& m_schema;
       };
@@ -80,25 +82,20 @@ namespace cond {
       column( SINCE, cond::Time_t );
       column( PAYLOAD_HASH, std::string, PAYLOAD::PAYLOAD_HASH_SIZE );
       column( INSERTION_TIME, boost::posix_time::ptime );
-      
-      struct MAX_SINCE {					 
-	typedef cond::Time_t type;				   
-	static constexpr size_t size = 0;
-	static std::string tableName(){ return SINCE::tableName(); }	
-	static std::string fullyQualifiedName(){ 
-	  return std::string("MAX(")+SINCE::fullyQualifiedName()+")";
-	} 
-      };
+
       struct SINCE_GROUP {					 
 	typedef cond::Time_t type;				   
 	static constexpr size_t size = 0;
 	static std::string tableName(){ return SINCE::tableName(); }	
 	static std::string fullyQualifiedName(){ 
-	  std::string sgroupSize = boost::lexical_cast<std::string>(cond::time::SINCE_GROUP_SIZE);
-	  return "("+SINCE::fullyQualifiedName()+"/"+sgroupSize+")*"+sgroupSize;	  
+	  return "MIN("+SINCE::fullyQualifiedName()+")";	  
 	} 
+	static std::string group(){
+	  std::string sgroupSize = boost::lexical_cast<std::string>( cond::time::SINCE_GROUP_SIZE);
+	  return "CAST("+SINCE::fullyQualifiedName()+"/"+sgroupSize+" AS INT )*"+sgroupSize;
+	}
       };
-
+ 
       struct SEQUENCE_SIZE {
 	typedef unsigned int type;
 	static constexpr size_t size = 0;
@@ -123,11 +120,16 @@ namespace cond {
 				      const boost::posix_time::ptime& snapshotTime, 
 				      std::vector<std::tuple<cond::Time_t,cond::Hash> >& iovs);
 	size_t selectLatest( const std::string& tag, std::vector<std::tuple<cond::Time_t,cond::Hash> >& iovs);
+	size_t selectSnapshot( const std::string& tag,
+                               const boost::posix_time::ptime& snapshotTime,
+                               std::vector<std::tuple<cond::Time_t,cond::Hash> >& iovs);
 	bool getLastIov( const std::string& tag, cond::Time_t& since, cond::Hash& hash );
+	bool getSnapshotLastIov( const std::string& tag, const boost::posix_time::ptime& snapshotTime, cond::Time_t& since, cond::Hash& hash );
 	bool getSize( const std::string& tag, size_t& size );
         bool getSnapshotSize( const std::string& tag, const boost::posix_time::ptime& snapshotTime, size_t& size );
 	void insertOne( const std::string& tag, cond::Time_t since, cond::Hash payloadHash, const boost::posix_time::ptime& insertTime);
 	void insertMany( const std::string& tag, const std::vector<std::tuple<cond::Time_t,cond::Hash,boost::posix_time::ptime> >& iovs );
+	void erase( const std::string& tag );
       private:
 	coral::ISchema& m_schema;
       };
@@ -139,6 +141,7 @@ namespace cond {
       column( SOURCE_ACCOUNT, std::string );
       column( SOURCE_TAG, std::string );
       column( TAG_NAME, std::string );
+      column( STATUS_CODE, int );
       column( INSERTION_TIME, boost::posix_time::ptime );
       
       class Table : public ITagMigrationTable {
@@ -147,13 +150,38 @@ namespace cond {
 	virtual ~Table(){}
 	bool exists();
 	void create();
-	bool select( const std::string& sourceAccount, const std::string& sourceTag, std::string& tagName);
+	bool select( const std::string& sourceAccount, const std::string& sourceTag, std::string& tagName, int& statusCode);
 	void insert( const std::string& sourceAccount, const std::string& sourceTag, const std::string& tagName, 
-		     const boost::posix_time::ptime& insertionTime);
+		     int statusCode, const boost::posix_time::ptime& insertionTime);
+	void updateValidationCode( const std::string& sourceAccount, const std::string& sourceTag, int statusCode );
       private:
 	coral::ISchema& m_schema;
       };
     }
+
+    // temporary... to be removed after the changeover.
+    table( PAYLOAD_MIGRATION ) {
+      
+      column( SOURCE_ACCOUNT, std::string );
+      column( SOURCE_TOKEN, std::string );
+      column( PAYLOAD_HASH, std::string, PAYLOAD::PAYLOAD_HASH_SIZE );
+      column( INSERTION_TIME, boost::posix_time::ptime );
+      
+      class Table : public IPayloadMigrationTable {
+      public:
+	explicit Table( coral::ISchema& schema );
+	virtual ~Table(){}
+	bool exists();
+	void create();
+	bool select( const std::string& sourceAccount, const std::string& sourceToken, std::string& payloadId );
+	void insert( const std::string& sourceAccount, const std::string& sourceToken, const std::string& payloadId, 
+		     const boost::posix_time::ptime& insertionTime);
+	void update( const std::string& sourceAccount, const std::string& sourceToken, const std::string& payloadId, 
+		     const boost::posix_time::ptime& insertionTime);
+      private:
+	coral::ISchema& m_schema;
+      };
+    } 
     
     class IOVSchema : public IIOVSchema {
     public: 
@@ -165,11 +193,14 @@ namespace cond {
       IIOVTable& iovTable();
       IPayloadTable& payloadTable();
       ITagMigrationTable& tagMigrationTable();
+      IPayloadMigrationTable& payloadMigrationTable();
+      std::string parsePoolToken( const std::string& );
     private:
       TAG::Table m_tagTable;
       IOV::Table m_iovTable;
       PAYLOAD::Table m_payloadTable;
       TAG_MIGRATION::Table m_tagMigrationTable;
+      PAYLOAD_MIGRATION::Table m_payloadMigrationTable;
     };
   }
 }

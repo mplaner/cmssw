@@ -7,7 +7,7 @@
  **
  ***/
 
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -24,8 +24,6 @@
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
 #include "RecoEcal/EgammaCoreTools/interface/PositionCalc.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeedFwd.h"
-#include "RecoEgamma/EgammaIsolationAlgos/interface/PfBlockBasedIsolation.h"
-#include "RecoCaloTools/MetaCollections/interface/CaloRecHitMetaCollections.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterTools.h"
 #include "RecoEgamma/PhotonIdentification/interface/PFPhotonIsolationCalculator.h"
 #include "RecoEgamma/PhotonIdentification/interface/PhotonIsolationCalculator.h"
@@ -40,7 +38,7 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 
 // GEDPhotonProducer inherits from EDProducer, so it can be a module:
-class GEDPhotonProducer : public edm::EDProducer {
+class GEDPhotonProducer : public edm::stream::EDProducer<> {
 
  public:
 
@@ -59,6 +57,7 @@ class GEDPhotonProducer : public edm::EDProducer {
                             const CaloTopology *topology,
 			    const EcalRecHitCollection* ecalBarrelHits,
 			    const EcalRecHitCollection* ecalEndcapHits,
+                            const EcalRecHitCollection* preshowerHits,
 			    const edm::Handle<CaloTowerCollection> & hcalTowersHandle,
 			    reco::VertexCollection& pvVertices,
 			    reco::PhotonCollection & outputCollection,
@@ -84,17 +83,15 @@ class GEDPhotonProducer : public edm::EDProducer {
  edm::EDGetTokenT<reco::PhotonCollection> photonProducerT_;
  edm::EDGetTokenT<EcalRecHitCollection> barrelEcalHits_;
  edm::EDGetTokenT<EcalRecHitCollection> endcapEcalHits_;
+ edm::EDGetTokenT<EcalRecHitCollection> preshowerHits_;
  edm::EDGetTokenT<reco::PFCandidateCollection> pfEgammaCandidates_;
  edm::EDGetTokenT<reco::PFCandidateCollection> pfCandidates_;
  edm::EDGetTokenT<CaloTowerCollection> hcalTowers_;
  edm::EDGetTokenT<reco::VertexCollection> vertexProducer_;
  
-
   std::string conversionProducer_;
   std::string conversionCollection_;
   std::string valueMapPFCandPhoton_;
-
-
 
   PFPhotonIsolationCalculator* thePFBasedIsolationCalculator_;
   PhotonIsolationCalculator* thePhotonIsolationCalculator_;

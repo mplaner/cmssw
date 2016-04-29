@@ -19,7 +19,7 @@
 
 // system include files
 #include <memory>
-#include <boost/bind.hpp>
+#include <functional>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -64,7 +64,7 @@ SecSourceAnalyzer::SecSourceAnalyzer(const edm::ParameterSet& iConfig)
    TH1F * histoName = new TH1F("h","",10,0,10); 
    bool playback = false;
    
-   input_.reset(new edm::PileUp(iConfig.getParameter<edm::ParameterSet>("input"),
+   input_.reset(new edm::PileUp(iConfig.getParameter<edm::ParameterSet>("input"),"input",
                                 averageNumber,histoName,playback));
       
    dataStep2_ = iConfig.getParameter<bool>("dataStep2");
@@ -93,6 +93,7 @@ SecSourceAnalyzer::~SecSourceAnalyzer()
 void
 SecSourceAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+   using namespace std::placeholders;
    vectorEventIDs_.resize(maxBunch_-minBunch_+1);
 
    int nevt = 0 ;
@@ -102,17 +103,18 @@ SecSourceAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	 {
 	   input_->readPileUp( iEvent.id(),
                                vectorEventIDs_[ ibx-minBunch_ ],
-			       boost::bind(&SecSourceAnalyzer::getBranches, 
-					   this, _1, iEvent.moduleCallingContext()), ibx
-			       );
+                               std::bind(&SecSourceAnalyzer::getBranches,
+                                           this, _1, iEvent.moduleCallingContext()), ibx,
+                               iEvent.streamID());
 	 }
        else
 	 {
 	   input_->readPileUp( iEvent.id(),
                                vectorEventIDs_[ ibx-minBunch_ ],
-			       boost::bind(&SecSourceAnalyzer::dummyFunction, 
-					   this, _1), ibx
-			       );
+                               std::bind(&SecSourceAnalyzer::dummyFunction,
+                                           this, _1),
+                               ibx,
+                               iEvent.streamID());
 	 }
 
        nevt += vectorEventIDs_[ ibx-minBunch_ ].size() ;
@@ -142,7 +144,7 @@ void  SecSourceAnalyzer::getBranches(EventPrincipal const &ep,
         // Get the SimTrack collection
         
 	// default version changed to transmit vertexoffset
-        boost::shared_ptr<Wrapper<std::vector<SimTrack> > const> shPtr =
+        std::shared_ptr<Wrapper<std::vector<SimTrack> > const> shPtr =
           getProductByTag<std::vector<SimTrack> >(ep, tag_, &moduleCallingContext);
     
         if (shPtr) 
@@ -156,7 +158,7 @@ void  SecSourceAnalyzer::getBranches(EventPrincipal const &ep,
     
         // default version changed to transmit vertexoffset
 	tag_ = InputTag("CFwriter","g4SimHits");
-        boost::shared_ptr<Wrapper<PCrossingFrame<SimTrack> > const> shPtr =
+        std::shared_ptr<Wrapper<PCrossingFrame<SimTrack> > const> shPtr =
           getProductByTag<PCrossingFrame<SimTrack> >(ep, tag_, &moduleCallingContext);
         
 	if (shPtr) 

@@ -33,18 +33,19 @@
 #include "Geometry/TrackerNumberingBuilder/interface/GeometricDet.h"
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
 #include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetType.h"
-#include "FWCore/Utilities/interface/InputTag.h"
 
 #include <string>
 #include "DQMServices/Core/interface/MonitorElement.h"
+#include <DQMServices/Core/interface/DQMEDAnalyzer.h>
 //For RecHit
 #include "DataFormats/TrackerRecHit2D/interface/SiStripRecHit2DCollection.h" 
 #include "DataFormats/TrackerRecHit2D/interface/SiStripMatchedRecHit2DCollection.h" 
+#include "SimTracker/TrackerHitAssociation/interface/TrackerHitAssociator.h"
 
 class SiStripDetCabling;
 class SiStripDCSStatus;
 
-class SiStripRecHitsValid : public edm::EDAnalyzer {
+class SiStripRecHitsValid : public DQMEDAnalyzer {
 
  public:
   
@@ -60,8 +61,14 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
  
   struct SubDetMEs{ // MEs for Subdetector Level
     MonitorElement*  meNumrphi;
+    MonitorElement*  meBunchrphi;
+    MonitorElement*  meEventrphi;
     MonitorElement*  meNumStereo;
+    MonitorElement*  meBunchStereo;
+    MonitorElement*  meEventStereo;
     MonitorElement*  meNumMatched;
+    MonitorElement*  meBunchMatched;
+    MonitorElement*  meEventMatched;
   };
 
   struct LayerMEs{ // MEs for Layer Level
@@ -73,6 +80,7 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
     MonitorElement* mePullLFrphi;
     MonitorElement* mePullMFrphi;
     MonitorElement* meChi2rphi;
+    MonitorElement* meNsimHitrphi;
     
   };
 
@@ -85,6 +93,7 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
     MonitorElement* mePullLFStereo;
     MonitorElement* mePullMFStereo;
     MonitorElement* meChi2Stereo;
+    MonitorElement* meNsimHitStereo;
     MonitorElement* mePosxMatched;
     MonitorElement* mePosyMatched;
     MonitorElement* meResolxMatched;
@@ -92,15 +101,16 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
     MonitorElement* meResxMatched;
     MonitorElement* meResyMatched;
     MonitorElement* meChi2Matched;
+    MonitorElement* meNsimHitMatched;
 
   };
 
   struct RecHitProperties{ 
     float x;
     float y;
-    float z;
+//    float z;
     float resolxx;
-    float resolxy;
+//    float resolxy;
     float resolyy;
     float resx;
     float resy;
@@ -108,20 +118,19 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
     int clusiz;
     float cluchg;
     float chi2;
+    int NsimHit;
+    int bunch;
+    int event;
   };
 
 
  protected:
 
   virtual void analyze(const edm::Event& e, const edm::EventSetup& c);
+  void bookHistograms(DQMStore::IBooker & ibooker,const edm::Run& run, const edm::EventSetup& es);
   void beginJob(const edm::EventSetup& es);
-  virtual void beginRun(const edm::Run&, const edm::EventSetup&);
-  void endJob();
-    
+
  private: 
-  //Back-End Interface
-  DQMStore* dbe_;
-  std::string outputFile_;
 
   TotalMEs totalMEs;
 
@@ -131,8 +140,14 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
 
 
   bool switchNumrphi;
+  bool switchBunchrphi;
+  bool switchEventrphi;
   bool switchNumStereo;
+  bool switchBunchStereo;
+  bool switchEventStereo;
   bool switchNumMatched;
+  bool switchBunchMatched;
+  bool switchEventMatched;
 
 
   bool switchWclusrphi;
@@ -143,6 +158,7 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
   bool switchPullLFrphi;
   bool switchPullMFrphi;
   bool switchChi2rphi;
+  bool switchNsimHitrphi;
   bool switchWclusStereo;
   bool switchAdcStereo;
   bool switchPosxStereo;
@@ -151,6 +167,7 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
   bool switchPullLFStereo;
   bool switchPullMFStereo;
   bool switchChi2Stereo;
+  bool switchNsimHitStereo;
   bool switchPosxMatched;
   bool switchPosyMatched;
   bool switchResolxMatched;
@@ -158,6 +175,7 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
   bool switchResxMatched;
   bool switchResyMatched;
   bool switchChi2Matched;
+  bool switchNsimHitMatched;
   
   std::string topFolderName_;
   std::vector<std::string> SubDetList_;
@@ -173,13 +191,13 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
 
   std::pair<LocalPoint,LocalVector> projectHit( const PSimHit& hit, const StripGeomDetUnit* stripDet,
 							const BoundPlane& plane);
-  void createMEs(const edm::EventSetup& es);
-  void createTotalMEs(); 
-  void createLayerMEs(std::string label);
-  void createSubDetMEs(std::string label);
-  void createStereoAndMatchedMEs(std::string label);
+  void createMEs(DQMStore::IBooker & ibooker,const edm::EventSetup& es);
+  void createTotalMEs(DQMStore::IBooker & ibooker); 
+  void createLayerMEs(DQMStore::IBooker & ibooker,std::string label);
+  void createSubDetMEs(DQMStore::IBooker & ibooker,std::string label);
+  void createStereoAndMatchedMEs(DQMStore::IBooker & ibooker,std::string label);
   
-  MonitorElement* bookME1D(const char* ParameterSetLabel, const char* HistoName, const char* HistoTitle);
+  MonitorElement* bookME1D(DQMStore::IBooker & ibooker,const char* ParameterSetLabel, const char* HistoName, const char* HistoTitle);
 
   inline void fillME(MonitorElement* ME,float value1){if (ME!=0)ME->Fill(value1);}
   inline void fillME(MonitorElement* ME,float value1,float value2){if (ME!=0)ME->Fill(value1,value2);}
@@ -187,21 +205,20 @@ class SiStripRecHitsValid : public edm::EDAnalyzer {
   inline void fillME(MonitorElement* ME,float value1,float value2,float value3,float value4){if (ME!=0)ME->Fill(value1,value2,value3,value4);}
 
   edm::ParameterSet conf_;
+  TrackerHitAssociator::Config trackerHitAssociatorConfig_;
   unsigned long long m_cacheID_;
-  edm::ParameterSet Parameters;
   //const StripTopology* topol;
 
   /* static const int MAXHIT = 1000; */
 
-  std::vector<RecHitProperties> rechitrphi;
-  std::vector<RecHitProperties> rechitstereo;
-  std::vector<RecHitProperties> rechitmatched;
+//  std::vector<RecHitProperties> rechitrphi;
+//  std::vector<RecHitProperties> rechitstereo;
+//  std::vector<RecHitProperties> rechitmatched;
   RecHitProperties rechitpro;
 
   void rechitanalysis(SiStripRecHit2D const rechit,const StripTopology &topol, TrackerHitAssociator& associate);
   void rechitanalysis_matched(SiStripMatchedRecHit2D const rechit, const GluedGeomDet* gluedDet, TrackerHitAssociator& associate);
   
-  //edm::InputTag matchedRecHits_, rphiRecHits_, stereoRecHits_; 
   edm::EDGetTokenT<SiStripMatchedRecHit2DCollection> matchedRecHitsToken_;
   edm::EDGetTokenT<SiStripRecHit2DCollection> rphiRecHitsToken_;
   edm::EDGetTokenT<SiStripRecHit2DCollection> stereoRecHitsToken_;

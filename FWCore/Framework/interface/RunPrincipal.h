@@ -15,7 +15,7 @@ is the DataBlock.
 #include <string>
 #include <vector>
 
-#include "boost/shared_ptr.hpp"
+#include <memory>
 
 #include "DataFormats/Provenance/interface/RunAuxiliary.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryID.h"
@@ -34,8 +34,8 @@ namespace edm {
     typedef Principal Base;
 
     RunPrincipal(
-        boost::shared_ptr<RunAuxiliary> aux,
-        boost::shared_ptr<ProductRegistry const> reg,
+        std::shared_ptr<RunAuxiliary> aux,
+        std::shared_ptr<ProductRegistry const> reg,
         ProcessConfiguration const& pc,
         HistoryAppender* historyAppender,
         unsigned int iRunIndex);
@@ -86,11 +86,11 @@ namespace edm {
       return aux_->mergeAuxiliary(aux);
     }
 
-    void setUnscheduledHandler(boost::shared_ptr<UnscheduledHandler>) {}
+    void setUnscheduledHandler(std::shared_ptr<UnscheduledHandler>) {}
 
     void put(
         BranchDescription const& bd,
-        WrapperOwningHolder const& edp);
+        std::unique_ptr<WrapperBase> edp);
 
     void readImmediate() const;
 
@@ -103,13 +103,14 @@ namespace edm {
     virtual bool isComplete_() const override {return complete_;}
 
     virtual bool unscheduledFill(std::string const&,
-                                 ModuleCallingContext const* mcc) const override {return false;}
+                                 SharedResourcesAcquirer* sra,
+                                 ModuleCallingContext const*) const override {return false;}
 
     virtual unsigned int transitionIndex_() const override;
 
     void resolveProductImmediate(ProductHolderBase const& phb) const;
 
-    boost::shared_ptr<RunAuxiliary> aux_;
+    std::shared_ptr<RunAuxiliary> aux_;
     ProcessHistoryID m_reducedHistoryID;
     RunIndex index_;
 

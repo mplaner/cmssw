@@ -22,6 +22,10 @@
 
 #include "SeedToTrackProducer.h"
 
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
+
+
 //
 // class declaration
 //
@@ -43,7 +47,9 @@
 SeedToTrackProducer::SeedToTrackProducer(const edm::ParameterSet& iConfig)
 {
     
-    L2seedsTag_ =  iConfig.getParameter<edm::InputTag>("L2seedsCollection");
+  L2seedsTagT_ = consumes<TrajectorySeedCollection>(iConfig.getParameter<edm::InputTag>("L2seedsCollection"));
+  L2seedsTagS_ = consumes<edm::View<TrajectorySeed> >(iConfig.getParameter<edm::InputTag>("L2seedsCollection"));
+
 
     
     
@@ -90,15 +96,19 @@ SeedToTrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     iSetup.get<IdealMagneticFieldRecord>().get(theMGField);
     iSetup.get<GlobalTrackingGeometryRecord>().get(theTrackingGeometry);
 
+    edm::ESHandle<TrackerTopology> httopo;
+    iSetup.get<TrackerTopologyRcd>().get(httopo);
+    const TrackerTopology& ttopo = *httopo;
+
     // now read the L2 seeds collection :
     edm::Handle<TrajectorySeedCollection> L2seedsCollection;
-    iEvent.getByLabel(L2seedsTag_,L2seedsCollection);
+    iEvent.getByToken(L2seedsTagT_,L2seedsCollection);
     const std::vector<TrajectorySeed>* L2seeds = 0;
     if (L2seedsCollection.isValid()) L2seeds = L2seedsCollection.product();
     else  edm::LogError("SeedToTrackProducer") << "L2 seeds collection not found !! " << endl;
     
     edm::Handle<edm::View<TrajectorySeed> > seedHandle;
-    iEvent.getByLabel(L2seedsTag_, seedHandle);
+    iEvent.getByToken(L2seedsTagS_, seedHandle);
     
     
     int countRH = 0;
@@ -139,14 +149,15 @@ SeedToTrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
         edm::LogVerbatim("SeedToTrackProducer") << "trackPtError=" << theTrack.ptError() << "trackPhiError=" << theTrack.phiError() << endl;
  
         //fill the seed segments in the track
-        unsigned int index_hit = 0;
+        unsigned int nHitsAdded = 0;
         for(TrajectorySeed::recHitContainer::const_iterator itRecHits=(L2seeds->at(i)).recHits().first; itRecHits!=(L2seeds->at(i)).recHits().second; ++itRecHits, ++countRH) {
             TrackingRecHit* hit = (itRecHits)->clone();
-            theTrack.setHitPattern( *hit, index_hit);
+            theTrack.appendHitPattern(*hit, ttopo);
             selectedTrackHits->push_back(hit);
-            index_hit++;
-            theTrackExtra.add(TrackingRecHitRef( rHits, hidx ++ ) );
+            nHitsAdded++;
         }
+        theTrackExtra.setHits( rHits, hidx, nHitsAdded );
+        hidx += nHitsAdded;
         selectedTracks->push_back(theTrack);
         selectedTrackExtras->push_back(theTrackExtra);
 

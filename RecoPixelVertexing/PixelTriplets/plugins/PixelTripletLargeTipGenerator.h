@@ -7,10 +7,7 @@
     provided Layers
  */
 
-#include "RecoTracker/TkHitPairs/interface/HitPairGenerator.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGenerator.h"
 #include "CombinedHitTripletGenerator.h"
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
@@ -24,18 +21,14 @@ class PixelTripletLargeTipGenerator : public HitTripletGeneratorFromPairAndLayer
 typedef CombinedHitTripletGenerator::LayerCacheType       LayerCacheType;
 
 public:
-  PixelTripletLargeTipGenerator( const edm::ParameterSet& cfg);
+  PixelTripletLargeTipGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
-  virtual ~PixelTripletLargeTipGenerator() { delete thePairGenerator; }
+  virtual ~PixelTripletLargeTipGenerator();
 
-  virtual void init( const HitPairGenerator & pairs,
-      const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
-
-  virtual void hitTriplets( const TrackingRegion& region, OrderedHitTriplets & trs, 
-      const edm::Event & ev, const edm::EventSetup& es);
-
-  const HitPairGenerator & pairGenerator() const { return *thePairGenerator; }
-  const std::vector<ctfseeding::SeedingLayer> & thirdLayers() const { return theLayers; }
+  virtual void hitTriplets( const TrackingRegion& region, OrderedHitTriplets & trs,
+                            const edm::Event & ev, const edm::EventSetup& es,
+                            SeedingLayerSetsHits::SeedingLayerSet pairLayers,
+                            const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers) override;
 
 private:
 
@@ -45,10 +38,6 @@ private:
 
 
 private:
-  HitPairGenerator * thePairGenerator;
-  std::vector<ctfseeding::SeedingLayer> theLayers;
-  LayerCacheType * theLayerCache;
-
   bool useFixedPreFiltering;
   float extraHitRZtolerance;
   float extraHitRPhitolerance;

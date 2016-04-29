@@ -4,7 +4,6 @@
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "Utilities/Timing/interface/TimingReport.h"
 
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "DataFormats/CaloTowers/interface/CaloTowerCollection.h"
@@ -59,12 +58,13 @@ CaloExtractorByAssociator::CaloExtractorByAssociator(const ParameterSet& par, ed
   ParameterSet serviceParameters = par.getParameter<ParameterSet>("ServiceParameters");
   theService = new MuonServiceProxy(serviceParameters);
 
-  theAssociatorParameters = new TrackAssociatorParameters(par.getParameter<edm::ParameterSet>("TrackAssociatorParameters"));
+  //theAssociatorParameters = new TrackAssociatorParameters(par.getParameter<edm::ParameterSet>("TrackAssociatorParameters"), iC);
+  theAssociatorParameters = new TrackAssociatorParameters();
+  theAssociatorParameters->loadParameters(par.getParameter<edm::ParameterSet>("TrackAssociatorParameters"), iC);
   theAssociator = new TrackDetectorAssociator();
 }
 
 CaloExtractorByAssociator::~CaloExtractorByAssociator(){
-  if (thePrintTimeReport) TimingReport::current()->dump(std::cout);
   if (theAssociatorParameters) delete theAssociatorParameters;
   if (theService) delete theService;
   if (theAssociator) delete theAssociator;

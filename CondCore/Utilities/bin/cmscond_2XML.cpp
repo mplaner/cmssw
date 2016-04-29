@@ -16,7 +16,6 @@
 #include <iostream>
 #include <sstream>
 #include "TFile.h"
-#include "Cintex/Cintex.h"
 
 namespace cond {
   class XMLUtilities : public Utilities {
@@ -114,16 +113,12 @@ cond::XMLUtilities::XMLUtilities():Utilities("cmscond_2XML"){
   addOption<cond::Time_t>("beginTime","b","begin time (first since) (optional)");
   addOption<cond::Time_t>("endTime","e","end time (last till) (optional)");
   addOption<std::string>("tag","t","list info of the specified tag");
-
-  ROOT::Cintex::Cintex::Enable();
 }
 
 cond::XMLUtilities::~XMLUtilities(){
 }
 
 int cond::XMLUtilities::execute(){
-  initializePluginManager();
-  
   cond::DbSession session = openDbSession( "connect", Auth::COND_READER_ROLE, true );
 
   std::string tag = getOptionValue<std::string>("tag");

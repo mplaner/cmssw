@@ -19,12 +19,25 @@
 
 namespace cond {
 
+  // to be removed after the transition to new DB
+  typedef enum { UNKNOWN_DB=0, COND_DB, ORA_DB } BackendType;
+  static constexpr BackendType DEFAULT_DB = COND_DB;
+  // for the validation of migrated data
+  typedef enum { ERROR=0, MIGRATED, VALIDATED } MigrationStatus;
+  static const std::vector<std::string> validationStatusText = { "Error",
+								 "Migrated",
+								 "Validated" };
+
   typedef enum { 
-    SYNCHRONIZATION_UNKNOWN = -1,
-    OFFLINE=0, 
-    HLT, 
-    PROMPT, 
-    PCL 
+    SYNCH_ANY = 0,
+    SYNCH_VALIDATION,
+    SYNCH_OFFLINE,
+    SYNCH_MC,
+    SYNCH_RUNMC,
+    SYNCH_HLT, 
+    SYNCH_EXPRESS,
+    SYNCH_PROMPT, 
+    SYNCH_PCL 
   } SynchronizationType;
 
   std::string synchronizationTypeNames( SynchronizationType type );
@@ -36,6 +49,7 @@ namespace cond {
 
   // Basic element of the IOV sequence.
   struct Iov_t {
+    virtual ~Iov_t(){}
     virtual void clear();
     bool isValid() const;
     bool isValidFor( Time_t target ) const;
@@ -87,6 +101,14 @@ namespace cond {
     std::string payloadToken;
     std::string exectime;
     std::string execmessage;
+  };
+
+  struct GTMetadata_t {
+    Time_t validity;
+    std::string description;
+    std::string release;
+    boost::posix_time::ptime insertionTime;
+    boost::posix_time::ptime snapshotTime;
   };
 
   class GTEntry_t {

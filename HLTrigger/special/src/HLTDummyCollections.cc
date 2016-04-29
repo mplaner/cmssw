@@ -32,7 +32,8 @@ Implementation:
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 // -- Ecal
-#include "EventFilter/EcalRawToDigi/plugins/EcalRawToRecHitFacility.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+#include "DataFormats/EcalRecHit/interface/EcalRecHitComparison.h"
 // -- Hcal
 #include "EventFilter/HcalRawToDigi/plugins/HcalRawToDigi.h"
 // -- Ecal Preshower
@@ -53,7 +54,7 @@ Implementation:
 #include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
 #include "DataFormats/Common/interface/DetSetVector.h"
 // -- SiStrips
-#include "DataFormats/Common/interface/LazyGetter.h"
+#include "DataFormats/Common/interface/DetSetVectorNew.h"
 #include "DataFormats/SiStripCluster/interface/SiStripCluster.h"
 // --- GCT
 #include "EventFilter/GctRawToDigi/plugins/GctRawToDigi.h"
@@ -78,7 +79,7 @@ class HLTDummyCollections : public edm::EDProducer {
     // ----------member data ---------------------------
 
     std::string action_;
-    bool doEcal_ ;
+  //bool doEcal_ ;
     bool doHcal_; 
     bool unpackZDC_ ;
     bool doEcalPreshower_ ;
@@ -110,7 +111,7 @@ HLTDummyCollections::HLTDummyCollections(const edm::ParameterSet& iConfig)
   unpackZDC_        = iConfig.getParameter<bool>("UnpackZDC");
   ESdigiCollection_ = iConfig.getParameter<std::string>("ESdigiCollection");
 
-  doEcal_           = ( action_ == "doEcal");
+  //  doEcal_           = ( action_ == "doEcal");
   doHcal_           = ( action_ == "doHcal");
   doEcalPreshower_  = ( action_ == "doEcalPreshower");
   doMuonDTDigis_    = ( action_ == "doMuonDT");
@@ -120,10 +121,11 @@ HLTDummyCollections::HLTDummyCollections(const edm::ParameterSet& iConfig)
   doObjectMap_      = ( action_ == "doObjectMap");
   doGCT_	    = ( action_ == "doGCT");
 
+/* This interface is out of data and I do not know what is the proper replacement
   if (doEcal_) {
     // ECAL unpacking :
     produces< edm::LazyGetter<EcalRecHit> >();
-  }
+  } */
 
   if (doHcal_) {
     // HCAL unpacking
@@ -162,7 +164,7 @@ HLTDummyCollections::HLTDummyCollections(const edm::ParameterSet& iConfig)
   }
 
   if (doSiStrip_) {
-    produces< edm::LazyGetter<SiStripCluster> >();
+    produces< edmNew::DetSetVector<SiStripCluster> >();
   }
 
   if (doGCT_) {
@@ -212,10 +214,11 @@ HLTDummyCollections::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   using namespace edm;
 
+  /*
   if (doEcal_) {
     std::auto_ptr< edm::LazyGetter<EcalRecHit> > Ecalcollection( new edm::LazyGetter<EcalRecHit> );
     iEvent.put(Ecalcollection);
-  }
+    } */
 
   if (doHcal_) {
     std::auto_ptr<HBHEDigiCollection> hbhe_prod(new HBHEDigiCollection()); 
@@ -270,7 +273,7 @@ HLTDummyCollections::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   }
 
   if (doSiStrip_) {
-    std::auto_ptr< edm::LazyGetter<SiStripCluster> > SiStripcollection( new edm::LazyGetter<SiStripCluster> );
+    std::auto_ptr< edmNew::DetSetVector<SiStripCluster> > SiStripcollection( new edmNew::DetSetVector<SiStripCluster> );
     iEvent.put(SiStripcollection);
   }
 

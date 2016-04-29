@@ -3,8 +3,9 @@
  *  \author M. Sani
  */
 
-#include <Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h>
-#include <FWCore/Utilities/interface/Exception.h>
+#include "Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h"
+#include "FWCore/Utilities/interface/Exception.h"
+
 #include <memory>
 
 GlobalTrackingGeometry::GlobalTrackingGeometry(std::vector<const TrackingGeometry*>& geos)
@@ -14,15 +15,15 @@ GlobalTrackingGeometry::GlobalTrackingGeometry(std::vector<const TrackingGeometr
 
 GlobalTrackingGeometry::~GlobalTrackingGeometry()
 {
-    delete theDetTypes;
+    delete theDetTypes.load();
     theDetTypes = nullptr;
-    delete theDetUnits;
+    delete theDetUnits.load();
     theDetUnits = nullptr;
-    delete theDets;
+    delete theDets.load();
     theDets = nullptr;
-    delete theDetUnitIds;
+    delete theDetUnitIds.load();
     theDetUnitIds = nullptr;
-    delete theDetIds;
+    delete theDetIds.load();
     theDetIds = nullptr;
 }
 

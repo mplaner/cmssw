@@ -19,8 +19,6 @@
 ///  \author    : Andreas Mussgiller
 ///  date       : December 2010
 
-#include "DataFormats/GeometryCommonDetAlgo/interface/DeepCopyPointerByClone.h"
-
 #include "Geometry/CommonTopologies/interface/SurfaceDeformation.h"
 #include "Geometry/CommonTopologies/interface/PixelTopology.h"
 #include "Geometry/TrackerGeometryBuilder/interface/PixelGeomDetType.h"
@@ -30,7 +28,7 @@ class Plane;
 class ProxyPixelTopology GCC11_FINAL : public PixelTopology {
 public:
 
-  ProxyPixelTopology( PixelGeomDetType* type, Plane * bp );
+  ProxyPixelTopology( PixelGeomDetType const * type, Plane * bp );
 
   virtual LocalPoint localPosition( const MeasurementPoint& ) const;
   /// conversion taking also the predicted track state 
@@ -97,7 +95,7 @@ public:
 
   virtual const GeomDetType& type() const { return *theType;}
 
-  virtual PixelGeomDetType& specificType() const { return *theType; }
+  virtual PixelGeomDetType const & specificType() const { return *theType; }
 
   const SurfaceDeformation * surfaceDeformation() const { 
     return theSurfaceDeformation.operator->();
@@ -118,9 +116,9 @@ private:
   SurfaceDeformation::Local2DVector
     positionCorrection(const Topology::LocalTrackPred &trk) const;
   
-  PixelGeomDetType* theType;  
+  PixelGeomDetType const * theType;  
   float theLength, theWidth;
-  DeepCopyPointerByClone<const SurfaceDeformation> theSurfaceDeformation;
+  std::unique_ptr<const SurfaceDeformation> theSurfaceDeformation;
 };
 
 #endif

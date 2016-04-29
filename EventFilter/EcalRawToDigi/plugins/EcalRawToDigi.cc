@@ -2,13 +2,18 @@
 #include "EventFilter/EcalRawToDigi/interface/EcalElectronicsMapper.h"
 #include "EventFilter/EcalRawToDigi/interface/DCCDataUnpacker.h"
 
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
-#include "DataFormats/EcalRawData/interface/EcalListOfFEDS.h"
+
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CondFormats/DataRecord/interface/EcalChannelStatusRcd.h"
+
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 EcalRawToDigi::EcalRawToDigi(edm::ParameterSet const& conf):
   
@@ -54,11 +59,11 @@ EcalRawToDigi::EcalRawToDigi(edm::ParameterSet const& conf):
   
   put_(conf.getParameter<bool>("eventPut")),
   
-  dataLabel_(conf.getParameter<edm::InputTag>("InputLabel")),
+
 
   REGIONAL_(conf.getParameter<bool>("DoRegional")),
 
-  fedsLabel_(conf.getParameter<edm::InputTag>("FedLabel")),
+
 
   myMap_(0),
   
@@ -115,8 +120,10 @@ EcalRawToDigi::EcalRawToDigi(edm::ParameterSet const& conf):
     <<"\n feID check is "<<feIdCheck_
     <<"\n force keep FR data is "<<forceToKeepFRdata_
     <<"\n";
-  
-  
+
+  edm::InputTag dataLabel = conf.getParameter<edm::InputTag>("InputLabel");
+  edm::InputTag fedsLabel = conf.getParameter<edm::InputTag>("FedLabel");
+
   // Producer products :
   produces<EBDigiCollection>("ebDigis"); 
   produces<EEDigiCollection>("eeDigis");
@@ -148,12 +155,15 @@ EcalRawToDigi::EcalRawToDigi(edm::ParameterSet const& conf):
   produces<EcalElectronicsIdCollection>("EcalIntegrityMemChIdErrors");
   produces<EcalElectronicsIdCollection>("EcalIntegrityMemGainErrors");
 
+  dataToken_=consumes<FEDRawDataCollection>(dataLabel);
+  if (REGIONAL_){
+      fedsToken_=consumes<EcalListOfFEDS>(fedsLabel);
+  }
 
- 
   // Build a new Electronics mapper and parse default map file
   myMap_ = new EcalElectronicsMapper(numbXtalTSamples_,numbTriggerTSamples_);
 
-  // in case of external  text file (deprecated by HLT environment) 
+  // in case of external  tsext file (deprecated by HLT environment) 
   //  bool readResult = myMap_->readDCCMapFile(conf.getParameter<std::string>("DCCMapFile",""));
 
   // use two arrays from cfg to establish DCCId:FedId. If they are empy, than use hard coded correspondence 
@@ -230,6 +240,48 @@ void printStatusRecords(const DCCDataUnpacker* unpacker,
   std::cout << "<=== BARREL" << std::endl;
 }
 
+void EcalRawToDigi::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  desc.add<bool>("tccUnpacking",true);
+  desc.add<edm::InputTag>("FedLabel",edm::InputTag("listfeds"));
+  desc.add<bool>("srpUnpacking",true);
+  desc.add<bool>("syncCheck",true);
+  desc.add<bool>("feIdCheck",true);
+  desc.addUntracked<bool>("silentMode",true);
+  desc.add<edm::InputTag>("InputLabel",edm::InputTag("rawDataCollector"));
+  {
+    std::vector<int> temp1;
+    unsigned int nvec = 54;
+    temp1.reserve(nvec);
+    for (unsigned int i=0; i<nvec; i++) temp1.push_back(601+i);
+    desc.add<std::vector<int> >("orderedFedList",temp1);
+  }
+  desc.add<bool>("eventPut",true);
+  desc.add<int>("numbTriggerTSamples",1);
+  desc.add<int>("numbXtalTSamples",10);
+  {
+    std::vector<int> temp1;
+    unsigned int nvec = 54;
+    temp1.reserve(nvec);
+    for (unsigned int i=0; i<nvec; i++) temp1.push_back(1+i);
+    desc.add<std::vector<int> >("orderedDCCIdList",temp1);
+  }
+  {
+    std::vector<int> temp1;
+    unsigned int nvec = 54;
+    temp1.reserve(nvec);
+    for (unsigned int i=0; i<nvec; i++) temp1.push_back(601+i);
+    desc.add<std::vector<int> >("FEDs",temp1);
+  }
+  desc.add<bool>("DoRegional",false);
+  desc.add<bool>("feUnpacking",true);
+  desc.add<bool>("forceToKeepFRData",false);
+  desc.add<bool>("headerUnpacking",true);
+  desc.add<bool>("memUnpacking",true);
+  descriptions.add("ecalRawToDigi",desc);
+}
+
+
 void EcalRawToDigi::beginRun(const edm::Run&, const edm::EventSetup& es)
 {
   // channel status database
@@ -276,7 +328,7 @@ void EcalRawToDigi::produce(edm::Event& e, const edm::EventSetup& es)
   std::vector<int> FEDS_to_unpack;
   if (REGIONAL_) {
         edm::Handle<EcalListOfFEDS> listoffeds;
-        e.getByLabel(fedsLabel_, listoffeds);
+        e.getByToken(fedsToken_, listoffeds);
         FEDS_to_unpack = listoffeds -> GetList();
   }
 
@@ -285,7 +337,7 @@ void EcalRawToDigi::produce(edm::Event& e, const edm::EventSetup& es)
   // Step A: Get Inputs    
 
   edm::Handle<FEDRawDataCollection> rawdata;  
-  e.getByLabel(dataLabel_,rawdata);
+  e.getByToken(dataToken_,rawdata);
 
 
   // Step B: encapsulate vectors in actual collections and set unpacker pointers

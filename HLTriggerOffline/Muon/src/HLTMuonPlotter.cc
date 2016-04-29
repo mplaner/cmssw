@@ -62,9 +62,6 @@ HLTMuonPlotter::HLTMuonPlotter(const ParameterSet & pset,
   genMuonSelector_ = 0;
   recMuonSelector_ = 0;
 
-  dbe_ = Service<DQMStore>().operator->();
-  dbe_->setVerbose(0);
-
   //set tokens
   hltTriggerSummaryRAW_ = tokens.get<0>();
   genParticleLabel_ = tokens.get<1>();
@@ -77,12 +74,14 @@ HLTMuonPlotter::HLTMuonPlotter(const ParameterSet & pset,
 void 
 HLTMuonPlotter::beginJob() 
 {
+
 }
 
 
 
 void 
-HLTMuonPlotter::beginRun(const Run & iRun, const EventSetup & iSetup) 
+HLTMuonPlotter::beginRun(DQMStore::IBooker & iBooker,
+			 const Run & iRun, const EventSetup & iSetup) 
 {
 
   static int runNumber = 0;
@@ -109,28 +108,25 @@ HLTMuonPlotter::beginRun(const Run & iRun, const EventSetup & iSetup)
   if (cutMinPt_ < 0.) cutMinPt_ = 0.;
   
   string baseDir = "HLT/Muon/Distributions/";
-  dbe_->setCurrentFolder(baseDir + hltPath_);
+  iBooker.setCurrentFolder(baseDir + hltPath_);
 
   vector<string> sources(2);
   sources[0] = "gen";
   sources[1] = "rec";
 
-  if (dbe_->get(baseDir + hltPath_ + "/CutMinPt") == 0) {
+  elements_["CutMinPt" ] = iBooker.bookFloat("CutMinPt" );
+  elements_["CutMaxEta"] = iBooker.bookFloat("CutMaxEta");
+  elements_["CutMinPt" ]->Fill(cutMinPt_);
+  elements_["CutMaxEta"]->Fill(cutMaxEta_);
 
-      elements_["CutMinPt" ] = dbe_->bookFloat("CutMinPt" );
-      elements_["CutMaxEta"] = dbe_->bookFloat("CutMaxEta");
-      elements_["CutMinPt" ]->Fill(cutMinPt_);
-      elements_["CutMaxEta"]->Fill(cutMaxEta_);
-
-      for (size_t i = 0; i < sources.size(); i++) {
-        string source = sources[i];
-        for (size_t j = 0; j < stepLabels_.size(); j++) {
-          bookHist(hltPath_, stepLabels_[j], source, "Eta");
-          bookHist(hltPath_, stepLabels_[j], source, "Phi");
-          bookHist(hltPath_, stepLabels_[j], source, "MaxPt1");
-          bookHist(hltPath_, stepLabels_[j], source, "MaxPt2");
-        }
-      }
+  for (size_t i = 0; i < sources.size(); i++) {
+    string source = sources[i];
+    for (size_t j = 0; j < stepLabels_.size(); j++) {
+      bookHist(iBooker, hltPath_, stepLabels_[j], source, "Eta");
+      bookHist(iBooker, hltPath_, stepLabels_[j], source, "Phi");
+      bookHist(iBooker, hltPath_, stepLabels_[j], source, "MaxPt1");
+      bookHist(iBooker, hltPath_, stepLabels_[j], source, "MaxPt2");
+    }
   }
 
 }
@@ -228,9 +224,13 @@ HLTMuonPlotter::analyze(const Event & iEvent, const EventSetup & iSetup)
     
     for (size_t step = 0; step < nSteps; step++) {
       
-      const size_t hltStep = (step >= 2) ? step - 2 : 0;
+      size_t hltStep = (step >= 2) ? step - 2 : 0;
+      if (nSteps == 6) hltStep=hltStep-1; // case of the tracker muon (it has no L2)
       size_t level = 0;
-      if (stepLabels_[step].find("L3") != string::npos) level = 3;
+      if ((stepLabels_[step].find("L3TkIso") != string::npos)||(stepLabels_[step].find("TkTkIso") != string::npos)) level = 6;
+      else if ((stepLabels_[step].find("L3HcalIso") != string::npos)||(stepLabels_[step].find("TkEcalIso") != string::npos)) level = 5;
+      else if ((stepLabels_[step].find("L3EcalIso") != string::npos)||(stepLabels_[step].find("TkEcalIso") != string::npos)) level = 4;
+      else if ((stepLabels_[step].find("L3") != string::npos)||(stepLabels_[step].find("Tk") != string::npos)) level = 3;
       else if (stepLabels_[step].find("L2") != string::npos) level = 2;
       else if (stepLabels_[step].find("L1") != string::npos) level = 1;
       
@@ -395,7 +395,8 @@ HLTMuonPlotter::findMatches(
 
 
 void 
-HLTMuonPlotter::bookHist(string path, string label, 
+HLTMuonPlotter::bookHist(DQMStore::IBooker & iBooker,
+			 string path, string label, 
                          string source, string type)
 {
 
@@ -426,7 +427,7 @@ HLTMuonPlotter::bookHist(string path, string label,
   }
 
   h->Sumw2();
-  elements_[name] = dbe_->book1D(name, h);
+  elements_[name] = iBooker.book1D(name, h);
   delete h;
 
 }

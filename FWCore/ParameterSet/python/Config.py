@@ -99,8 +99,11 @@ def findProcess(module):
 
 class Process(object):
     """Root class for a CMS configuration process"""
-    def __init__(self,name):
-        """The argument 'name' will be the name applied to this Process"""
+    def __init__(self,name,*Mods):
+        """The argument 'name' will be the name applied to this Process
+            Can optionally pass as additional arguments cms.Modifier instances
+            which will be used ot modify the Process as it is built
+            """
         self.__dict__['_Process__name'] = name
         if not name.isalnum():
             raise RuntimeError("Error: The process name is an empty string or contains non-alphanumeric characters")
@@ -127,6 +130,9 @@ class Process(object):
         self.__dict__['_Process__InExtendCall'] = False
         self.__dict__['_Process__partialschedules'] = {}
         self.__isStrict = False
+        self.__dict__['_Process__modifiers'] = Mods
+        for m in self.__modifiers:
+            m._setChosen()
 
     def setStrict(self, value):
         self.__isStrict = value
@@ -303,7 +309,7 @@ class Process(object):
             return
         if not isinstance(value,_ConfigureComponent):
             raise TypeError("can only assign labels to an object which inherits from '_ConfigureComponent'\n"
-                            +"an instance of "+str(type(value))+" will not work")
+                            +"an instance of "+str(type(value))+" will not work - requested label is "+name)
         if not isinstance(value,_Labelable) and not isinstance(value,Source) and not isinstance(value,Looper) and not isinstance(value,Schedule):
             if name == value.type_():
                 self.add_(value)
@@ -519,7 +525,9 @@ class Process(object):
                 continue
             item = getattr(other,name)
             if name == "source" or name == "looper" or name == "subProcess":
-                self.__setattr__(name,item)
+                # In these cases 'item' could be None if the specific object was not defined
+                if item is not None:
+                    self.__setattr__(name,item)
             elif isinstance(item,_ModuleSequenceType):
                 seqs[name]=item
             elif isinstance(item,_Labelable):
@@ -530,6 +538,10 @@ class Process(object):
                 self.__setattr__(name,item)
             elif isinstance(item,_Unlabelable):
                 self.add_(item)
+            elif isinstance(item,ProcessModifier):
+                item.apply(self)
+            elif isinstance(item,ProcessFragment):
+                self.extend(item)
 
         #now create a sequence which uses the newly made items
         for name in seqs.iterkeys():
@@ -545,6 +557,7 @@ class Process(object):
                 #now put in proper bucket
                 newSeq._place(name,self)
         self.__dict__['_Process__InExtendCall'] = False
+
     def _dumpConfigNamedList(self,items,typeName,options):
         returnValue = ''
         for name,item in items:
@@ -679,7 +692,7 @@ class Process(object):
         return returnValue
     def _dumpPython(self, d, options):
         result = ''
-        for name, value in d.iteritems():
+        for name, value in sorted(d.iteritems()):
            result += value.dumpPythonAs(name,options)+'\n'
         return result
     def dumpPython(self, options=PrintOptions()):
@@ -786,21 +799,23 @@ class Process(object):
             self.endpaths_()[endpathname].insertInto(processPSet, endpathname, self.__dict__)
         processPSet.addVString(False, "@filters_on_endpaths", endpathValidator.filtersOnEndpaths)
 
-    def prune(self,verbose=False):
+    def prune(self,verbose=False,keepUnresolvedSequencePlaceholders=False):
         """ Remove clutter from the process which we think is unnecessary:
         tracked PSets, VPSets and unused modules and sequences. If a Schedule has been set, then Paths and EndPaths
         not in the schedule will also be removed, along with an modules and sequences used only by
         those removed Paths and EndPaths."""
-        for name in self.psets_():
-            if getattr(self,name).isTracked():
-                delattr(self, name)
+# need to update this to only prune psets not on refToPSets
+# but for now, remove the delattr
+#        for name in self.psets_():
+#            if getattr(self,name).isTracked():
+#                delattr(self, name)
         for name in self.vpsets_():
             delattr(self, name)
         #first we need to resolve any SequencePlaceholders being used
         for x in self.paths.itervalues():
-            x.resolve(self.__dict__)
+            x.resolve(self.__dict__,keepUnresolvedSequencePlaceholders)
         for x in self.endpaths.itervalues():
-            x.resolve(self.__dict__)
+            x.resolve(self.__dict__,keepUnresolvedSequencePlaceholders)
         usedModules = set()
         unneededPaths = set()
         if self.schedule_():
@@ -856,28 +871,51 @@ class Process(object):
                 self.__thelist.append(pset)
             def newPSet(self):
                 return self.__processPSet.newPSet()
+        #This adaptor is used to 'add' the method 'getTopPSet_'
+        # to the ProcessDesc and PythonParameterSet C++ classes.
+        # This method is needed for the PSet refToPSet_ functionality.
+        class TopLevelPSetAcessorAdaptor(object):
+            def __init__(self,ppset,process):
+                self.__ppset = ppset
+                self.__process = process
+            def __getattr__(self,attr):
+                return getattr(self.__ppset,attr)
+            def getTopPSet_(self,label):
+                return getattr(self.__process,label)
+            def newPSet(self):
+                return TopLevelPSetAcessorAdaptor(self.__ppset.newPSet(),self.__process)
+            def addPSet(self,tracked,name,ppset):
+                return self.__ppset.addPSet(tracked,name,self.__extractPSet(ppset))
+            def addVPSet(self,tracked,name,vpset):
+                return self.__ppset.addVPSet(tracked,name,[self.__extractPSet(x) for x in vpset])
+            def __extractPSet(self,pset):
+                if isinstance(pset,TopLevelPSetAcessorAdaptor):
+                    return pset.__ppset
+                return pset
+                
         self.validate()
         processPSet.addString(True, "@process_name", self.name_())
         all_modules = self.producers_().copy()
         all_modules.update(self.filters_())
         all_modules.update(self.analyzers_())
         all_modules.update(self.outputModules_())
-        self._insertInto(processPSet, self.psets_())
-        self._insertInto(processPSet, self.vpsets_())
-        self._insertManyInto(processPSet, "@all_modules", all_modules, True)
-        self._insertOneInto(processPSet,  "@all_sources", self.source_(), True)
-        self._insertOneInto(processPSet,  "@all_loopers", self.looper_(), True)
-        self._insertOneInto(processPSet,  "@all_subprocesses", self.subProcess_(), False)
-        self._insertManyInto(processPSet, "@all_esmodules", self.es_producers_(), True)
-        self._insertManyInto(processPSet, "@all_essources", self.es_sources_(), True)
-        self._insertManyInto(processPSet, "@all_esprefers", self.es_prefers_(), True)
-        self._insertManyInto(processPSet, "@all_aliases", self.aliases_(), True)
-        self._insertPaths(processPSet)
+        adaptor = TopLevelPSetAcessorAdaptor(processPSet,self)
+        self._insertInto(adaptor, self.psets_())
+        self._insertInto(adaptor, self.vpsets_())
+        self._insertManyInto(adaptor, "@all_modules", all_modules, True)
+        self._insertOneInto(adaptor,  "@all_sources", self.source_(), True)
+        self._insertOneInto(adaptor,  "@all_loopers", self.looper_(), True)
+        self._insertOneInto(adaptor,  "@all_subprocesses", self.subProcess_(), False)
+        self._insertManyInto(adaptor, "@all_esmodules", self.es_producers_(), True)
+        self._insertManyInto(adaptor, "@all_essources", self.es_sources_(), True)
+        self._insertManyInto(adaptor, "@all_esprefers", self.es_prefers_(), True)
+        self._insertManyInto(adaptor, "@all_aliases", self.aliases_(), True)
+        self._insertPaths(adaptor)
         #handle services differently
         services = []
         for n in self.services_():
-             getattr(self,n).insertInto(ServiceInjectorAdaptor(processPSet,services))
-        processPSet.addVPSet(False,"services",services)
+             getattr(self,n).insertInto(ServiceInjectorAdaptor(adaptor,services))
+        adaptor.addVPSet(False,"services",services)
         return processPSet
 
     def validate(self):
@@ -936,6 +974,34 @@ class Process(object):
                   self.__setattr__(esname+"_prefer",  ESPrefer(d[esname].type_()) )
             return found
 
+
+class ProcessFragment(object):
+    def __init__(self, process):
+        if isinstance(process, Process):
+            self.__process = process
+        elif isinstance(process, str):
+            self.__process = Process(process)
+        else:
+            raise TypeError('a ProcessFragment can only be constructed from an existig Process or from process name')
+    def __dir__(self):
+        return [ x for x in dir(self.__process) if isinstance(getattr(self.__process, x), _ConfigureComponent) ]
+    def __getattribute__(self, name):
+        if name == '_ProcessFragment__process':
+            return object.__getattribute__(self, '_ProcessFragment__process')
+        else:
+            return getattr(self.__process, name)
+    def __setattr__(self, name, value):
+        if name == '_ProcessFragment__process':
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self.__process, name, value)
+    def __delattr__(self, name):
+        if name == '_ProcessFragment__process':
+            pass
+        else:
+            return delattr(self.__process, name)
+
+
 class FilteredStream(dict):
     """a dictionary with fixed keys"""
     def _blocked_attribute(obj):
@@ -992,6 +1058,12 @@ class SubProcess(_ConfigureComponent,_Unlabelable):
       out += "process = parentProcess"+str(hash(self))+"\n"
       out += "process.subProcess = cms.SubProcess( process = childProcess, SelectEvents = "+self.__SelectEvents.dumpPython(options) +", outputCommands = "+self.__outputCommands.dumpPython(options) +")\n"
       return out
+   def process(self):
+      return self.__process
+   def SelectEvents(self):
+      return self.__SelectEvents
+   def outputCommands(self):
+      return self.__outputCommands
    def type_(self):
       return 'subProcess'
    def nameInProcessDesc_(self,label):
@@ -1021,15 +1093,18 @@ class Modifier(object):
   reconfigure items in a process to match our expectation of running in 2017. Once declared,
   these Modifier instances are imported into a configuration and items which need to be modified
   are then associated with the Modifier and with the action to do the modification.
-  The registered modifications will only occur if the modify() method is called.
+  The registered modifications will only occur if the Modifier was passed to 
+  the cms.Process' constructor.
   """
   def __init__(self):
-    self.__objectToModifiers = []
     self.__processModifiers = []
-  def toModifyProcess(self,func):
-    """This is used to register actions to be performed on the process as a whole.
-    This takes as argument a callable object (e.g. function) which takes as its sole argument an instance of Process"""
-    self.__processModifiers.append(func)
+    self.__chosen = False
+  def makeProcessModifier(self,func):
+    """This is used to create a ProcessModifer which can perform actions on the process as a whole.
+       This takes as argument a callable object (e.g. function) which takes as its sole argument an instance of Process.
+       In order to work, the value returned from this function must be assigned to a uniquely named variable.
+    """
+    return ProcessModifier(self,func)
   def toModify(self,obj, func=None,**kw):
     """This is used to register an action to be performed on the specific object. Two different forms are allowed
     Form 1: A callable object (e.g. function) can be passed as the second. This callable object is expected to take one argument
@@ -1039,30 +1114,54 @@ class Modifier(object):
     """
     if func is not None and len(kw) != 0:
       raise TypeError("toModify takes either two arguments or one argument and key/value pairs")
+    if not self.isChosen():
+        return
     if func is not None:
-      self.__objectToModifiers.append( (obj,func))
+      func(obj)
     else:
-      self.__objectToModifiers.append( (obj, _ParameterModifier(kw)))
-  def modify(self,process):
-    """This applies all the registered modifiers to the passed in process"""
-    for m in self.__processModifiers:
-      m(process)
-    for o,m in self.__objectToModifiers:
-      if isinstance(o,_Labelable):
-        if o.hasLabel_():
-          m(o)
-      else:
-        m(o)
-    return process
-  def __call__(self,process):
-    """Forwards to modify call. The presence of a __call__ allows Modifiers to be chained together.
-    E.g. Have bar inherit all modifiers of foo
-       foo = Modifier()
-       bar = Modifier()
-       foo.toModifyProcess(bar)
+      temp =_ParameterModifier(kw)
+      temp(obj)
+  def _setChosen(self):
+    """Should only be called by cms.Process instances"""
+    self.__chosen = True
+  def isChosen(self):
+    return self.__chosen
+
+class ModifierChain(object):
+    """A Modifier made up of a list of Modifiers
     """
-    self.modify(process)
-  
+    def __init__(self, *chainedModifiers):
+        self.__chosen = False
+        self.__chain = chainedModifiers
+    def _applyNewProcessModifiers(self,process):
+        """Should only be called by cms.Process instances
+        applies list of accumulated changes to the process"""
+        for m in self.__chain:
+            m._applyNewProcessModifiers(process)
+    def _setChosen(self):
+        """Should only be called by cms.Process instances"""
+        self.__chosen = True
+        for m in self.__chain:
+            m._setChosen()
+    def isChosen(self):
+        return self.__chosen
+
+class ProcessModifier(object):
+    """A class used by a Modifier to affect an entire Process instance.
+    When a Process 'loads' a module containing a ProcessModifier, that
+    ProcessModifier will be applied to the Process if and only if the 
+    Modifier passed to the constructor has been chosen.
+    """
+    def __init__(self, modifier, func):
+        self.__modifier = modifier
+        self.__func = func
+        self.__seenProcesses = set()
+    def apply(self,process):
+        if self.__modifier.isChosen():
+            if process not in self.__seenProcesses:
+                self.__func(process)
+                self.__seenProcesses.add(process)
+
 if __name__=="__main__":
     import unittest
     import copy
@@ -1128,7 +1227,7 @@ if __name__=="__main__":
             self.__insertValue(tracked,label,value)
         def newPSet(self):
             return TestMakePSet()
-        
+    
     class TestModuleCommand(unittest.TestCase):
         def setUp(self):
             """Nothing to do """
@@ -1681,6 +1780,22 @@ process.subProcess = cms.SubProcess( process = childProcess, SelectEvents = cms.
             self.assertEqual((True,['a']),p.values["@sub_process"][1].values["process"][1].values['@all_modules'])
             self.assertEqual((True,['p']),p.values["@sub_process"][1].values["process"][1].values['@paths'])
             self.assertEqual({'@service_type':(True,'Foo')}, p.values["@sub_process"][1].values["process"][1].values["services"][1][0].values)
+        def testRefToPSet(self):
+            proc = Process("test")
+            proc.top = PSet(a = int32(1))
+            proc.ref = PSet(refToPSet_ = string("top"))
+            proc.ref2 = PSet( a = int32(1), b = PSet( refToPSet_ = string("top")))
+            proc.ref3 = PSet(refToPSet_ = string("ref"))
+            proc.ref4 = VPSet(PSet(refToPSet_ = string("top")),
+                              PSet(refToPSet_ = string("ref2")))
+            p = TestMakePSet()
+            proc.fillProcessDesc(p)
+            self.assertEqual((True,1),p.values["ref"][1].values["a"])
+            self.assertEqual((True,1),p.values["ref3"][1].values["a"])
+            self.assertEqual((True,1),p.values["ref2"][1].values["a"])
+            self.assertEqual((True,1),p.values["ref2"][1].values["b"][1].values["a"])
+            self.assertEqual((True,1),p.values["ref4"][1][0].values["a"])
+            self.assertEqual((True,1),p.values["ref4"][1][1].values["a"])
         def testPrune(self):
             p = Process("test")
             p.a = EDAnalyzer("MyAnalyzer")
@@ -1707,10 +1822,10 @@ process.subProcess = cms.SubProcess( process = childProcess, SelectEvents = cms.
             self.assert_(not hasattr(p, 's'))
             self.assert_(hasattr(p, 'path1'))
             self.assert_(hasattr(p, 'path2'))
-            self.assert_(not hasattr(p, 'pset1'))
-            self.assert_(hasattr(p, 'pset2'))
-            self.assert_(not hasattr(p, 'vpset1'))
-            self.assert_(not hasattr(p, 'vpset2'))
+#            self.assert_(not hasattr(p, 'pset1'))
+#            self.assert_(hasattr(p, 'pset2'))
+#            self.assert_(not hasattr(p, 'vpset1'))
+#            self.assert_(not hasattr(p, 'vpset2'))
 
             p = Process("test")
             p.a = EDAnalyzer("MyAnalyzer")
@@ -1754,44 +1869,76 @@ process.subProcess = cms.SubProcess( process = childProcess, SelectEvents = cms.
             self.assert_(hasattr(p, 'b'))
             self.assert_(hasattr(p, 's'))
             self.assert_(hasattr(p, 'pth'))
+            #test unresolved SequencePlaceholder
+            p = Process("test")
+            p.b = EDAnalyzer("YourAnalyzer")
+            p.s = Sequence(SequencePlaceholder("a")+p.b)
+            p.pth = Path(p.s)
+            p.prune(keepUnresolvedSequencePlaceholders=True)
+            self.assert_(hasattr(p, 'b'))
+            self.assert_(hasattr(p, 's'))
+            self.assert_(hasattr(p, 'pth'))
+            self.assertEqual(p.s.dumpPython(''),'cms.Sequence(cms.SequencePlaceholder("a")+process.b)\n')
         def testModifier(self):
             m1 = Modifier()
-            p = Process("test")
+            p = Process("test",m1)
             p.a = EDAnalyzer("MyAnalyzer", fred = int32(1))
             def _mod_fred(obj):
               obj.fred = 2
+            m1.toModify(p.a,_mod_fred)
+            self.assertEqual(p.a.fred.value(),2)
+            p.b = EDAnalyzer("YourAnalyzer", wilma = int32(1))
+            m1.toModify(p.b, wilma = 2)
+            self.assertEqual(p.b.wilma.value(),2)
+            #check that Modifier not attached to a process doesn't run
+            m1 = Modifier()
+            p = Process("test")
+            p.a = EDAnalyzer("MyAnalyzer", fred = int32(1))
             m1.toModify(p.a,_mod_fred)
             p.b = EDAnalyzer("YourAnalyzer", wilma = int32(1))
             m1.toModify(p.b, wilma = 2)
             self.assertEqual(p.a.fred.value(),1)
             self.assertEqual(p.b.wilma.value(),1)
-            m1.modify(p)
-            self.assertEqual(p.a.fred.value(),2)
-            self.assertEqual(p.b.wilma.value(),2)
-            #check that items not attached to process are unchanged
+            #make sure clones get the changes
             m1 = Modifier()
-            p = Process("test")
-            p.a = EDAnalyzer("MyAnalyzer", fred = int32(1))
-            m1.toModify(p.a,_mod_fred)
-            b = EDAnalyzer("YourAnalyzer", wilma = int32(1))
-            m1.toModify(b, wilma = 2)
-            self.assertEqual(p.a.fred.value(),1)
-            self.assertEqual(b.wilma.value(),1)
-            m1.modify(p)
+            p = Process("test",m1)
+            p.a = EDAnalyzer("MyAnalyzer", fred = int32(1), wilma = int32(1))
+            m1.toModify(p.a, fred = int32(2))
+            p.b = p.a.clone(wilma = int32(3))
             self.assertEqual(p.a.fred.value(),2)
-            self.assertEqual(b.wilma.value(),1)
-            #make sure chains of modifiers work
-            m1 = Modifier()
-            m2 = Modifier()
-            m2.toModifyProcess(m1)
-            p = Process("test")
-            p.a = EDAnalyzer("MyAnalyzer", fred = int32(1))
-            m1.toModify(p.a,_mod_fred)
-            p.b = EDAnalyzer("YourAnalyzer", wilma = int32(1))
-            m1.toModify(p.b, wilma = 2)
-            m2.toModify(p.b, wilma = 3)
-            m2.modify(p)
-            self.assertEqual(p.a.fred.value(),2)
+            self.assertEqual(p.a.wilma.value(),1)
+            self.assertEqual(p.b.fred.value(),2)
             self.assertEqual(p.b.wilma.value(),3)
+            #test that load causes process wide methods to run
+            def _rem_a(proc):
+                del proc.a
+            class ProcModifierMod(object):
+                def __init__(self,modifier,func):
+                    self.proc_mod_ = modifier.makeProcessModifier(func)
+            class DummyMod(object):
+                def __init__(self):
+                    self.a = EDAnalyzer("Dummy")
+            testMod = DummyMod()
+            p.extend(testMod)
+            self.assert_(hasattr(p,"a"))
+            m1 = Modifier()
+            p = Process("test",m1)
+            testProcMod = ProcModifierMod(m1,_rem_a)
+            p.extend(testMod)
+            p.extend(testProcMod)
+            self.assert_(not hasattr(p,"a"))
+            #test ModifierChain
+            m1 = Modifier()
+            mc = ModifierChain(m1)
+            p = Process("test",mc)
+            testMod = DummyMod()
+            p.b = EDAnalyzer("Dummy2", fred = int32(1))
+            m1.toModify(p.b, fred = int32(3))
+            p.extend(testMod)
+            testProcMod = ProcModifierMod(m1,_rem_a)
+            p.extend(testProcMod)
+            self.assert_(not hasattr(p,"a"))
+            self.assertEqual(p.b.fred.value(),3)
+
 
     unittest.main()

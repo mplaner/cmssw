@@ -10,8 +10,24 @@
 #include "CondFormats/HcalObjects/interface/AllObjects.h"
 #include "CondFormats/DataRecord/interface/HcalAllRcds.h"
 
+#include "CondFormats/DataRecord/interface/HcalOOTPileupCorrectionRcd.h"
+#include "CondFormats/HcalObjects/interface/OOTPileupCorrectionColl.h"
+
+#include "CondFormats/DataRecord/interface/HcalOOTPileupCompatibilityRcd.h"
+#include "CondFormats/HcalObjects/interface/OOTPileupCorrectionBuffer.h"
+
+#include "CondFormats/DataRecord/interface/HcalOOTPileupCorrectionMapCollRcd.h"
+#include "CondFormats/HcalObjects/interface/OOTPileupCorrectionMapColl.h"
+
+#include "CondFormats/DataRecord/interface/HcalInterpolatedPulseCollRcd.h"
+#include "CondFormats/HcalObjects/interface/HcalInterpolatedPulseColl.h"
+
+#include "CondFormats/DataRecord/interface/HBHENegativeEFilterRcd.h"
+#include "CondFormats/HcalObjects/interface/HBHENegativeEFilter.h"
+
 //
 #include "CondCore/CondDB/interface/Serialization.h"
+
 
 // required for compiling ( the only available constructor in this class ). Can't be used in persistency without this...
 namespace cond {
@@ -45,6 +61,12 @@ REGISTER_PLUGIN(HcalCholeskyMatricesRcd,HcalCholeskyMatrices);
 REGISTER_PLUGIN(HcalCovarianceMatricesRcd,HcalCovarianceMatrices);
 REGISTER_PLUGIN(HcalRecoParamsRcd,HcalRecoParams);
 REGISTER_PLUGIN(HcalLongRecoParamsRcd,HcalLongRecoParams);
+REGISTER_PLUGIN(HcalZDCLowGainFractionsRcd,HcalZDCLowGainFractions);
 REGISTER_PLUGIN(HcalMCParamsRcd,HcalMCParams);
 REGISTER_PLUGIN(HcalFlagHFDigiTimeParamsRcd,HcalFlagHFDigiTimeParams);
 REGISTER_PLUGIN(HcalTimingParamsRcd,HcalTimingParams);
+REGISTER_PLUGIN(HcalOOTPileupCorrectionRcd,OOTPileupCorrectionColl);
+REGISTER_PLUGIN(HcalOOTPileupCompatibilityRcd,OOTPileupCorrectionBuffer);
+REGISTER_PLUGIN(HcalOOTPileupCorrectionMapCollRcd,OOTPileupCorrectionMapColl);
+REGISTER_PLUGIN(HcalInterpolatedPulseCollRcd,HcalInterpolatedPulseColl);
+REGISTER_PLUGIN(HBHENegativeEFilterRcd,HBHENegativeEFilter);

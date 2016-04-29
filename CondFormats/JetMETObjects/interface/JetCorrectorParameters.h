@@ -7,11 +7,14 @@
 #ifndef JetCorrectorParameters_h
 #define JetCorrectorParameters_h
 
+#include "CondFormats/Serialization/interface/Serializable.h"
+
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <iostream>
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 class JetCorrectorParameters 
 {
@@ -24,7 +27,7 @@ class JetCorrectorParameters
     {
       public:
         //-------- Constructors -------------- 
-        Definitions() {}
+        Definitions() : mIsResponse(false) {}
         Definitions(const std::vector<std::string>& fBinVar, const std::vector<std::string>& fParVar, const std::string& fFormula, bool fIsResponse); 
         Definitions(const std::string& fLine); 
         //-------- Member functions ----------
@@ -44,7 +47,9 @@ class JetCorrectorParameters
         std::string              mFormula;
         std::vector<std::string> mParVar;
         std::vector<std::string> mBinVar;
-    };
+    
+    COND_SERIALIZABLE;
+};
     //---------------- Record class --------------------------------
     //-- Each Record holds the properties of a bin ----------------- 
     class Record 
@@ -68,7 +73,9 @@ class JetCorrectorParameters
         std::vector<float> mMin;
         std::vector<float> mMax;
         std::vector<float> mParameters;
-    };
+    
+    COND_SERIALIZABLE;
+};
      
     //-------- Constructors --------------
     JetCorrectorParameters() { valid_ = false;}
@@ -93,6 +100,8 @@ class JetCorrectorParameters
     JetCorrectorParameters::Definitions         mDefinitions;
     std::vector<JetCorrectorParameters::Record> mRecords;
     bool                                        valid_; /// is this a valid set?
+
+  COND_SERIALIZABLE;
 };
 
 
@@ -138,8 +147,8 @@ class JetCorrectorParametersCollection {
 		 UncertaintyPileUpPtHF=33, 
 		 UncertaintyPileUpBias=25, 
 		 UncertaintyPileUpJetRate=26,
-		 UncertaintyAux1=34,
-		 UncertaintyAux2=35,
+		 L1RC=34,
+		 L1Residual=35,
 		 UncertaintyAux3=36,
 		 UncertaintyAux4=37,
 		 N_LEVELS=38
@@ -204,6 +213,9 @@ class JetCorrectorParametersCollection {
   collection_type                        corrections_;
   collection_type                        correctionsL5_;
   collection_type                        correctionsL7_;
+
+ COND_SERIALIZABLE;
+
 };
 
 

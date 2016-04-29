@@ -36,7 +36,7 @@ namespace fwlite {
     explicit FWLiteEventFinder(TBranch* auxBranch) : auxBranch_(auxBranch) {}
     virtual ~FWLiteEventFinder() {}
     virtual
-    edm::EventNumber_t getEventNumberOfEntry(long long entry) const override {
+    edm::EventNumber_t getEventNumberOfEntry(edm::IndexIntoFile::EntryNumber_t entry) const override {
       void* saveAddress = auxBranch_->GetAddress();
       edm::EventAuxiliary eventAux;
       edm::EventAuxiliary *pEvAux = &eventAux;
@@ -126,7 +126,7 @@ namespace fwlite {
         }
 
         indexIntoFile_.setNumberOfEvents(auxBranch->GetEntries());
-        indexIntoFile_.setEventFinder(boost::shared_ptr<edm::IndexIntoFile::EventFinder>(new FWLiteEventFinder(auxBranch)));
+        indexIntoFile_.setEventFinder(std::shared_ptr<edm::IndexIntoFile::EventFinder>(std::make_shared<FWLiteEventFinder>(auxBranch)));
 
       } else if (meta->FindBranch(edm::poolNames::fileIndexBranchName().c_str()) != 0) {
         edm::FileIndex* findexPtr = &fileIndex_;

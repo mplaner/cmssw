@@ -15,7 +15,7 @@ photonConvTrajSeedFromSingleLeg  = cms.EDProducer("PhotonConversionTrajectorySee
                                                   OrderedHitsFactoryPSet = cms.PSet(
                                                       maxHitPairsPerTrackAndGenerator = cms.uint32(10),
                                                       maxElement = cms.uint32(40000),
-                                                      SeedingLayers = cms.string('convLayerPairs')
+                                                      SeedingLayers = cms.InputTag('convLayerPairs')
                                                       ),
                                                   SeedComparitorPSet = cms.PSet(
                                                       ComponentName = cms.string('none')
@@ -40,6 +40,7 @@ photonConvTrajSeedFromSingleLeg  = cms.EDProducer("PhotonConversionTrajectorySee
                                                   SeedCreatorPSet = cms.PSet(
                                                       ComponentName = cms.string('SeedForPhotonConversion1Leg'),
                                                       SeedMomentumForBOFF = cms.double(5.0),
-                                                      propagator = cms.string('PropagatorWithMaterial')
+                                                      propagator = cms.string('PropagatorWithMaterial'),
+                                                      TTRHBuilder = cms.string('WithTrackAngle')
                                                       )
                                                   )

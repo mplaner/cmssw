@@ -35,13 +35,29 @@
 
 
 #include<iostream>
+#include <algorithm>
+#include <cctype>
 
+namespace {
 template <class T> T sqr( T t) {return t*t;}
+}
 
 
 using namespace PixelRecoUtilities;
 using namespace std;
 using namespace ctfseeding; 
+
+RectangularEtaPhiTrackingRegion::UseMeasurementTracker RectangularEtaPhiTrackingRegion::stringToUseMeasurementTracker(const std::string& name) {
+  std::string tmp = name;
+  std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+  if(tmp == "never")
+    return UseMeasurementTracker::kNever;
+  if(tmp == "forsistrips")
+    return UseMeasurementTracker::kForSiStrips;
+  if(tmp == "always")
+    return UseMeasurementTracker::kAlways;
+  throw cms::Exception("Configuration") << "Got invalid string '" << name << "', valid values are 'Never', 'ForSiStrips', 'Always' (case insensitive)";
+}
 
 void RectangularEtaPhiTrackingRegion:: initEtaRange( const GlobalVector & dir, const Margin& margin) {
   float eta = dir.eta();
@@ -128,7 +144,7 @@ checkRZOld(const DetLayer* layer, const TrackingRecHit *outerHit,const edm::Even
   }
 }
 
-OuterEstimator *
+std::unique_ptr<OuterEstimator>
   RectangularEtaPhiTrackingRegion::estimator(const BarrelDetLayer* layer,const edm::EventSetup& iSetup) const
 {
 
@@ -184,13 +200,13 @@ OuterEstimator *
     phiRange = phiPrediction(detRWindow.mean()); 
   }
 
-  return new OuterEstimator(
+  return std::make_unique<OuterEstimator>(
 			    OuterDetCompatibility( layer, phiRange, detRWindow, hitZWindow),
 			    OuterHitCompatibility( phiPrediction, zPrediction ),
 			    iSetup);
 }
 
-OuterEstimator *
+std::unique_ptr<OuterEstimator>
 RectangularEtaPhiTrackingRegion::estimator(const ForwardDetLayer* layer,const edm::EventSetup& iSetup) const
 {
 
@@ -241,7 +257,7 @@ RectangularEtaPhiTrackingRegion::estimator(const ForwardDetLayer* layer,const ed
     hitRWindow = Range(w1.min(),w2.max()).intersection(detRWindow);
   }
 
-  return new OuterEstimator(
+  return std::make_unique<OuterEstimator>(
     OuterDetCompatibility( layer, phiRange, hitRWindow, detZWindow),
     OuterHitCompatibility( phiPrediction, rPrediction),iSetup );
 }
@@ -286,21 +302,18 @@ HitRZConstraint
 TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
       const edm::Event& ev,
       const edm::EventSetup& es,
-      const  SeedingLayer* layer) const
-{
-
-
-  //ESTIMATOR
+      const SeedingLayerSetsHits::SeedingLayer& layer) const {
   TrackingRegion::Hits result;
 
-  const DetLayer * detLayer = layer->detLayer();
-  OuterEstimator * est = 0;
+  //ESTIMATOR
+
+  const DetLayer * detLayer = layer.detLayer();
+  std::unique_ptr<OuterEstimator> est;
 
   bool measurementMethod = false;
-  if ( theMeasurementTrackerUsage > 0.5) measurementMethod = true;
-  if ( theMeasurementTrackerUsage > -0.5 &&
-       !(detLayer->subDetector() == GeomDetEnumerators::PixelBarrel ||
-         detLayer->subDetector() == GeomDetEnumerators::PixelEndcap) ) measurementMethod = true;
+  if(theMeasurementTrackerUsage == UseMeasurementTracker::kAlways) measurementMethod = true;
+  else if(theMeasurementTrackerUsage == UseMeasurementTracker::kForSiStrips &&
+          GeomDetEnumerators::isTrackerStrip(detLayer->subDetector())) measurementMethod = true;
 
   if(measurementMethod) {
     edm::ESHandle<MagneticField> field;
@@ -310,10 +323,12 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
     const GlobalPoint vtx = origin();
     GlobalVector dir = direction();
     
-    if (detLayer->subDetector() == GeomDetEnumerators::PixelBarrel || (!theUseEtaPhi  && detLayer->location() == GeomDetEnumerators::barrel)){
+    if ((GeomDetEnumerators::isTrackerPixel(detLayer->subDetector()) && GeomDetEnumerators::isBarrel(detLayer->subDetector())) ||
+        (!theUseEtaPhi  && detLayer->location() == GeomDetEnumerators::barrel)) {
       const BarrelDetLayer& bl = dynamic_cast<const BarrelDetLayer&>(*detLayer);
       est = estimator(&bl,es);
-    } else if (detLayer->subDetector() == GeomDetEnumerators::PixelEndcap || (!theUseEtaPhi  && detLayer->location() == GeomDetEnumerators::endcap)) {
+    } else if ((GeomDetEnumerators::isTrackerPixel(detLayer->subDetector()) && GeomDetEnumerators::isEndcap(detLayer->subDetector())) ||
+               (!theUseEtaPhi  && detLayer->location() == GeomDetEnumerators::endcap)) {
       const ForwardDetLayer& fl = dynamic_cast<const ForwardDetLayer&>(*detLayer);
       est = estimator(&fl,es);
     }
@@ -323,7 +338,7 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
     MeasurementEstimator * findDetAndHits = &etaPhiEstimator;
     if (est){
       LogDebug("RectangularEtaPhiTrackingRegion")<<"use pixel specific estimator.";
-      findDetAndHits = est;
+      findDetAndHits = est.get();
     }
     else{
       LogDebug("RectangularEtaPhiTrackingRegion")<<"use generic etat phi estimator.";
@@ -345,18 +360,28 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
     // propagator
     StraightLinePropagator prop( magField, alongMomentum);
     
-    edm::Handle<MeasurementTrackerEvent> mte;
-    ev.getByLabel(edm::InputTag(theMeasurementTrackerName), mte);
-    LayerMeasurements lm(mte->measurementTracker(), *mte);
+    LayerMeasurements lm(theMeasurementTracker->measurementTracker(), *theMeasurementTracker);
     
-    vector<TrajectoryMeasurement> meas = lm.measurements(*detLayer, tsos, prop, *findDetAndHits);
-    result.reserve(meas.size());
-    for (auto const & im : meas) {
-    auto ptrHit = im.recHit();
-    if (ptrHit->isValid())  result.push_back( std::move(ptrHit) );
+    LayerMeasurements:: SimpleHitContainer hits;
+    lm.recHits(hits,*detLayer, tsos, prop, *findDetAndHits);
+    /*
+    {  // old code
+      vector<TrajectoryMeasurement> meas = lm.measurements(*detLayer, tsos, prop, *findDetAndHits);
+      auto n=0UL;
+      for (auto const & im : meas) 
+	if(im.recHit()->isValid()) ++n;
+      assert(n==hits.size());
+      // std::cout << "old/new " << n <<'/'<<hits.size() << std::endl;      
+    }
+    */
+
+    result.reserve(hits.size());
+    for (auto h : hits) {
+      cache.emplace_back(h);
+      result.emplace_back(h);
     }
   
-    // LogDebug("RectangularEtaPhiTrackingRegion")<<" found "<< meas.size()<<" minus one measurements on layer: "<<detLayer->subDetector();
+    LogDebug("RectangularEtaPhiTrackingRegion")<<" found "<< hits.size()<<" minus one measurements on layer: "<<detLayer->subDetector();
     // std::cout << "RectangularEtaPhiTrackingRegion" <<" found "<< meas.size()<<" minus one measurements on layer: "<<detLayer->subDetector() << std::endl;
   
   } else {
@@ -372,17 +397,17 @@ TrackingRegion::Hits RectangularEtaPhiTrackingRegion::hits(
     }
     if (!est) return result;
     
-    TrackingRegion::Hits layerHits = layer->hits(ev,es);
+    auto layerHits = layer.hits();
     result.reserve(layerHits.size());
-    for (auto const & ih : layerHits) {
-      if ( est->hitCompatibility()(ih.get()) ) {
-	result.push_back( std::move(ih) );
+    for (auto && ih : layerHits) {
+      if ( est->hitCompatibility()(*ih) ) {
+	result.emplace_back( std::move(ih) );
       }
     }
   }
   
   // std::cout << "RectangularEtaPhiTrackingRegion hits "  << result.size() << std::endl;
-  delete est;
+
   return result;
 }
 

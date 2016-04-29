@@ -16,10 +16,12 @@
 
 #include <memory>
 
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Utilities/interface/InputTag.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 // FEDRawData 
 #include "DataFormats/FEDRawData/interface/FEDRawData.h"
@@ -35,16 +37,19 @@
 #include "DataFormats/Scalers/interface/DcsStatus.h"
 #include "DataFormats/Scalers/interface/ScalersRaw.h"
 
-class ScalersRawToDigi : public edm::EDProducer 
+class ScalersRawToDigi : public edm::stream::EDProducer<> 
 {
   public:
     explicit ScalersRawToDigi(const edm::ParameterSet&);
     ~ScalersRawToDigi();
+    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
     virtual void produce(edm::Event&, const edm::EventSetup&) override;
 
   private:
     edm::InputTag inputTag_;
+    edm::EDGetTokenT<FEDRawDataCollection> fedToken_;
+
 };
 
 // Constructor
@@ -61,10 +66,18 @@ ScalersRawToDigi::ScalersRawToDigi(const edm::ParameterSet& iConfig):
   {
     inputTag_ = iConfig.getParameter<edm::InputTag>("scalersInputTag");
   }
+  fedToken_=consumes<FEDRawDataCollection>(inputTag_);
+
 }
 
 // Destructor
 ScalersRawToDigi::~ScalersRawToDigi() {}
+
+void ScalersRawToDigi::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+  edm::ParameterSetDescription desc;
+  desc.add<edm::InputTag>("scalersInputTag",edm::InputTag("rawDataCollector"));
+  descriptions.add("scalersRawToDigi",desc);
+}
 
 // Method called to produce the data 
 void ScalersRawToDigi::produce(edm::Event& iEvent, 
@@ -74,7 +87,7 @@ void ScalersRawToDigi::produce(edm::Event& iEvent,
 
   // Get a handle to the FED data collection
   edm::Handle<FEDRawDataCollection> rawdata;
-  iEvent.getByLabel(inputTag_, rawdata);
+  iEvent.getByToken(fedToken_, rawdata);
 
   std::auto_ptr<LumiScalersCollection> pLumi(new LumiScalersCollection());
 

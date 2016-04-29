@@ -10,14 +10,28 @@ sipixelEDAClient = cms.EDAnalyzer("SiPixelEDAClient",
     NEventsForNoiseCalculation = cms.untracked.int32(100000),
     UseOfflineXMLFile = cms.untracked.bool(True),
     Tier0Flag = cms.untracked.bool(True),
-    DoHitEfficiency = cms.untracked.bool(True)
+    DoHitEfficiency = cms.untracked.bool(True),
+    isUpgrade = cms.untracked.bool(False)	
+)
+
+sipixelPhase1Client = cms.EDAnalyzer("SiPixelEDAClient",
+    EventOffsetForInit = cms.untracked.int32(10),
+    ActionOnLumiSection = cms.untracked.bool(False),
+    ActionOnRunEnd = cms.untracked.bool(True),
+    HighResolutionOccupancy = cms.untracked.bool(False),
+    NoiseRateCutValue = cms.untracked.double(-1.),
+    NEventsForNoiseCalculation = cms.untracked.int32(100000),
+    UseOfflineXMLFile = cms.untracked.bool(True),
+    Tier0Flag = cms.untracked.bool(True),
+    DoHitEfficiency = cms.untracked.bool(True),
+    isUpgrade = cms.untracked.bool(True)
 )
 
 #QualityTester
 sipixelQTester = cms.EDAnalyzer("QualityTester",
     qtList = cms.untracked.FileInPath('DQM/SiPixelMonitorClient/test/sipixel_tier0_qualitytest.xml'),
     prescaleFactor = cms.untracked.int32(1),
-    getQualityTestsFromFile = cms.untracked.bool(False),
+    getQualityTestsFromFile = cms.untracked.bool(True),
     label = cms.untracked.string("SiPixelDQMQTests"),
     verboseQT = cms.untracked.bool(False)
 )
@@ -44,3 +58,4 @@ PixelOfflineDQMClientNoDataCertification = cms.Sequence(sipixelQTester+
 
 PixelOfflineDQMClientWithDataCertificationHI = cms.Sequence(PixelOfflineDQMClientNoDataCertification)
 PixelOfflineDQMClientWithDataCertificationHI.replace(sipixelQTester,sipixelQTesterHI)
+PixelOfflinePhase1DQMClient = cms.Sequence(sipixelPhase1Client)

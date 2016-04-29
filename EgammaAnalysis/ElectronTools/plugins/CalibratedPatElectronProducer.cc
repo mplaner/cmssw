@@ -62,6 +62,7 @@ CalibratedPatElectronProducer::CalibratedPatElectronProducer( const edm::Paramet
     combinationRegressionInputPath = cfg.getParameter<std::string>("combinationRegressionInputPath");
     scaleCorrectionsInputPath = cfg.getParameter<std::string>("scaleCorrectionsInputPath");
     linCorrectionsInputPath   = cfg.getParameter<std::string>("linearityCorrectionsInputPath");
+    applyExtraHighEnergyProtection = cfg.getParameter<bool>("applyExtraHighEnergyProtection");
 
     //basic checks
     if ( isMC && ( dataset != "Summer11" && dataset != "Fall11"
@@ -194,7 +195,11 @@ void CalibratedPatElectronProducer::produce( edm::Event & event, const edm::Even
             double trackMomentum = ele->trackMomentumAtVtx().R();
             double trackMomentumError = ele->trackMomentumError();
             double combinedMomentum = ele->p();
-            double combinedMomentumError = ele->p4Error(ele->candidateP4Kind());
+            double combinedMomentumError = 0;
+            if ( ele->candidateP4Kind() != GsfElectron::P4_UNKNOWN )
+            {
+              combinedMomentumError = ele->p4Error(ele->candidateP4Kind());
+            }
             // FIXME : p4Error not filled for pure tracker electrons
             // Recompute it using the parametrization implemented in
             // RecoEgamma/EgammaElectronAlgos/src/ElectronEnergyCorrector.cc::simpleParameterizationUncertainty()
@@ -244,7 +249,7 @@ void CalibratedPatElectronProducer::produce( edm::Event & event, const edm::Even
             // energy calibration for ecalDriven electrons
             if ( ele->core()->ecalDrivenSeed() || correctionsType==2 || combinationType==3 )
             {
-                theEnCorrector->calibrate(mySimpleElectron);
+                theEnCorrector->calibrate(mySimpleElectron, event.streamID());
 
                 // E-p combination
 
@@ -281,7 +286,7 @@ void CalibratedPatElectronProducer::produce( edm::Event & event, const edm::Even
                             std::cout << "[CalibratedPATElectronProducer] "
                             << "You choose regression combination." << std::endl;
                         }
-                	    myEpCombinationTool->combine(mySimpleElectron);
+                	    myEpCombinationTool->combine(mySimpleElectron, applyExtraHighEnergyProtection);
                         theEnCorrector->correctLinearity(mySimpleElectron);
                 	    break;
                 	default:
@@ -297,7 +302,7 @@ void CalibratedPatElectronProducer::produce( edm::Event & event, const edm::Even
                    oldMomentum.z()*mySimpleElectron.getCombinedMomentum()/oldMomentum.t(),
                    mySimpleElectron.getCombinedMomentum() ) ;
 
-                ele->correctMomentum
+                 ele->correctMomentum
                     (
                         newMomentum_,
                         mySimpleElectron.getTrackerMomentumError(),

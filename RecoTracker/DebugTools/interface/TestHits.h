@@ -41,6 +41,7 @@
 #include "RecoTracker/TransientTrackingRecHit/interface/TkTransientTrackingRecHitBuilder.h"
 #include "TrackingTools/PatternTools/interface/MeasurementExtractor.h"
 #include "TrackingTools/TrackFitters/interface/KFTrajectoryFitter.h"
+#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
 #include <sstream>
 #include <TFile.h>
 #include <TH1F.h>
@@ -58,8 +59,7 @@ private:
 
   std::pair<LocalPoint,LocalVector> projectHit(const PSimHit&, const StripGeomDetUnit*, const BoundPlane&);
 
-  const edm::ParameterSet conf_;
-  TrackerHitAssociator * hitAssociator;
+  TrackerHitAssociator::Config trackerHitAssociatorConfig_;
 
   double mineta, maxeta;
 

@@ -14,7 +14,11 @@ class GlobalTrackingRegionProducerFromBeamSpot : public TrackingRegionProducer {
 public:
 
   GlobalTrackingRegionProducerFromBeamSpot(const edm::ParameterSet& cfg,
-	   edm::ConsumesCollector && iC) {
+	   edm::ConsumesCollector && iC):
+    GlobalTrackingRegionProducerFromBeamSpot(cfg, iC)
+  {}
+  GlobalTrackingRegionProducerFromBeamSpot(const edm::ParameterSet& cfg,
+	   edm::ConsumesCollector & iC) {
 
     edm::ParameterSet regionPSet = cfg.getParameter<edm::ParameterSet>("RegionPSet");
     thePtMin            = regionPSet.getParameter<double>("ptMin");
@@ -30,8 +34,8 @@ public:
 
   virtual ~GlobalTrackingRegionProducerFromBeamSpot(){}
 
-  virtual std::vector<TrackingRegion* > regions(const edm::Event&ev, const edm::EventSetup&) const {
-    std::vector<TrackingRegion* > result;
+  virtual std::vector<std::unique_ptr<TrackingRegion> > regions(const edm::Event&ev, const edm::EventSetup&) const override {
+    std::vector<std::unique_ptr<TrackingRegion> > result;
     edm::Handle<reco::BeamSpot> bsHandle;
     ev.getByToken( token_beamSpot, bsHandle);
     if(bsHandle.isValid()) {
@@ -40,7 +44,7 @@ public:
 
       GlobalPoint origin(bs.x0(), bs.y0(), bs.z0()); 
 
-      result.push_back( new GlobalTrackingRegion( 
+      result.push_back( std::make_unique<GlobalTrackingRegion>(
           thePtMin, origin, theOriginRadius, std::max(theNSigmaZ*bs.sigmaZ(), theOriginHalfLength), thePrecise));
 
     }

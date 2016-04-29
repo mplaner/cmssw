@@ -50,6 +50,8 @@ PATMuonProducer::PATMuonProducer(const edm::ParameterSet & iConfig) : useUserDat
   muonToken_ = consumes<edm::View<reco::Muon> >(iConfig.getParameter<edm::InputTag>( "muonSource" ));
   // embedding of tracks
   embedBestTrack_ = iConfig.getParameter<bool>( "embedMuonBestTrack" );
+  embedTunePBestTrack_ = iConfig.getParameter<bool>( "embedTunePMuonBestTrack" );
+  forceEmbedBestTrack_ = iConfig.getParameter<bool>( "forceBestTrackEmbedding" );
   embedTrack_ = iConfig.getParameter<bool>( "embedTrack" );
   embedCombinedMuon_ = iConfig.getParameter<bool>( "embedCombinedMuon"   );
   embedStandAloneMuon_ = iConfig.getParameter<bool>( "embedStandAloneMuon" );
@@ -62,6 +64,7 @@ PATMuonProducer::PATMuonProducer(const edm::ParameterSet & iConfig) : useUserDat
   useParticleFlow_ = iConfig.getParameter<bool>( "useParticleFlow" );
   embedPFCandidate_ = iConfig.getParameter<bool>( "embedPFCandidate" );
   pfMuonToken_ = mayConsume<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>( "pfMuonSource" ));
+  embedPfEcalEnergy_ = iConfig.getParameter<bool>( "embedPfEcalEnergy" );
   // embedding of tracks from TeV refit
   embedPickyMuon_ = iConfig.getParameter<bool>( "embedPickyMuon" );
   embedTpfmsMuon_ = iConfig.getParameter<bool>( "embedTpfmsMuon" );
@@ -96,11 +99,9 @@ PATMuonProducer::PATMuonProducer(const edm::ParameterSet & iConfig) : useUserDat
     userDataHelper_ = PATUserDataHelper<Muon>(iConfig.getParameter<edm::ParameterSet>("userData"), consumesCollector());
   }
   // embed high level selection variables
-  usePV_ = true;
   embedHighLevelSelection_ = iConfig.getParameter<bool>("embedHighLevelSelection");
   if ( embedHighLevelSelection_ ) {
     beamLineToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamLineSrc"));
-    usePV_ = iConfig.getParameter<bool>("usePV");
     pvToken_ = consumes<std::vector<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("pvSrc"));
   }
   // produces vector of muons
@@ -151,7 +152,6 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
 
   // prepare the high level selection: needs beamline
   // OR primary vertex, depending on user selection
-  reco::TrackBase::Point beamPoint(0,0,0);
   reco::Vertex primaryVertex;
   reco::BeamSpot beamSpot;
   bool beamSpotIsValid = false;
@@ -172,7 +172,6 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
       edm::LogError("DataNotAvailable")
 	<< "No beam spot available from EventSetup, not adding high level selection \n";
     }
-    beamPoint = reco::TrackBase::Point ( beamSpot.x0(), beamSpot.y0(), beamSpot.z0() );
     if( pvHandle.isValid() && !pvHandle->empty() ) {
       primaryVertex = pvHandle->at(0);
       primaryVertexIsValid = true;
@@ -187,9 +186,9 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
   // this will be the new object collection
   std::vector<Muon> * patMuons = new std::vector<Muon>();
 
+  edm::Handle< reco::PFCandidateCollection >  pfMuons;
   if( useParticleFlow_ ){
     // get the PFCandidates of type muons
-    edm::Handle< reco::PFCandidateCollection >  pfMuons;
     iEvent.getByToken(pfMuonToken_, pfMuons);
 
     unsigned index=0;
@@ -230,19 +229,9 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
 			  beamSpot,
 			  beamSpotIsValid );
 
-	  // Correct to PV, or beam spot
-	  if ( !usePV_ ) {
-	    double corr_d0 = -1.0 * chosenTrack->dxy( beamPoint );
-	    aMuon.setDB( corr_d0, -1.0 );
-	  } else {
-	    std::pair<bool,Measurement1D> result = IPTools::absoluteTransverseImpactParameter(tt, primaryVertex);
-	    double d0_corr = result.second.value();
-	    double d0_err = result.second.error();
-	    aMuon.setDB( d0_corr, d0_err );
-	  }
 	}
 
-	if ( globalTrack.isNonnull() && globalTrack.isAvailable() ) {
+	if ( globalTrack.isNonnull() && globalTrack.isAvailable() && !embedCombinedMuon_) {
 	  double norm_chi2 = globalTrack->chi2() / globalTrack->ndof();
 	  aMuon.setNormChi2( norm_chi2 );
 	}
@@ -254,6 +243,11 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
       aMuon.setPFCandidateRef( pfRef  );
       if( embedPFCandidate_ ) aMuon.embedPFCandidate();
       fillMuon( aMuon, muonBaseRef, pfBaseRef, genMatches, deposits, isolationValues );
+
+      if (embedPfEcalEnergy_) {
+        aMuon.setPfEcalEnergy(pfmu.ecalEnergy());
+      }
+
       patMuons->push_back(aMuon);
     }
   }
@@ -274,6 +268,12 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
       iEvent.getByToken(tcMETMuonCorrsToken_, tcMETMuonCorrs);
       //tcMETmuCorValueMap  = *tcMETmuCorValueMap_h;
     }
+
+    if (embedPfEcalEnergy_) {
+        // get the PFCandidates of type muons
+        iEvent.getByToken(pfMuonToken_, pfMuons);
+    }
+
     for (edm::View<reco::Muon>::const_iterator itMuon = muons->begin(); itMuon != muons->end(); ++itMuon) {
       // construct the Muon from the ref -> save ref to original object
       unsigned int idx = itMuon - muons->begin();
@@ -328,16 +328,6 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
 			  beamSpot,
 			  beamSpotIsValid );
 
-	  // Correct to PV, or beam spot
-	  if ( !usePV_ ) {
-	    double corr_d0 = -1.0 * chosenTrack->dxy( beamPoint );
-	    aMuon.setDB( corr_d0, -1.0 );
-	  } else {
-	    std::pair<bool,Measurement1D> result = IPTools::absoluteTransverseImpactParameter(tt, primaryVertex);
-	    double d0_corr = result.second.value();
-	    double d0_err = result.second.error();
-	    aMuon.setDB( d0_corr, d0_err );
-	  }
 	}
 
 	if ( globalTrack.isNonnull() && globalTrack.isAvailable() ) {
@@ -349,6 +339,18 @@ void PATMuonProducer::produce(edm::Event & iEvent, const edm::EventSetup & iSetu
       // embed MET muon corrections
       if( embedCaloMETMuonCorrs_ ) aMuon.embedCaloMETMuonCorrs((*caloMETMuonCorrs)[muonRef]);
       if( embedTcMETMuonCorrs_ ) aMuon.embedTcMETMuonCorrs((*tcMETMuonCorrs  )[muonRef]);
+
+      if (embedPfEcalEnergy_) {
+          aMuon.setPfEcalEnergy(-99.0);
+          for (const reco::PFCandidate &pfmu : *pfMuons) {
+              if (pfmu.muonRef().isNonnull()) {
+                  if (pfmu.muonRef().id() != muonRef.id()) throw cms::Exception("Configuration") << "Muon reference within PF candidates does not point to the muon collection." << std::endl;
+                  if (pfmu.muonRef().key() == muonRef.key()) {
+                      aMuon.setPfEcalEnergy(pfmu.ecalEnergy());
+                  }
+              } 
+          }
+      }
 
       patMuons->push_back(aMuon);
     }
@@ -374,7 +376,6 @@ void PATMuonProducer::fillMuon( Muon& aMuon, const MuonBaseRef& muonRef, const r
   // as the pat::Muon momentum
   if (useParticleFlow_)
     aMuon.setP4( aMuon.pfCandidateRef()->p4() );
-  if (embedBestTrack_)      aMuon.embedMuonBestTrack();
   if (embedTrack_)          aMuon.embedTrack();
   if (embedStandAloneMuon_) aMuon.embedStandAloneMuon();
   if (embedCombinedMuon_)   aMuon.embedCombinedMuon();
@@ -388,6 +389,10 @@ void PATMuonProducer::fillMuon( Muon& aMuon, const MuonBaseRef& muonRef, const r
     if (embedDytMuon_ && aMuon.isAValidMuonTrack(reco::Muon::DYT))
       aMuon.embedDytMuon();
   }
+
+  // embed best tracks (at the end, so unless forceEmbedBestTrack_ is true we can save some space not embedding them twice)
+  if (embedBestTrack_)      aMuon.embedMuonBestTrack(forceEmbedBestTrack_);
+  if (embedTunePBestTrack_)      aMuon.embedTunePMuonBestTrack(forceEmbedBestTrack_);
 
   // store the match to the generated final state muons
   if (addGenMatch_) {
@@ -448,7 +453,9 @@ void PATMuonProducer::fillDescriptions(edm::ConfigurationDescriptions & descript
   iDesc.add<edm::InputTag>("muonSource", edm::InputTag("no default"))->setComment("input collection");
 
   // embedding
-  iDesc.add<bool>("embedMuonBestTrack", true)->setComment("embed muon best track");
+  iDesc.add<bool>("embedMuonBestTrack",      true)->setComment("embed muon best track (global pflow)");
+  iDesc.add<bool>("embedTunePMuonBestTrack", true)->setComment("embed muon best track (muon only)");
+  iDesc.add<bool>("forceBestTrackEmbedding", true)->setComment("force embedding separately the best tracks even if they're already embedded e.g. as tracker or global tracks");
   iDesc.add<bool>("embedTrack", true)->setComment("embed external track");
   iDesc.add<bool>("embedStandAloneMuon", true)->setComment("embed external stand-alone muon");
   iDesc.add<bool>("embedCombinedMuon", false)->setComment("embed external combined muon");
@@ -466,6 +473,7 @@ void PATMuonProducer::fillDescriptions(edm::ConfigurationDescriptions & descript
   iDesc.add<edm::InputTag>("pfMuonSource", edm::InputTag("pfMuons"))->setComment("particle flow input collection");
   iDesc.add<bool>("useParticleFlow", false)->setComment("whether to use particle flow or not");
   iDesc.add<bool>("embedPFCandidate", false)->setComment("embed external particle flow object");
+  iDesc.add<bool>("embedPfEcalEnergy", true)->setComment("add ecal energy as reconstructed by PF");
 
   // MC matching configurables
   iDesc.add<bool>("addGenMatch", true)->setComment("add MC matching");
@@ -526,8 +534,6 @@ void PATMuonProducer::fillDescriptions(edm::ConfigurationDescriptions & descript
                  )->setComment("input with high level selection");
   iDesc.addNode( edm::ParameterDescription<edm::InputTag>("pvSrc", edm::InputTag(), true)
                  )->setComment("input with high level selection");
-  iDesc.addNode( edm::ParameterDescription<bool>("usePV", bool(), true)
-                 )->setComment("input with high level selection, use primary vertex (true) or beam line (false)");
 
   //descriptions.add("PATMuonProducer", iDesc);
 }

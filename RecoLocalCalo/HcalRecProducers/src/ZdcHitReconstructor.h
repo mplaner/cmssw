@@ -1,7 +1,7 @@
 #ifndef ZDCHITRECONSTRUCTOR_H 
 #define ZDCHITRECONSTRUCTOR_H 1
 
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 
@@ -11,7 +11,7 @@
 #include "RecoLocalCalo/HcalRecAlgos/interface/ZdcSimpleRecAlgo.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalHFStatusBitFromRecHits.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalHFStatusBitFromDigis.h"
-#include "RecoLocalCalo/HcalRecAlgos/interface/HcalCaloFlagLabels.h"
+#include "DataFormats/METReco/interface/HcalCaloFlagLabels.h"
 #include "CondFormats/HcalObjects/interface/HcalChannelQuality.h"
 #include "CondFormats/HcalObjects/interface/HcalChannelStatus.h"
 #include "CondFormats/HcalObjects/interface/HcalLongRecoParams.h"
@@ -33,7 +33,7 @@ class HcalTopology;
     \author E. Garcia - CSU
     ** Based on HcalSimpleReconstructor.h by J. Mans
     */
-    class ZdcHitReconstructor : public edm::EDProducer {
+    class ZdcHitReconstructor : public edm::stream::EDProducer<> {
     public:
       explicit ZdcHitReconstructor(const edm::ParameterSet& ps);
       virtual ~ZdcHitReconstructor();

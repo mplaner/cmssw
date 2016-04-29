@@ -79,7 +79,8 @@ def GlobalTag(essource = None, globaltag = None, conditions = None):
                   label      = len(entry) > 3 and entry[3] or None
                   tag        = entry[0]
                   connection = len(entry) > 2 and entry[2] or None
-                  map[ (record, label) ] = (tag, connection)
+                  snapshotTime = len(entry) > 4 and entry[4] or None
+                  map[ (record, label) ] = (tag, connection, snapshotTime)
                 custom_conditions.update( map )
             else:
                 globaltag = autoKey
@@ -90,7 +91,6 @@ def GlobalTag(essource = None, globaltag = None, conditions = None):
             # Perform any alias expansion and consistency check.
             # We are assuming the same connection and pfnPrefix/Postfix will be used for all GTs.
             globaltag[0] = combineGTs(globaltag[0])
-            print "globaltag =", globaltag[0]
             essource.globaltag = cms.string( str(globaltag[0]) )
         if len(globaltag) > 1:
             essource.connect   = cms.string( str(globaltag[1]) )
@@ -110,7 +110,8 @@ def GlobalTag(essource = None, globaltag = None, conditions = None):
                 label      = len(entry) > 3 and entry[3] or None
                 tag        = entry[0]
                 connection = len(entry) > 2 and entry[2] or None
-                map[ (record, label) ] = (tag, connection)
+                snapshotTime = len(entry) > 4 and entry[4] or None
+                map[ (record, label) ] = (tag, connection, snapshotTime)
             custom_conditions.update( map )
         elif isinstance(conditions, dict):
           custom_conditions.update( conditions )
@@ -119,14 +120,16 @@ def GlobalTag(essource = None, globaltag = None, conditions = None):
 
     # explicit payloads toGet from DB
     if custom_conditions:
-        for ( (record, label), (tag, connection) ) in custom_conditions.iteritems():
+        for ( (record, label), (tag, connection, snapshotTime) ) in sorted(custom_conditions.iteritems()):
             payload = cms.PSet()
             payload.record = cms.string( record )
             if label:
                 payload.label = cms.untracked.string( label )
             payload.tag = cms.string( tag )
             if connection:
-                payload.connect = cms.untracked.string( connection )
+                payload.connect = cms.string( connection )
+            if snapshotTime:
+                payload.snapshotTime = cms.string( snapshotTime )
             essource.toGet.append( payload )
 
     return essource

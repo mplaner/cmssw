@@ -22,14 +22,14 @@ int run( const std::string& connectionString ){
   try{
 
     //*************
-    std::cout <<"# Connecting with db in "<<connectionString<<std::endl;
+    std::cout <<"> Connecting with db in "<<connectionString<<std::endl;
     ConnectionPool connPool;
     connPool.setMessageVerbosity( coral::Debug );
-    Session session = connPool.createSession( connectionString, true );
+    Session session = connPool.createSession( connectionString, true, cond::COND_DB );
     session.transaction().start( false );
     MyTestData d0( 17 );
     MyTestData d1( 999 );
-    std::cout <<"# Storing payload ptr="<<&d0<<std::endl;
+    std::cout <<"> Storing payload ptr="<<&d0<<std::endl;
     cond::Hash p0 = session.storePayload( d0, boost::posix_time::microsec_clock::universal_time() );
     cond::Hash p1 = session.storePayload( d1, boost::posix_time::microsec_clock::universal_time() );
     std::string d("abcd1234");
@@ -37,13 +37,13 @@ int run( const std::string& connectionString ){
 
     IOVEditor editor;
     if( !session.existsIov( "MyNewIOV" ) ){
-      editor = session.createIov<MyTestData>( "MyNewIOV", cond::runnumber ); 
+      editor = session.createIov<MyTestData>( "MyNewIOV", cond::runnumber, cond::SYNCH_OFFLINE ); 
       editor.setDescription("Test with MyTestData class");
       editor.insert( 1, p0 );
       editor.insert( 100, p1 );
-      std::cout <<"# inserted 2 iovs..."<<std::endl;
+      std::cout <<"> inserted 2 iovs..."<<std::endl;
       editor.flush();
-      std::cout <<"# iov changes flushed..."<<std::endl;
+      std::cout <<"> iov changes flushed..."<<std::endl;
     }
 
     if( !session.existsIov( "StringData" ) ){
@@ -54,47 +54,73 @@ int run( const std::string& connectionString ){
       editor.flush();
     }
 
+    bool isOra = session.isOraSession();
     session.transaction().commit();
-    std::cout <<"# iov changes committed!..."<<std::endl;
+    std::cout <<"> iov changes committed!..."<<std::endl;
+
+    if ( !isOra ){
+      session.transaction().start( false );
+      std::cout <<"## now trying to insert in the past..."<<std::endl;
+      try{
+	editor = session.editIov( "MyNewIOV" );
+	editor.insert( 200, p1 );
+	editor.insert( 300, p1 );
+	editor.insert( 50, p1 );
+	editor.flush();
+	std::cout <<"ERROR: forbidden insertion."<<std::endl;
+	session.transaction().commit();
+      } catch ( const cond::persistency::Exception& e ){
+	std::cout <<"Expected error: "<<e.what()<<std::endl;
+	session.transaction().rollback();
+      }
+      session.transaction().start( false );
+      editor = session.editIov( "StringData" );
+      editor.insert( 3000000, p3 );
+      editor.insert( 4000000, p3 );
+      editor.insert( 1500000, p3);
+      editor.flush();
+      std::cout <<"Insertion in the past completed."<<std::endl;
+      session.transaction().commit();
+    }
     ::sleep(2);
     session.transaction().start();
 
     IOVProxy proxy = session.readIov( "MyNewIOV" );
-    std::cout <<"## iov loaded size="<<proxy.loadedSize()<<std::endl;
-    std::cout <<"## iov sequence size="<<proxy.sequenceSize()<<std::endl;
+    std::cout <<"> iov loaded size="<<proxy.loadedSize()<<std::endl;
+    std::cout <<"> iov sequence size="<<proxy.sequenceSize()<<std::endl;
     IOVProxy::Iterator iovIt = proxy.find( 57 );
     if( iovIt == proxy.end() ){
-      std::cout <<"#0 not found!"<<std::endl;
+      std::cout <<">[0] not found!"<<std::endl;
     } else {
       cond::Iov_t val = *iovIt;
-      std::cout <<"#0 iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
+      std::cout <<"#[0] iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
       boost::shared_ptr<MyTestData> pay0 = session.fetchPayload<MyTestData>( val.payloadId );
       pay0->print();
       iovIt++;
     }
     if(iovIt == proxy.end() ){
-      std::cout<<"#1 not found!"<<std::endl;
+      std::cout<<"#[1] not found!"<<std::endl;
     } else {
       cond::Iov_t val =*iovIt;
-      std::cout <<"#1 iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
+      std::cout <<"#[1] iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
       boost::shared_ptr<MyTestData> pay1 = session.fetchPayload<MyTestData>( val.payloadId );
       pay1->print();
     }
     iovIt = proxy.find( 176 );
     if( iovIt == proxy.end() ){
-      std::cout <<"#2 not found!"<<std::endl;
+      std::cout <<"#[2] not found!"<<std::endl;
     } else {
       cond::Iov_t val = *iovIt;
-      std::cout <<"#2 iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
+      std::cout <<"#[2] iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
       boost::shared_ptr<MyTestData> pay2 = session.fetchPayload<MyTestData>( val.payloadId );
       pay2->print();
       iovIt++;
     }
     if(iovIt == proxy.end() ){
-      std::cout<<"#3 not found!"<<std::endl;
+      std::cout<<"#[3] not found!"<<std::endl;
     } else {
       cond::Iov_t val =*iovIt;
-      std::cout <<"#3 iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
+      std::cout <<"#[3] iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
       boost::shared_ptr<MyTestData> pay3 = session.fetchPayload<MyTestData>( val.payloadId );
       pay3->print();
     }
@@ -102,12 +128,12 @@ int run( const std::string& connectionString ){
     proxy = session.readIov( "StringData" ); 
     auto iov2It = proxy.find( 1000022 );
     if(iov2It == proxy.end() ){
-      std::cout<<"#4 not found!"<<std::endl;
+      std::cout<<"#[4] not found!"<<std::endl;
     } else {
       cond::Iov_t val =*iov2It;
-      std::cout <<"#4 iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
+      std::cout <<"#[4] iov since="<<val.since<<" till="<<val.till<<" pid="<<val.payloadId<<std::endl;
       boost::shared_ptr<std::string> pay4 = session.fetchPayload<std::string>( val.payloadId );
-      std::cout <<" ## pay4="<<*pay4<<std::endl;
+      std::cout <<"#pay4="<<*pay4<<std::endl;
     }
     session.transaction().commit();
   } catch (const std::exception& e){
@@ -117,7 +143,7 @@ int run( const std::string& connectionString ){
     std::cout << "UNEXPECTED FAILURE." << std::endl;
     return -1;
   }
-  std::cout <<"## TEST successfully completed."<<std::endl;
+  std::cout <<"## Run successfully completed."<<std::endl;
   return 0;
 }
 
@@ -126,7 +152,8 @@ int main (int argc, char** argv)
   int ret = 0;
   edmplugin::PluginManager::Config config;
   edmplugin::PluginManager::configure(edmplugin::standard::config());
-  std::string connectionString0("sqlite_file:cms_conditions.db");
+  std::string connectionString0("sqlite_file:cms_conditions_0.db");
+  std::cout <<"## Running with CondDBV2 format..."<<std::endl;
   ret = run( connectionString0 );
   if( ret<0 ) return ret;
   std::string connectionString1("sqlite_file:cms_conditions_ora.db");
@@ -138,6 +165,7 @@ int main (int argc, char** argv)
     oraSess.createDatabase();
     oraSess.transaction().commit();
   }
+  std::cout <<"## Running with CondDBV1 format..."<<std::endl;
   ret = run( connectionString1 );
   return ret;
 }

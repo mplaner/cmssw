@@ -51,7 +51,7 @@ void reco::writeSpecific(reco::CaloJet & jet,
     geometry->getSubdetectorGeometry(DetId::Calo, CaloTowerDetId::SubdetId);
 
   edm::ESHandle<HcalTopology> topology;
-  c.get<IdealGeometryRecord>().get(topology);
+  c.get<HcalRecNumberingRecord>().get(topology);
 
   // Make the specific
   reco::CaloJet::Specific specific;
@@ -268,6 +268,8 @@ bool reco::makeSpecific(vector<reco::CandidatePtr> const & particles,
   float chargedMuEnergy=0.;
   int   chargedMultiplicity=0;
   int   neutralMultiplicity=0;
+
+  float HOEnergy=0.;
   
   vector<reco::CandidatePtr>::const_iterator itParticle;
   for (itParticle=particles.begin();itParticle!=particles.end();++itParticle){
@@ -275,49 +277,55 @@ bool reco::makeSpecific(vector<reco::CandidatePtr> const & particles,
       edm::LogWarning("DataNotFound") << " JetSpecific: PF Particle is invalid\n";
       continue;
     }    
-    const PFCandidate* pfCand = dynamic_cast<const PFCandidate*> (itParticle->get());
+    const Candidate* pfCand = itParticle->get();
     if (pfCand) {
-      switch (PFCandidate::ParticleType(pfCand->particleId())) {
-      case PFCandidate::h:       // charged hadron
+
+      const PFCandidate* pfCandCast = dynamic_cast<const PFCandidate*>(pfCand);
+      if (pfCandCast)
+        HOEnergy += pfCandCast->hoEnergy();
+
+      switch (std::abs(pfCand->pdgId())) {
+      case 211: //PFCandidate::h:       // charged hadron
 	chargedHadronEnergy += pfCand->energy();
 	chargedHadronMultiplicity++;
 	chargedMultiplicity++;
 	break;
 
-      case PFCandidate::h0 :    // neutral hadron
+      case 130: //PFCandidate::h0 :    // neutral hadron
 	neutralHadronEnergy += pfCand->energy();
 	neutralHadronMultiplicity++;
 	neutralMultiplicity++;
       break;
 
-      case PFCandidate::gamma:   // photon
+      case 22: //PFCandidate::gamma:   // photon
 	photonEnergy += pfCand->energy();
 	photonMultiplicity++;
 	neutralEmEnergy += pfCand->energy();
 	neutralMultiplicity++;
       break;
 
-      case PFCandidate::e:       // electron 
+      case 11: // PFCandidate::e:       // electron 
 	electronEnergy += pfCand->energy();
 	electronMultiplicity++;
 	chargedEmEnergy += pfCand->energy(); 
 	chargedMultiplicity++;
 	break;
 
-      case PFCandidate::mu:      // muon
+      case 13: //PFCandidate::mu:      // muon
 	muonEnergy += pfCand->energy();
 	muonMultiplicity++;
 	chargedMuEnergy += pfCand->energy();
 	chargedMultiplicity++;
 	break;
 
-      case PFCandidate::h_HF :    // hadron in HF
+      case 1: // PFCandidate::h_HF :    // hadron in HF
 	HFHadronEnergy += pfCand->energy();
 	HFHadronMultiplicity++;
+	neutralHadronEnergy += pfCand->energy();
 	neutralMultiplicity++;
 	break;
 
-      case PFCandidate::egamma_HF :    // electromagnetic in HF
+      case 2: //PFCandidate::egamma_HF :    // electromagnetic in HF
 	HFEMEnergy += pfCand->energy();
 	HFEMMultiplicity++;
 	neutralEmEnergy += pfCand->energy();
@@ -327,7 +335,7 @@ bool reco::makeSpecific(vector<reco::CandidatePtr> const & particles,
 
       default:
 	edm::LogWarning("DataNotFound") <<"reco::makePFJetSpecific: Unknown PFCandidate::ParticleType: "
-					<<pfCand->particleId()<<" is ignored\n";
+					<<pfCand->pdgId()<<" is ignored\n";
 	break;
       }
     }
@@ -359,6 +367,8 @@ bool reco::makeSpecific(vector<reco::CandidatePtr> const & particles,
   pfJetSpecific->mChargedMultiplicity=chargedMultiplicity;
   pfJetSpecific->mNeutralMultiplicity=neutralMultiplicity;
 
+  pfJetSpecific->mHOEnergy= HOEnergy;
+
   return true;
 }
 
@@ -377,10 +387,10 @@ bool reco::makeSpecific(vector<reco::CandidatePtr> const & mcparticles,
     }
     const Candidate* candidate = itMcParticle->get();
     if (candidate->hasMasterClone()) candidate = candidate->masterClone().get();
-    const GenParticle* genParticle = GenJet::genParticle(candidate);
-    if (genParticle) {
-      double e = genParticle->energy();
-      switch (abs (genParticle->pdgId ())) {
+    //const GenParticle* genParticle = GenJet::genParticle(candidate);
+    if (candidate) {
+      double e = candidate->energy();
+      switch (abs (candidate->pdgId ())) {
       case 22: // photon
       case 11: // e
 	genJetSpecific->m_EmEnergy += e;

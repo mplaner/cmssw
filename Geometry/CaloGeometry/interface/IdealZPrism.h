@@ -20,7 +20,6 @@ Internally, the "point of reference" is the center (eta/phi) of the
 front face of the prism.  Therefore, the only internally stored
 parameters are eta and phi HALF-widths and the tower z thickness.
 
-$Revision: 1.8 $
 \author J. Mans - Minnesota
 */
 class IdealZPrism : public CaloCellGeometry 
@@ -38,12 +37,10 @@ class IdealZPrism : public CaloCellGeometry
       IdealZPrism& operator=( const IdealZPrism& idzp ) ;
       
       IdealZPrism( const GlobalPoint& faceCenter , 
-		   const CornersMgr*  mgr        ,
+		   CornersMgr*        mgr        ,
 		   const CCGFloat*    parm         ) ;
       
       virtual ~IdealZPrism() ;
-      
-      virtual const CornersVec& getCorners() const ;
       
       CCGFloat dEta() const ;
       CCGFloat dPhi() const ;
@@ -61,6 +58,8 @@ class IdealZPrism : public CaloCellGeometry
       
    private:
 
+      virtual void initCorners(CornersVec& ) override;
+      
       static GlobalPoint etaPhiR( float eta ,
 				  float phi ,
 				  float rad   ) ;

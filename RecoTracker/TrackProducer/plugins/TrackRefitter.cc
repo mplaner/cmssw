@@ -10,6 +10,9 @@
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
+
 TrackRefitter::TrackRefitter(const edm::ParameterSet& iConfig):
   KfTrackProducerBase(iConfig.getParameter<bool>("TrajectoryInEvent"),
 		      iConfig.getParameter<bool>("useHitsSplitting")),
@@ -64,6 +67,9 @@ void TrackRefitter::produce(edm::Event& theEvent, const edm::EventSetup& setup)
   edm::ESHandle<TransientTrackingRecHitBuilder> theBuilder;
   getFromES(setup,theG,theMF,theFitter,thePropagator,theMeasTk,theBuilder);
 
+  edm::ESHandle<TrackerTopology> httopo;
+  setup.get<TrackerTopologyRcd>().get(httopo);
+
   //
   //declare and get TrackCollection to be retrieved from the event
   //
@@ -74,6 +80,12 @@ void TrackRefitter::produce(edm::Event& theEvent, const edm::EventSetup& setup)
     {
       edm::Handle<reco::TrackCollection> theTCollection;
       getFromEvt(theEvent,theTCollection,bs);
+
+      LogDebug("TrackRefitter") << "TrackRefitter::produce(none):Number of Trajectories:" << (*theTCollection).size();
+
+      if (bs.position()==math::XYZPoint(0.,0.,0.) && bs.type() == reco::BeamSpot::Unknown) {
+	edm::LogError("TrackRefitter") << " BeamSpot is (0,0,0), it is probably because is not valid in the event"; break; }
+
       if (theTCollection.failedToGet()){
 	edm::LogError("TrackRefitter")<<"could not get the reco::TrackCollection."; break;}
       LogDebug("TrackRefitter") << "run the algorithm" << "\n";
@@ -93,6 +105,7 @@ void TrackRefitter::produce(edm::Event& theEvent, const edm::EventSetup& setup)
 
       edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
       theEvent.getByToken(bsSrc_,recoBeamSpotHandle);
+      if (!recoBeamSpotHandle.isValid()) break;
       bs = *recoBeamSpotHandle;      
       if (theTCollectionWithConstraint.failedToGet()){
 	//edm::LogError("TrackRefitter")<<"could not get TrackMomConstraintAssociationCollection product.";
@@ -110,6 +123,7 @@ void TrackRefitter::produce(edm::Event& theEvent, const edm::EventSetup& setup)
       theEvent.getByToken(trkconstrcoll_,theTCollectionWithConstraint);
       edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
       theEvent.getByToken(bsSrc_,recoBeamSpotHandle);
+      if (!recoBeamSpotHandle.isValid()) break;
       bs = *recoBeamSpotHandle;      
       if (theTCollectionWithConstraint.failedToGet()){
 	edm::LogError("TrackRefitter")<<"could not get TrackVtxConstraintAssociationCollection product."; break;}
@@ -125,6 +139,7 @@ void TrackRefitter::produce(edm::Event& theEvent, const edm::EventSetup& setup)
       theEvent.getByToken(trkconstrcoll_,theTCollectionWithConstraint);
       edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
       theEvent.getByToken(bsSrc_,recoBeamSpotHandle);
+      if (!recoBeamSpotHandle.isValid()) break;
       bs = *recoBeamSpotHandle;      
       if (theTCollectionWithConstraint.failedToGet()){
 	//edm::LogError("TrackRefitter")<<"could not get TrackParamConstraintAssociationCollection product.";
@@ -140,7 +155,7 @@ void TrackRefitter::produce(edm::Event& theEvent, const edm::EventSetup& setup)
 
   
   //put everything in th event
-  putInEvt(theEvent, thePropagator.product(), theMeasTk.product(), outputRHColl, outputTColl, outputTEColl, outputTrajectoryColl, algoResults);
+  putInEvt(theEvent, thePropagator.product(), theMeasTk.product(), outputRHColl, outputTColl, outputTEColl, outputTrajectoryColl, algoResults,theBuilder.product(), httopo.product());
   LogDebug("TrackRefitter") << "end" << "\n";
 }
 

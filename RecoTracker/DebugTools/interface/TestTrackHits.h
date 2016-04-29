@@ -33,12 +33,13 @@
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHitBuilder.h"
 #include "RecoTracker/TransientTrackingRecHit/interface/TkTransientTrackingRecHitBuilder.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/TrackerGeometryBuilder/interface/StripGeomDetUnit.h"
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h" 
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h" 
 #include "TrackingTools/Records/interface/TransientRecHitRecord.h" 
 #include "SimTracker/TrackerHitAssociation/interface/TrackerHitAssociator.h"
-#include "SimTracker/TrackAssociation/interface/TrackAssociatorByHits.h"
+#include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
 #include "TrackingTools/PatternTools/interface/TrajectoryStateUpdator.h"
 #include "TrackingTools/GeomPropagators/interface/Propagator.h"
 #include "Geometry/TrackerGeometryBuilder/interface/GluedGeomDet.h"
@@ -76,8 +77,7 @@ private:
     throw cms::Exception("CkfDebugger error: rechit of dimension not 1,2,3,4,5");
   }
 
-  const edm::ParameterSet conf_;
-  TrackerHitAssociator * hitAssociator;
+  TrackerHitAssociator::Config trackerHitAssociatorConfig_;
 
   std::string propagatorName;
   std::string builderName;
@@ -90,7 +90,7 @@ private:
   edm::ESHandle<Propagator> thePropagator;
   edm::ESHandle<TransientTrackingRecHitBuilder> theBuilder;
   edm::ESHandle<TrajectoryStateUpdator> theUpdator;
-  edm::ESHandle<TrackAssociatorBase> trackAssociator;
+  edm::Handle<reco::TrackToTrackingParticleAssociator> trackAssociator;
   edm::Handle<std::vector<Trajectory> > trajCollectionHandle;
   edm::Handle<edm::View<reco::Track> > trackCollectionHandle;
   edm::Handle<TrajTrackAssociationCollection> trajTrackAssociationCollectionHandle;

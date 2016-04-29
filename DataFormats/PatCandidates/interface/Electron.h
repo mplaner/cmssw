@@ -29,6 +29,8 @@
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/PatCandidates/interface/PackedCandidate.h"
+#include "DataFormats/Common/interface/AtomicPtrCache.h"
 
 // Define typedefs for convenience
 namespace pat {
@@ -45,7 +47,7 @@ namespace reco {
 
 // Class definition
 namespace pat {
-
+  class PATElectronSlimmer;
 
   class Electron : public Lepton<reco::GsfElectron> {
 
@@ -152,6 +154,11 @@ namespace pat {
       float hcalIso()  const { return dr04HcalTowerSumEt(); }
       /// Overload of pat::Lepton::caloIso(); returns the sum of ecalIso() and hcalIso
       float caloIso()  const { return ecalIso()+hcalIso(); }
+      /// get and set PFCluster Isolation                                                                                                                                      
+      float ecalPFClusterIso() const { return ecalPFClusIso_; };
+      float hcalPFClusterIso() const { return hcalPFClusIso_; };
+      void setEcalPFClusterIso(float ecalPFClus) { ecalPFClusIso_ = ecalPFClus; };
+      void setHcalPFClusterIso(float hcalPFClus) { hcalPFClusIso_ = hcalPFClus; };
 
       // ---- PF specific methods ----
       bool isPF() const{ return isPF_; }
@@ -167,19 +174,23 @@ namespace pat {
       void embedPFCandidate();
       /// get the number of non-null PFCandidates
       size_t numberOfSourceCandidatePtrs() const {
-        return pfCandidateRef_.isNonnull() ? 1 : 0;
+        return (pfCandidateRef_.isNonnull() ? 1 : 0) + associatedPackedFCandidateIndices_.size();
       }
       /// get the source candidate pointer with index i
       reco::CandidatePtr sourceCandidatePtr( size_type i ) const;
 
       // ---- embed various impact parameters with errors ----
-      typedef enum IPTYPE { None = 0, PV2D = 1, PV3D = 2, BS2D = 3, BS3D = 4 } IpType;
+      typedef enum IPTYPE { PV2D = 0, PV3D = 1, BS2D = 2, BS3D = 3, IpTypeSize = 4 } IpType;
       /// Impact parameter wrt primary vertex or beamspot
-      double dB(IpType type = None) const;
+      double dB(IPTYPE type) const;
       /// Uncertainty on the corresponding impact parameter
-      double edB(IpType type = None) const;
+      double edB(IPTYPE type) const;
+      /// the version without arguments returns PD2D, but with an absolute value (for backwards compatibility)
+      double dB() const { return std::abs(dB(PV2D)); }
+      /// the version without arguments returns PD2D, but with an absolute value (for backwards compatibility)
+      double edB() const { return std::abs(edB(PV2D)); }
       /// Set impact parameter of a certain type and its uncertainty
-      void setDB(double dB, double edB, IpType type = None);
+      void setDB(double dB, double edB, IPTYPE type);
 
       // ---- Momentum estimate specific methods ----
       const LorentzVector & ecalDrivenMomentum() const {return ecalDrivenMomentum_;}
@@ -189,16 +200,15 @@ namespace pat {
       friend std::ostream& reco::operator<<(std::ostream& out, const pat::Electron& obj);
 
       /// additional mva input variables
-      /// R9 variable
-      double r9() const { return r9_; };
-      /// sigmaIPhiPhi
-      double sigmaIphiIphi() const { return sigmaIphiIphi_; };
       /// sigmaIEtaIPhi
-      double sigmaIetaIphi() const { return sigmaIetaIphi_; };
+      float sigmaIetaIphi() const { return sigmaIetaIphi_; }
+      /// sigmaIEtaIPhi (from full 5x5 non-ZS clusters without fractions, a la 5.3.X)
+      float full5x5_sigmaIetaIphi() const { return full5x5_sigmaIetaIphi_; }
       /// ip3d
       double ip3d() const { return ip3d_; }
       /// set missing mva input variables
-      void setMvaVariables( double r9, double sigmaIphiIphi, double sigmaIetaIphi, double ip3d );
+      void setMvaVariables( double sigmaIetaIphi, double ip3d );
+      void full5x5_setSigmaIetaIphi(float sigmaIetaIphi) { full5x5_sigmaIetaIphi_ = sigmaIetaIphi; }
 
       const EcalRecHitCollection * recHits() const { return &recHits_;}
 
@@ -233,6 +243,22 @@ namespace pat {
       bool passConversionVeto() const { return passConversionVeto_; }
       void setPassConversionVeto( bool flag ) { passConversionVeto_ = flag; }
 
+      /// References to PFCandidates linked to this object (e.g. for isolation vetos or masking before jet reclustering)
+      edm::RefVector<pat::PackedCandidateCollection> associatedPackedPFCandidates() const ;
+      /// References to PFCandidates linked to this object (e.g. for isolation vetos or masking before jet reclustering)
+      template<typename T>
+      void setAssociatedPackedPFCandidates(const edm::RefProd<pat::PackedCandidateCollection> & refprod,
+                                           T beginIndexItr,
+                                           T endIndexItr) {
+        packedPFCandidates_ = refprod;
+        associatedPackedFCandidateIndices_.clear();
+        associatedPackedFCandidateIndices_.insert(associatedPackedFCandidateIndices_.end(),
+                                                  beginIndexItr,
+                                                  endIndexItr);
+      }
+
+      friend class PATElectronSlimmer;
+
     protected:
       /// init impact parameter defaults (for use in a constructor)
       void initImpactParameters();
@@ -252,6 +278,8 @@ namespace pat {
       bool embeddedPflowSuperCluster_;
       /// Place to store electron's supercluster internally
       std::vector<reco::SuperCluster> superCluster_;
+      /// Place to temporarily store the electron's supercluster after relinking the seed to it
+      edm::AtomicPtrCache<std::vector<reco::SuperCluster> > superClusterRelinked_;
       /// Place to store electron's basic clusters internally 
       std::vector<reco::CaloCluster> basicClusters_;
       /// Place to store electron's preshower clusters internally      
@@ -292,18 +320,8 @@ namespace pat {
       /// ECAL-driven momentum
       LorentzVector ecalDrivenMomentum_;
 
-      // V+Jets group selection variables.
-      /// True if impact parameter has been cached
-      bool    cachedDB_;
-      /// Impact parameter at the primary vertex
-      double  dB_;
-      /// Impact paramater uncertainty at the primary vertex
-      double  edB_;
-
       /// additional missing mva variables : 14/04/2012
-      double r9_;
-      double sigmaIphiIphi_;
-      double sigmaIetaIphi_;
+      float sigmaIetaIphi_, full5x5_sigmaIetaIphi_;
       double ip3d_;
 
       /// output of regression
@@ -322,17 +340,24 @@ namespace pat {
       double ecalTrackRegressionScale_;
       double ecalTrackRegressionSmear_;
       
-      
+      /// PFCluster Isolation (a la HLT)
+      float ecalPFClusIso_;
+      float hcalPFClusIso_;
+
       /// conversion veto
       bool passConversionVeto_;
 
       // ---- cached impact parameters ----
       /// True if the IP (former dB) has been cached
-      std::vector<bool>    cachedIP_;
+      uint8_t    cachedIP_;
       /// Impact parameter at the primary vertex,
-      std::vector<double>  ip_;
+      float  ip_[IpTypeSize];    
       /// Impact parameter uncertainty as recommended by the tracking group
-      std::vector<double>  eip_;
+      float  eip_[IpTypeSize];      
+
+      // ---- link to PackedPFCandidates
+      edm::RefProd<pat::PackedCandidateCollection> packedPFCandidates_;
+      std::vector<uint16_t> associatedPackedFCandidateIndices_;
   };
 }
 

@@ -60,24 +60,13 @@
 #include "CLHEP/Random/RandFlat.h"
 #include <math.h>
 #include "vdt/log.h"
-//#include "G4UniversalFluctuation.hh"
-//#include "Randomize.hh"
-//#include "G4Poisson.hh"
-//#include "G4Step.hh"
-//#include "G4Material.hh"
-//#include "G4DynamicParticle.hh"
-//#include "G4ParticleDefinition.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 using namespace std;
 
-SiG4UniversalFluctuation::SiG4UniversalFluctuation(CLHEP::HepRandomEngine& eng)
-  :rndEngine(eng),
-   gaussQDistribution(0),
-   poissonQDistribution(0),
-   flatDistribution(0),
-   minNumberInteractionsBohr(10.0),
+SiG4UniversalFluctuation::SiG4UniversalFluctuation()
+  :minNumberInteractionsBohr(10.0),
    theBohrBeta2(50.0*keV/proton_mass_c2),
    minLoss(10.*eV),
    problim(5.e-3),  
@@ -103,10 +92,6 @@ SiG4UniversalFluctuation::SiG4UniversalFluctuation(CLHEP::HepRandomEngine& eng)
   ipotLogFluct = -8.659;  //material->GetIonisation()->GetLogMeanExcEnergy();
   e0 = 1.E-5;             //material->GetIonisation()->GetEnergy0fluct();
   
-  gaussQDistribution = new CLHEP::RandGaussQ(rndEngine);
-  poissonQDistribution = new CLHEP::RandPoissonQ(rndEngine);
-  flatDistribution = new CLHEP::RandFlat(rndEngine);
-
   //cout << " init new fluct +++++++++++++++++++++++++++++++++++++++++"<<endl;
 }
 
@@ -117,10 +102,6 @@ SiG4UniversalFluctuation::SiG4UniversalFluctuation(CLHEP::HepRandomEngine& eng)
 
 SiG4UniversalFluctuation::~SiG4UniversalFluctuation()
 {
-  delete gaussQDistribution;
-  delete poissonQDistribution;
-  delete flatDistribution;
-
 }
 
 
@@ -128,7 +109,8 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
 						    const double mass,
 						    double& tmax,
 						    const double length,
-						    const double meanLoss)
+						    const double meanLoss,
+                                                    CLHEP::HepRandomEngine* engine)
 {
 // Calculate actual loss from the mean loss.
 // The model used to get the fluctuations is essentially the same
@@ -139,13 +121,7 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
   //
   if (meanLoss < minLoss) return meanLoss;
 
-  //if(!particle) InitialiseMe(dp->GetDefinition());
-  //G4double tau   = dp->GetKineticEnergy()/particleMass;
-  //G4double gam   = tau + 1.0;
-  //G4double gam2  = gam*gam;
-  //G4double beta2 = tau*(tau + 2.0)/gam2;
-
-  particleMass   = mass; // dp->GetMass();
+  particleMass   = mass; 
   double gam2   = (momentum*momentum)/(particleMass*particleMass) + 1.0;
   double beta2 = 1.0 - 1.0/gam2;
   double gam = sqrt(gam2);
@@ -172,35 +148,20 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
       if (twomeanLoss < siga) {
         double x;
         do {
-          loss = twomeanLoss*flatDistribution->fire();
+          loss = twomeanLoss*CLHEP::RandFlat::shoot(engine);
        	  x = (loss - meanLoss)/siga;
-        } while (1.0 - 0.5*x*x < flatDistribution->fire());
+        } while (1.0 - 0.5*x*x < CLHEP::RandFlat::shoot(engine));
       } else {
         do {
-          loss = gaussQDistribution->fire(meanLoss,siga);
+          loss = CLHEP::RandGaussQ::shoot(engine, meanLoss, siga);
         } while (loss < 0. || loss > twomeanLoss);
       }
       return loss;
     }
   }
 
-  // Glandz regime : initialisation
-  //
-//   if (material != lastMaterial) {
-//     f1Fluct      = material->GetIonisation()->GetF1fluct();
-//     f2Fluct      = material->GetIonisation()->GetF2fluct();
-//     e1Fluct      = material->GetIonisation()->GetEnergy1fluct();
-//     e2Fluct      = material->GetIonisation()->GetEnergy2fluct();
-//     e1LogFluct   = material->GetIonisation()->GetLogEnergy1fluct();
-//     e2LogFluct   = material->GetIonisation()->GetLogEnergy2fluct();
-//     rateFluct    = material->GetIonisation()->GetRateionexcfluct();
-//     ipotFluct    = material->GetIonisation()->GetMeanExcitationEnergy();
-//     ipotLogFluct = material->GetIonisation()->GetLogMeanExcEnergy();
-//     lastMaterial = material;
-//   }
-
-  double a1 = 0. , a2 = 0., a3 = 0. ;
-  double p1,p2,p3;
+  double a1 = 0., a2 = 0., a3 = 0.;
+  double p3;
   double rate = rateFluct ;
 
   double w1 = tmax/ipotFluct;
@@ -233,32 +194,32 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
   //
   if (suma > sumalim)
   {
-    p1 = 0., p2 = 0 ;
     if((a1+a2) > 0.)
     {
+      double p1, p2;
       // excitation type 1
       if (a1>alim) {
         siga=sqrt(a1) ;
-        p1 = max(0.,gaussQDistribution->fire(a1,siga)+0.5);
+        p1 = max(0., CLHEP::RandGaussQ::shoot(engine, a1, siga) + 0.5);
       } else {
-        p1 = double(poissonQDistribution->fire(a1));
+	p1 = double(CLHEP::RandPoissonQ::shoot(engine,a1));
       }
     
       // excitation type 2
       if (a2>alim) {
         siga=sqrt(a2) ;
-        p2 = max(0.,gaussQDistribution->fire(a2,siga)+0.5);
+        p2 = max(0., CLHEP::RandGaussQ::shoot(engine, a2, siga) + 0.5);
       } else {
-        p2 = double(poissonQDistribution->fire(a2));
+	p2 = double(CLHEP::RandPoissonQ::shoot(engine,a2));
       }
     
       loss = p1*e1Fluct+p2*e2Fluct;
  
       // smearing to avoid unphysical peaks
       if (p2 > 0.)
-        loss += (1.-2.*flatDistribution->fire())*e2Fluct;
+        loss += (1.-2.*CLHEP::RandFlat::shoot(engine))*e2Fluct;
       else if (loss>0.)
-        loss += (1.-2.*flatDistribution->fire())*e1Fluct;   
+        loss += (1.-2.*CLHEP::RandFlat::shoot(engine))*e1Fluct;
       if (loss < 0.) loss = 0.0;
     }
 
@@ -266,9 +227,9 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
     if (a3 > 0.) {
       if (a3>alim) {
         siga=sqrt(a3) ;
-        p3 = max(0.,gaussQDistribution->fire(a3,siga)+0.5);
+        p3 = max(0., CLHEP::RandGaussQ::shoot(engine, a3, siga) + 0.5);
       } else {
-        p3 = double(poissonQDistribution->fire(a3));
+	p3 = double(CLHEP::RandPoissonQ::shoot(engine,a3));
       }
       double lossc = 0.;
       if (p3 > 0) {
@@ -278,13 +239,13 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
           double rfac   = p3/(nmaxCont2+p3);
           double namean = p3*rfac;
           double sa     = nmaxCont1*rfac;
-          na              = gaussQDistribution->fire(namean,sa);
+          na              = CLHEP::RandGaussQ::shoot(engine, namean, sa);
           if (na > 0.) {
             alfa   = w1*(nmaxCont2+p3)/(w1*nmaxCont2+p3);
             double alfa1  = alfa*vdt::fast_log(alfa)/(alfa-1.);
             double ea     = na*ipotFluct*alfa1;
             double sea    = ipotFluct*sqrt(na*(alfa-alfa1*alfa1));
-            lossc += gaussQDistribution->fire(ea,sea);
+            lossc += CLHEP::RandGaussQ::shoot(engine, ea, sea);
           }
         }
 
@@ -292,7 +253,7 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
           w2 = alfa*ipotFluct;
           double w  = (tmax-w2)/tmax;
           int    nb = int(p3-na);
-          for (int k=0; k<nb; k++) lossc += w2/(1.-w*flatDistribution->fire());
+          for (int k=0; k<nb; k++) lossc += w2/(1.-w*CLHEP::RandFlat::shoot(engine));
         }
       }        
       loss += lossc;  
@@ -301,16 +262,13 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
   }
   
   // suma < sumalim;  very small energy loss;  
-  //
-  //double e0 = material->GetIonisation()->GetEnergy0fluct();
-
   a3 = meanLoss*(tmax-e0)/(tmax*e0*vdt::fast_log(tmax/e0));
   if (a3 > alim)
   {
     siga=sqrt(a3);
-    p3 = max(0.,gaussQDistribution->fire(a3,siga)+0.5);
+    p3 = max(0., CLHEP::RandGaussQ::shoot(engine, a3, siga) + 0.5);
   } else {
-    p3 = double(poissonQDistribution->fire(a3));
+    p3 = double(CLHEP::RandPoissonQ::shoot(engine,a3));
   }
   if (p3 > 0.) {
     double w = (tmax-e0)/tmax;
@@ -320,34 +278,13 @@ double SiG4UniversalFluctuation::SampleFluctuations(const double momentum,
       p3 = nmaxCont2;
     } 
     int ip3 = (int)p3;
-    for (int i=0; i<ip3; i++) loss += 1./(1.-w*flatDistribution->fire());
+    for (int i=0; i<ip3; i++) loss += 1./(1.-w*CLHEP::RandFlat::shoot(engine));
     loss *= e0*corrfac;
     // smearing for losses near to e0
     if(p3 <= 2.)
-      loss += e0*(1.-2.*flatDistribution->fire()) ;
+      loss += e0*(1.-2.*CLHEP::RandFlat::shoot(engine)) ;
    }
     
    return loss;
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-// G4double SiG4UniversalFluctuation::Dispersion(
-//                           const G4Material* material,
-//                           const G4DynamicParticle* dp,
-//  				G4double& tmax,
-// 			        G4double& length)
-// {
-//   if(!particle) InitialiseMe(dp->GetDefinition());
-
-//   electronDensity = material->GetElectronDensity();
-
-//   G4double gam   = (dp->GetKineticEnergy())/particleMass + 1.0;
-//   G4double beta2 = 1.0 - 1.0/(gam*gam);
-
-//   G4double siga  = (1.0/beta2 - 0.5) * twopi_mc2_rcl2 * tmax * length
-//                  * electronDensity * chargeSquare;
-
-//   return siga;
-// }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

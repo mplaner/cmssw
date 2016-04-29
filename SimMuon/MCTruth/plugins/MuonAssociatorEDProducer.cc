@@ -11,13 +11,15 @@ MuonAssociatorEDProducer::MuonAssociatorEDProducer(const edm::ParameterSet& pars
   parset_(parset)
 {
   
-  LogTrace("MuonAssociatorEDProducer") << "constructing  MuonAssociatorEDProducer" << parset_.dump();
+  edm::LogVerbatim("MuonAssociatorEDProducer") << "constructing  MuonAssociatorEDProducer";
   produces<reco::RecoToSimCollection>();
   produces<reco::SimToRecoCollection>();
+  tpToken_=consumes<TrackingParticleCollection>(tpTag);
+  tracksToken_=consumes<edm::View<reco::Track> >(tracksTag);
 
   /// Perform some sanity checks of the configuration
-  edm::LogVerbatim("MuonAssociatorByHits") << "constructing  MuonAssociatorByHits" << parset_.dump();
-  edm::LogVerbatim("MuonAssociatorByHits") << "\n MuonAssociatorByHits will associate reco::Tracks with "<<tracksTag
+  LogTrace("MuonAssociatorEDProducer") << "constructing  MuonAssociatorByHits" << parset_.dump();
+  edm::LogVerbatim("MuonAssociatorEDProducer") << "\n MuonAssociatorByHits will associate reco::Tracks with "<<tracksTag
 					   << "\n\t\t and TrackingParticles with "<<tpTag;
   const std::string recoTracksLabel = tracksTag.label();
   const std::string recoTracksInstance = tracksTag.instance();
@@ -27,13 +29,13 @@ MuonAssociatorEDProducer::MuonAssociatorEDProducer(const edm::ParameterSet& pars
   if (recoTracksLabel == "standAloneMuons" || recoTracksLabel == "standAloneSETMuons" ||
       recoTracksLabel == "cosmicMuons" || recoTracksLabel == "hltL2Muons") {
     if (parset_.getParameter<bool>("UseTracker")) {
-      edm::LogWarning("MuonAssociatorByHits") 
+      edm::LogWarning("MuonAssociatorEDProducer") 
 	<<"\n*** WARNING : inconsistent input tracksTag = "<<tracksTag
 	<<"\n with UseTracker = true"<<"\n ---> setting UseTracker = false ";
       parset_.addParameter<bool>("UseTracker",false);
     }
     if (!parset_.getParameter<bool>("UseMuon")) {
-      edm::LogWarning("MuonAssociatorByHits") 
+      edm::LogWarning("MuonAssociatorEDProducer") 
 	<<"\n*** WARNING : inconsistent input tracksTag = "<<tracksTag
 	<<"\n with UseMuon = false"<<"\n ---> setting UseMuon = true ";
       parset_.addParameter<bool>("UseMuon",true);
@@ -44,26 +46,28 @@ MuonAssociatorEDProducer::MuonAssociatorEDProducer(const edm::ParameterSet& pars
       recoTracksLabel == "hltL3TkTracksFromL2" || 
       (recoTracksLabel == "hltL3Muons" && recoTracksInstance == "L2Seeded")) {
     if (parset_.getParameter<bool>("UseMuon")) {
-      edm::LogWarning("MuonAssociatorByHits") 
+      edm::LogWarning("MuonAssociatorEDProducer") 
 	<<"\n*** WARNING : inconsistent input tracksTag = "<<tracksTag
 	<<"\n with UseMuon = true"<<"\n ---> setting UseMuon = false ";
       parset_.addParameter<bool>("UseMuon",false);
     }
     if (!parset_.getParameter<bool>("UseTracker")) {
-      edm::LogWarning("MuonAssociatorByHits") 
+      edm::LogWarning("MuonAssociatorEDProducer") 
 	<<"\n*** WARNING : inconsistent input tracksTag = "<<tracksTag
 	<<"\n with UseTracker = false"<<"\n ---> setting UseTracker = true ";
       parset_.addParameter<bool>("UseTracker",true);
     }
   }
 
+  LogTrace("MuonAssociatorEDProducer") << "MuonAssociatorEDProducer::beginJob : constructing MuonAssociatorByHits";
+  associatorByHits = new MuonAssociatorByHits(parset_,consumesCollector());
+
+
 }
 
 MuonAssociatorEDProducer::~MuonAssociatorEDProducer() {}
 
 void MuonAssociatorEDProducer::beginJob() {
-  LogTrace("MuonAssociatorEDProducer") << "MuonAssociatorEDProducer::beginJob : constructing MuonAssociatorByHits";
-  associatorByHits = new MuonAssociatorByHits(parset_);
 }
 
 void MuonAssociatorEDProducer::endJob() {}
@@ -73,12 +77,12 @@ void MuonAssociatorEDProducer::produce(edm::Event& event, const edm::EventSetup&
 
    Handle<TrackingParticleCollection>  TPCollection ;
    LogTrace("MuonAssociatorEDProducer") <<"getting TrackingParticle collection - "<<tpTag;
-   event.getByLabel(tpTag, TPCollection);
+   event.getByToken(tpToken_, TPCollection);
    LogTrace("MuonAssociatorEDProducer") <<"\t... size = "<<TPCollection->size();
 
    Handle<edm::View<reco::Track> > trackCollection;
    LogTrace("MuonAssociatorEDProducer") <<"getting reco::Track collection - "<<tracksTag;
-   bool trackAvailable = event.getByLabel (tracksTag, trackCollection);
+   bool trackAvailable = event.getByToken (tracksToken_, trackCollection);
    if (trackAvailable) LogTrace("MuonAssociatorEDProducer") <<"\t... size = "<<trackCollection->size();
    else LogTrace("MuonAssociatorEDProducer") <<"\t... NOT FOUND.";
 

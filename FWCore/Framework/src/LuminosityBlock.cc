@@ -17,9 +17,6 @@ namespace edm {
   }
 
   LuminosityBlock::~LuminosityBlock() {
-    // anything left here must be the result of a failure
-    // let's record them as failed attempts in the event principal
-    for_all(putProducts_, principal_get_adapter_detail::deleter());
   }
 
   LuminosityBlockIndex
@@ -43,6 +40,13 @@ namespace edm {
       const_cast<Run*>(run_.get())->setConsumer(iConsumer);
     }
   }
+  
+  void
+  LuminosityBlock::setSharedResourcesAcquirer( SharedResourcesAcquirer* iResourceAcquirer) {
+    provRecorder_.setSharedResourcesAcquirer(iResourceAcquirer);
+    const_cast<Run*>(run_.get())->setSharedResourcesAcquirer(iResourceAcquirer);
+  }
+
 
   LuminosityBlockPrincipal const&
   LuminosityBlock::luminosityBlockPrincipal() const {
@@ -66,9 +70,7 @@ namespace edm {
     ProductPtrVec::iterator pie(putProducts().end());
 
     while(pit != pie) {
-        lbp.put(*pit->second, pit->first);
-        // Ownership has passed, so clear the pointer.
-        pit->first.reset();
+        lbp.put(*pit->second, std::move(pit->first));
         ++pit;
     }
 

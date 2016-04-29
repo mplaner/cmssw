@@ -15,26 +15,15 @@
 //
 
 // user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
-#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 #include "RecoEgamma/EgammaHLTProducers/interface/EgammaHLTPixelMatchElectronProducers.h"
 
-#include "RecoEgamma/EgammaHLTAlgos/interface/EgammaHLTPixelMatchElectronAlgo.h"/*
-//#include "DataFormats/EgammaReco/interface/ElectronPixelSeedFwd.h"
-//#include "DataFormats/EgammaReco/interface/ElectronPixelSeed.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "DataFormats/TrackReco/interface/TrackExtraFwd.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackCandidate/interface/TrackCandidateCollection.h"
-#include "DataFormats/TrackingRecHit/interface/TrackingRecHitFwd.h"
-*/
+#include "RecoEgamma/EgammaHLTAlgos/interface/EgammaHLTPixelMatchElectronAlgo.h"
+
 #include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
 #include "DataFormats/EgammaCandidates/interface/Electron.h"
 
@@ -44,11 +33,15 @@ using namespace reco;
  
 EgammaHLTPixelMatchElectronProducers::EgammaHLTPixelMatchElectronProducers(const edm::ParameterSet& iConfig) : conf_(iConfig) {
 
-  //register your products
-  produces<ElectronCollection>();
+  consumes<TrackCollection>(conf_.getParameter<edm::InputTag>("TrackProducer"));
+  consumes<GsfTrackCollection>(conf_.getParameter<edm::InputTag>("GsfTrackProducer"));
+  consumes<BeamSpot>(conf_.getParameter<edm::InputTag>("BSProducer"));
 
   //create algo
-  algo_ = new EgammaHLTPixelMatchElectronAlgo(conf_);
+  algo_ = new EgammaHLTPixelMatchElectronAlgo(conf_, consumesCollector());
+
+  //register your products
+  produces<ElectronCollection>();
 }
 
 
@@ -66,11 +59,8 @@ void EgammaHLTPixelMatchElectronProducers::fillDescriptions(edm::ConfigurationDe
   descriptions.add(("hltEgammaHLTPixelMatchElectronProducers"), desc);  
 }
 
-void EgammaHLTPixelMatchElectronProducers::beginJob() 
-{}
-
 // ------------ method called to produce the data  ------------
-void EgammaHLTPixelMatchElectronProducers::produce(edm::Event& e, const edm::EventSetup& iSetup)  {
+void EgammaHLTPixelMatchElectronProducers::produce(edm::StreamID sid, edm::Event& e, const edm::EventSetup& iSetup) const {
   // Update the algorithm conditions
   algo_->setupES(iSetup);  
   

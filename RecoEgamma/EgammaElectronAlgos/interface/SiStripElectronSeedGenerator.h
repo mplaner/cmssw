@@ -29,9 +29,6 @@
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 
 #include "DataFormats/DetId/interface/DetId.h"
-#include "DataFormats/SiStripDetId/interface/TIBDetId.h"
-#include "DataFormats/SiStripDetId/interface/TIDDetId.h"
-#include "DataFormats/SiStripDetId/interface/TECDetId.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 
 #include "DataFormats/L1Trigger/interface/L1EmParticleFwd.h"
@@ -44,7 +41,6 @@
 #include "TrackingTools/PatternTools/interface/TrajectoryStateUpdator.h"
 #include "TrackingTools/KalmanUpdators/interface/KFUpdator.h"
 
-#include "RecoLocalTracker/SiStripRecHitConverter/interface/SiStripRecHitMatcher.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
 #include "RecoTracker/TkDetLayers/interface/GeometricSearchTracker.h"
 #include "TrackingTools/TransientTrackingRecHit/interface/TransientTrackingRecHit.h" 
@@ -62,6 +58,7 @@ class KFUpdator;
 class MeasurementTracker;
 class MeasurementTrackerEvent;
 class NavigationSchool;
+class SiStripRecHitMatcher;
 
 class SiStripElectronSeedGenerator
 {

@@ -5,7 +5,7 @@
 #include "FWCore/MessageLogger/interface/ELseverityLevel.h"
 #include "FWCore/MessageLogger/interface/ErrorObj.h"
 
-#include "boost/shared_ptr.hpp"
+#include <memory>
 
 #include <map>
 
@@ -44,7 +44,9 @@ public:
     MessageSender &
     operator<< ( T const & t )
   {
+#ifndef __GCCXML__
     if (valid()) (*errorobj_p) << t;
+#endif
     return *this;
   }
 
@@ -54,7 +56,7 @@ public:
   
 private:
   // data:
-  boost::shared_ptr<ErrorObj> errorobj_p;
+  std::shared_ptr<ErrorObj> errorobj_p;
 
 };  // MessageSender
 

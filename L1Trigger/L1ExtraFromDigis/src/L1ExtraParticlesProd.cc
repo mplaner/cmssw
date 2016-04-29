@@ -81,6 +81,8 @@ L1ExtraParticlesProd::L1ExtraParticlesProd(const edm::ParameterSet& iConfig)
 	"forwardJetSource" ) ),
      tauJetSource_( iConfig.getParameter< edm::InputTag >(
 	"tauJetSource" ) ),
+     isoTauJetSource_( iConfig.getParameter< edm::InputTag >(
+	"isoTauJetSource" ) ),
      etTotSource_( iConfig.getParameter< edm::InputTag >(
 	"etTotalSource" ) ),
      etHadSource_( iConfig.getParameter< edm::InputTag >(
@@ -104,12 +106,26 @@ L1ExtraParticlesProd::L1ExtraParticlesProd(const edm::ParameterSet& iConfig)
    produces< L1JetParticleCollection >( "Central" ) ;
    produces< L1JetParticleCollection >( "Forward" ) ;
    produces< L1JetParticleCollection >( "Tau" ) ;
+   produces< L1JetParticleCollection >( "IsoTau" ) ;
    produces< L1MuonParticleCollection >() ;
    produces< L1EtMissParticleCollection >( "MET" ) ;
    produces< L1EtMissParticleCollection >( "MHT" ) ;
    produces< L1HFRingsCollection >() ;
 
    //now do what ever other initialization is needed
+   consumes<L1MuGMTReadoutCollection>(muonSource_);
+   consumes<L1GctEmCandCollection>(isoEmSource_);
+   consumes<L1GctEmCandCollection>(nonIsoEmSource_);
+   consumes<L1GctJetCandCollection>(cenJetSource_);
+   consumes<L1GctJetCandCollection>(forJetSource_);
+   consumes<L1GctJetCandCollection>(tauJetSource_);
+   consumes<L1GctJetCandCollection>(isoTauJetSource_);
+   consumes<L1GctEtTotalCollection>(etTotSource_);
+   consumes<L1GctEtMissCollection>(etMissSource_);
+   consumes<L1GctEtHadCollection>(etHadSource_);
+   consumes<L1GctHtMissCollection>(htMissSource_);
+   consumes<L1GctHFRingEtSumsCollection>(hfRingEtSumsSource_);
+   consumes<L1GctHFBitCountsCollection>(hfRingBitCountsSource_);
 }
 
 
@@ -253,6 +269,9 @@ L1ExtraParticlesProd::produce( edm::Event& iEvent,
       new L1JetParticleCollection );
 
    auto_ptr< L1JetParticleCollection > tauJetColl(
+      new L1JetParticleCollection );
+
+   auto_ptr< L1JetParticleCollection > isoTauJetColl(
       new L1JetParticleCollection );
 
    auto_ptr< L1EtMissParticleCollection > etMissColl(
@@ -511,6 +530,54 @@ L1ExtraParticlesProd::produce( edm::Event& iEvent,
 		  tauJetColl->push_back(
 					L1JetParticle( gctLorentzVector( et, *jetItr, caloGeom, true ),
 						       Ref< L1GctJetCandCollection >( hwTauJetCands,
+										      i ),
+						       jetItr->bx() ) ) ;
+		}
+	    }
+	}
+
+
+      // Isolated Tau jets.
+//       cout << "HW tau jets" << endl ;
+      Handle< L1GctJetCandCollection > hwIsoTauJetCands ;
+      iEvent.getByLabel( isoTauJetSource_, hwIsoTauJetCands ) ;
+
+      if( !hwIsoTauJetCands.isValid() )
+	{
+	  LogDebug("L1ExtraParticlesProd")
+	    << "\nWarning: L1GctJetCandCollection with " << isoTauJetSource_
+	    << "\nrequested in configuration, but not found in the event."
+	    << std::endl;
+	}
+      else
+	{
+	  L1GctJetCandCollection::const_iterator jetItr = hwIsoTauJetCands->begin() ;
+	  L1GctJetCandCollection::const_iterator jetEnd = hwIsoTauJetCands->end() ;
+	  for( int i = 0 ; jetItr != jetEnd ; ++jetItr, ++i )
+	    {
+// 	 cout << "#" << i
+// 	      << " name " << jetItr->name()
+// 	      << " empty " << jetItr->empty()
+// 	      << " rank " << jetItr->rank()
+// 	      << " eta " << jetItr->etaIndex()
+// 	      << " sign " << jetItr->etaSign()
+// 	      << " phi " << jetItr->phiIndex()
+// 	      << " cen " << jetItr->isCentral()
+// 	      << " for " << jetItr->isForward()
+// 	      << " tau " << jetItr->isTau()
+// 	      << " bx " << jetItr->bx()
+// 	      << endl ;
+
+	      if( !jetItr->empty() &&
+		  ( !centralBxOnly_ || jetItr->bx() == 0 ) )
+		{
+		  double et = jetScale->et( jetItr->rank() ) ;
+
+// 	    cout << "L1Extra et " << et << endl ;
+
+		  isoTauJetColl->push_back(
+					L1JetParticle( gctLorentzVector( et, *jetItr, caloGeom, true ),
+						       Ref< L1GctJetCandCollection >( hwIsoTauJetCands,
 										      i ),
 						       jetItr->bx() ) ) ;
 		}
@@ -1048,6 +1115,9 @@ L1ExtraParticlesProd::produce( edm::Event& iEvent,
    OrphanHandle< L1JetParticleCollection > tauJetHandle =
      iEvent.put( tauJetColl, "Tau" ) ;
 
+   OrphanHandle< L1JetParticleCollection > IsoTauJetHandle =
+     iEvent.put( isoTauJetColl, "IsoTau" ) ;
+
    OrphanHandle< L1EtMissParticleCollection > etMissCollHandle =
      iEvent.put( etMissColl, "MET" ) ;
 
@@ -1085,17 +1155,6 @@ L1ExtraParticlesProd::gctLorentzVector( const double& et,
 					phi,
 					0. ) ;
 }     
-
-// ------------ method called once each job just before starting event loop  ------------
-void 
-L1ExtraParticlesProd::beginJob()
-{
-}
-
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-L1ExtraParticlesProd::endJob() {
-}
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(L1ExtraParticlesProd);

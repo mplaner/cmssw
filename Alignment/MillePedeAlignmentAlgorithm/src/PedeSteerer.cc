@@ -62,6 +62,7 @@ PedeSteerer::PedeSteerer(AlignableTracker *aliTracker, AlignableMuon *aliMuon, A
   myParameterSign(myConfig.getUntrackedParameter<int>("parameterSign")),
   theMinHieraConstrCoeff(myConfig.getParameter<double>("minHieraConstrCoeff")),
   theMinHieraParPerConstr(myConfig.getParameter<unsigned int>("minHieraParPerConstr")),
+  theConstrPrecision(myConfig.getParameter<unsigned int>("constrPrecision")),
   theCoordMaster(0)
 {
   if (myParameterSign != 1 && myParameterSign != -1) {
@@ -512,7 +513,10 @@ void PedeSteerer::hierarchyConstraint(const Alignable *ali,
       const unsigned int aliLabel = myLabels->alignableLabel(aliSubComp);
       const unsigned int paramLabel = myLabels->parameterLabel(aliLabel, compParNum);
       // FIXME: multiply by cmsToPedeFactor(subcomponent)/cmsToPedeFactor(mother) (or vice a versa?)
-      aConstr << paramLabel << "    " << factors[iParam];
+      if (theConstrPrecision > 0)
+        aConstr << paramLabel << "    " << std::setprecision(theConstrPrecision) << factors[iParam];
+      else
+        aConstr << paramLabel << "    " << factors[iParam];
       if (myIsSteerFileDebug) { // debug
 	aConstr << "   ! for param " << compParNum << " of a " 
 		<< AlignableObjectId::idToString(aliSubComp->alignableObjectId()) << " at " 
@@ -710,19 +714,15 @@ void PedeSteerer::buildSubSteer(AlignableTracker *aliTracker, AlignableMuon *ali
     //prepare the output files
     //Get the data structure in which the configuration data are stored.
     //The relation between the ostream* and the corresponding file name needs to be filled
-    std::list<GeometryConstraintConfigData>* ConstraintsConfigContainer = GeometryConstraints.getConfigData();
+    auto& ConstraintsConfigContainer = GeometryConstraints.getConfigData();
     
     //loop over all configured constraints
-    for(std::list<GeometryConstraintConfigData>::iterator it = ConstraintsConfigContainer->begin();
-        it != ConstraintsConfigContainer->end(); it++) {
+    for(auto& it: ConstraintsConfigContainer) {
       //each level has its own constraint which means the output is stored in a separate file
-      for(std::vector<std::pair<Alignable*, std::string> >::const_iterator ilevelsFilename = it->levelsFilenames_.begin();
-          ilevelsFilename != it->levelsFilenames_.end(); ilevelsFilename++) {
-        it->mapFileName_.insert(
-                                std::pair<std::string, std::ofstream*>
-                                (ilevelsFilename->second,this->createSteerFile(ilevelsFilename->second,true))
-                                );
-        
+      for(const auto& ilevelsFilename: it.levelsFilenames_) {
+        it.mapFileName_.insert(std::make_pair
+			       (ilevelsFilename.second,this->createSteerFile(ilevelsFilename.second,true))
+			       );
       }
     }
     

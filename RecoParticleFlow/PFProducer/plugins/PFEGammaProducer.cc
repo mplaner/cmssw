@@ -42,7 +42,8 @@ namespace {
   typedef std::list< reco::PFBlockRef >::iterator IBR;
 }
 
-PFEGammaProducer::PFEGammaProducer(const edm::ParameterSet& iConfig):
+PFEGammaProducer::PFEGammaProducer(const edm::ParameterSet& iConfig,
+                                   const pfEGHelpers::HeavyObjectCache*):
   primaryVertex_(reco::Vertex()),
   ebeeClustersCollection_("EBEEClusters"),
   esClustersCollection_("ESClusters") {
@@ -103,6 +104,7 @@ PFEGammaProducer::PFEGammaProducer(const edm::ParameterSet& iConfig):
   produces<reco::SuperClusterCollection>();
   produces<reco::CaloClusterCollection>(ebeeClustersCollection_);
   produces<reco::CaloClusterCollection>(esClustersCollection_);  
+  produces<reco::ConversionCollection>();
   
   //PFElectrons Configuration
   algo_config.mvaEleCut
@@ -110,17 +112,11 @@ PFEGammaProducer::PFEGammaProducer(const edm::ParameterSet& iConfig):
 
   
   algo_config. mvaWeightFileEleID
-    = iConfig.getParameter<std::string>("pf_electronID_mvaWeightFile");
+    = iConfig.getParameter<edm::FileInPath>("pf_electronID_mvaWeightFile").fullPath();
 
   algo_config.applyCrackCorrections
     = iConfig.getParameter<bool>("pf_electronID_crackCorrection");
-  
-  std::string path_mvaWeightFileEleID;
-
-  algo_config.mvaWeightFileEleID = 
-    edm::FileInPath ( algo_config.mvaWeightFileEleID.c_str() ).fullPath();
-     
-
+    
   //PFPhoton Configuration
 
   std::string path_mvaWeightFileConvID;
@@ -131,10 +127,8 @@ PFEGammaProducer::PFEGammaProducer(const edm::ParameterSet& iConfig):
   std::string path_mvaWeightFileRes;
 
   algo_config.mvaweightfile =
-    iConfig.getParameter<std::string>("pf_convID_mvaWeightFile");
-  algo_config.mvaConvCut = iConfig.getParameter<double>("pf_conv_mvaCut");
-  algo_config.mvaweightfile = 
-    edm::FileInPath ( algo_config.mvaweightfile.c_str() ).fullPath();  
+    iConfig.getParameter<edm::FileInPath>("pf_convID_mvaWeightFile").fullPath();
+  algo_config.mvaConvCut = iConfig.getParameter<double>("pf_conv_mvaCut");  
   algo_config.sumPtTrackIsoForPhoton = 
     iConfig.getParameter<double>("sumPtTrackIsoForPhoton");
   algo_config.sumPtTrackIsoSlopeForPhoton = 
@@ -206,7 +200,9 @@ PFEGammaProducer::beginRun(const edm::Run & run,
                      const edm::EventSetup & es) 
 {
 
+  /* // kept for historical reasons
   if(useRegressionFromDB_) {
+    
     edm::ESHandle<GBRForest> readerPFLCEB;
     edm::ESHandle<GBRForest> readerPFLCEE;    
     edm::ESHandle<GBRForest> readerPFGCEB;
@@ -226,11 +222,11 @@ PFEGammaProducer::beginRun(const edm::Run & run,
     es.get<GBRWrapperRcd>().get("PFEcalResolution",readerPFRes);
     ReaderEcalRes_=readerPFRes.product();
 
-    /*
+    
     LogDebug("PFEGammaProducer")<<"setting regressions from DB "<<std::endl;
-    */
+    
   } 
-
+  */
 
   //pfAlgo_->setPFPhotonRegWeights(ReaderLC_, ReaderGC_, ReaderRes_);
     
@@ -353,10 +349,11 @@ PFEGammaProducer::produce(edm::Event& iEvent,
   // single hcal and produce unbiased collection of EGamma Candidates
 
   //printf("loop over blocks\n");
-  //unsigned nblcks = 0;
+  unsigned nblcks = 0;
 
   // this auto is a const reco::PFBlockRef&
-  for( const auto& blockref : otherBlockRefs ) {   
+  for( const auto& blockref : otherBlockRefs ) {
+    ++nblcks;
     // this auto is a: const edm::OwnVector< reco::PFBlockElement >&
     const auto& elements = blockref->elements();
     // make a copy of the link data, which will be edited.
@@ -365,13 +362,15 @@ PFEGammaProducer::produce(edm::Event& iEvent,
     // keep track of the elements which are still active.
     std::vector<bool> active( elements.size(), true );      
     
-    pfeg_->RunPFEG(blockref,active);
-    
-    edm::LogInfo("PFEGammaProducer")
+    pfeg_->RunPFEG(globalCache(),blockref,active);
+
+    if( pfeg_->getCandidates().size() ) {
+      LOGDRESSED("PFEGammaProducer")
       << "Block with " << elements.size() 
       << " elements produced " 
       << pfeg_->getCandidates().size() 
-      << " e-g candidates!" << std::endl;
+      << " e-g candidates!" << std::endl;      
+    }
 
     const size_t egsize = egCandidates_->size();
     egCandidates_->resize(egsize + pfeg_->getCandidates().size());
@@ -397,34 +396,26 @@ PFEGammaProducer::produce(edm::Event& iEvent,
 	      pfeg_->getRefinedSCs().end(),
 	      rscinsertfrom);    
   }
-  
-  edm::LogInfo("PFEGammaProducer")
+
+  LOGDRESSED("PFEGammaProducer")
       << "Running PFEGammaAlgo on all blocks produced = " 
       << egCandidates_->size() << " e-g candidates!"
       << std::endl;
-
+  
   edm::RefProd<reco::SuperClusterCollection> sClusterProd = 
     iEvent.getRefBeforePut<reco::SuperClusterCollection>();
 
   edm::RefProd<reco::PFCandidateEGammaExtraCollection> egXtraProd = 
     iEvent.getRefBeforePut<reco::PFCandidateEGammaExtraCollection>();
-  
-  size_t non_zero_sc_idx = 0; 
-  
+    
   //set the correct references to refined SC and EG extra using the refprods
   for (unsigned int i=0; i < egCandidates_->size(); ++i) {
     reco::PFCandidate &cand = egCandidates_->at(i);
     reco::PFCandidateEGammaExtra &xtra = egExtra_->at(i);
-    reco::SuperCluster& rsc = sClusters_->at(non_zero_sc_idx);
     
     reco::PFCandidateEGammaExtraRef extraref(egXtraProd,i);
-    reco::SuperClusterRef refinedSCRef;
-    // only set refined SC refs where the is valid!
-    if( rsc.energy() != 0.0 ) {      
-      refinedSCRef = reco::SuperClusterRef(sClusterProd,non_zero_sc_idx++);
-    } else {
-      sClusters_->erase(sClusters_->begin() + non_zero_sc_idx);
-    }
+    reco::SuperClusterRef refinedSCRef(sClusterProd,i);
+
     xtra.setSuperClusterRef(refinedSCRef); 
     cand.setSuperClusterRef(refinedSCRef);
     cand.setPFEGammaExtraRef(extraref);    
@@ -488,9 +479,15 @@ PFEGammaProducer::produce(edm::Event& iEvent,
     sc.setPreshowerClusters(psclusters);  
   }
   
+  //create and fill references to single leg conversions
+  edm::RefProd<reco::ConversionCollection> convProd = iEvent.getRefBeforePut<reco::ConversionCollection>();
+  singleLegConv_.reset(new reco::ConversionCollection);  
+  createSingleLegConversions(*egExtra_, *singleLegConv_, convProd);
+  
   // release our demonspawn into the wild to cause havoc
   iEvent.put(sClusters_);
   iEvent.put(egExtra_);  
+  iEvent.put(singleLegConv_);
   iEvent.put(egCandidates_); 
 }
 
@@ -575,3 +572,61 @@ PFEGammaProducer::setPFVertexParameters(bool useVertex,
   pfeg_->setPhotonPrimaryVtx(primaryVertex_ );
   
 }
+
+void PFEGammaProducer::createSingleLegConversions(reco::PFCandidateEGammaExtraCollection &extras, reco::ConversionCollection &oneLegConversions, const edm::RefProd<reco::ConversionCollection> &convProd) {
+ 
+  math::Error<3>::type error;
+  for (auto &extra : extras){
+    for (const auto &tkrefmva : extra.singleLegConvTrackRefMva()) {
+      const reco::Track &trk = *tkrefmva.first;
+            
+      const reco::Vertex convVtx(trk.innerPosition(), error);
+      std::vector<reco::TrackRef> OneLegConvVector;
+      OneLegConvVector.push_back(tkrefmva.first);
+      std::vector< float > OneLegMvaVector;
+      OneLegMvaVector.push_back(tkrefmva.second);
+      std::vector<reco::CaloClusterPtr> dummymatchingBC;
+      reco::CaloClusterPtrVector scPtrVec;
+      scPtrVec.push_back(edm::refToPtr(extra.superClusterRef()));
+
+      std::vector<math::XYZPointF>trackPositionAtEcalVec;
+      std::vector<math::XYZPointF>innPointVec;
+      std::vector<math::XYZVectorF>trackPinVec;
+      std::vector<math::XYZVectorF>trackPoutVec;
+      math::XYZPointF trackPositionAtEcal(trk.outerPosition().X(), trk.outerPosition().Y(), trk.outerPosition().Z());
+      trackPositionAtEcalVec.push_back(trackPositionAtEcal);
+      
+      math::XYZPointF innPoint(trk.innerPosition().X(), trk.innerPosition().Y(), trk.innerPosition().Z());
+      innPointVec.push_back(innPoint);
+
+      math::XYZVectorF trackPin(trk.innerMomentum().X(), trk.innerMomentum().Y(), trk.innerMomentum().Z());
+      trackPinVec.push_back(trackPin);
+
+      math::XYZVectorF trackPout(trk.outerMomentum().X(), trk.outerMomentum().Y(), trk.outerMomentum().Z());
+      trackPoutVec.push_back( trackPout );
+      
+      float DCA = trk.d0() ;
+      float mvaval = tkrefmva.second;
+      reco::Conversion singleLegConvCandidate(scPtrVec, 
+                                          OneLegConvVector,
+                                          trackPositionAtEcalVec,
+                                          convVtx,
+                                          dummymatchingBC,
+                                          DCA,
+                                          innPointVec,
+                                          trackPinVec,
+                                          trackPoutVec,
+                                          mvaval,                         
+                                          reco::Conversion::pflow);
+      singleLegConvCandidate.setOneLegMVA(OneLegMvaVector); 
+      oneLegConversions.push_back(singleLegConvCandidate);
+            
+      reco::ConversionRef convref(convProd,oneLegConversions.size()-1);
+      extra.addSingleLegConversionRef(convref);
+    
+    }
+
+  } 
+  
+}
+

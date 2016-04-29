@@ -22,7 +22,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -51,52 +51,28 @@
 // class decleration
 //
 
-class TrackerDigiGeometryAnalyzer : public edm::EDAnalyzer {
-   public:
+class TrackerDigiGeometryAnalyzer : public edm::one::EDAnalyzer<>
+{
+public:
       explicit TrackerDigiGeometryAnalyzer( const edm::ParameterSet& );
       ~TrackerDigiGeometryAnalyzer();
 
+  void beginJob() override {}
+  void analyze(edm::Event const& iEvent, edm::EventSetup const&) override;
+  void endJob() override {}
 
-      virtual void analyze( const edm::Event&, const edm::EventSetup& );
-   private:
+private:
   void analyseTrapezoidal( const GeomDetUnit& det);
   void checkRotation( const GeomDetUnit& det);
   void checkTopology( const GeomDetUnit& det);
   std::ostream& cylindrical( std::ostream& os, const GlobalPoint& gp) const;
-
-      // ----------member data ---------------------------
 };
 
-//
-// constants, enums and typedefs
-//
-
-//
-// static data member definitions
-//
-
-//
-// constructors and destructor
-//
 TrackerDigiGeometryAnalyzer::TrackerDigiGeometryAnalyzer( const edm::ParameterSet& iConfig )
-{
-   //now do what ever initialization is needed
-
-}
-
+{}
 
 TrackerDigiGeometryAnalyzer::~TrackerDigiGeometryAnalyzer()
-{
- 
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
-
-}
-
-
-//
-// member functions
-//
+{}
 
 // ------------ method called to produce the data  ------------
 void
@@ -114,14 +90,14 @@ TrackerDigiGeometryAnalyzer::analyze( const edm::Event& iEvent, const edm::Event
    edm::LogInfo("TrackerDigiGeometryAnalyzer")<<" I have "<<pDD->detTypes().size() <<" types";
 
    for(TrackingGeometry::DetUnitContainer::const_iterator it = pDD->detUnits().begin(); it != pDD->detUnits().end(); it++){
-       if(dynamic_cast<PixelGeomDetUnit*>((*it))!=0){
-	const BoundPlane& p = (dynamic_cast<PixelGeomDetUnit*>((*it)))->specificSurface();
+       if(dynamic_cast<const PixelGeomDetUnit*>((*it))!=0){
+	const BoundPlane& p = (dynamic_cast<const PixelGeomDetUnit*>((*it)))->specificSurface();
 	edm::LogInfo("TrackerDigiGeometryAnalyzer")<<" RadLeng Pixel "<<p.mediumProperties().radLen();
 	edm::LogInfo("TrackerDigiGeometryAnalyzer")<<" Xi Pixel "<<p.mediumProperties().xi();
        } 
 
-       if(dynamic_cast<StripGeomDetUnit*>((*it))!=0){
-	const BoundPlane& s = (dynamic_cast<StripGeomDetUnit*>((*it)))->specificSurface();
+       if(dynamic_cast<const StripGeomDetUnit*>((*it))!=0){
+	const BoundPlane& s = (dynamic_cast<const StripGeomDetUnit*>((*it)))->specificSurface();
 	edm::LogInfo("TrackerDigiGeometryAnalyzer")<<" RadLeng Strip "<<s.mediumProperties().radLen();
 	edm::LogInfo("TrackerDigiGeometryAnalyzer")<<" Xi Strip "<<s.mediumProperties().xi();
        }
@@ -131,14 +107,14 @@ TrackerDigiGeometryAnalyzer::analyze( const edm::Event& iEvent, const edm::Event
     }	
 
    for (TrackingGeometry::DetTypeContainer::const_iterator it = pDD->detTypes().begin(); it != pDD->detTypes().end(); it ++){
-     if (dynamic_cast<PixelGeomDetType*>((*it))!=0){
+     if (dynamic_cast<const PixelGeomDetType*>((*it))!=0){
        edm::LogInfo("TrackerDigiGeometryAnalyzer")<<" PIXEL Det";
-       const PixelTopology& p = (dynamic_cast<PixelGeomDetType*>((*it)))->specificTopology();
+       const PixelTopology& p = (dynamic_cast<const PixelGeomDetType*>((*it)))->specificTopology();
        edm::LogInfo("TrackerDigiGeometryAnalyzer")<<"    Rows    "<<p.nrows();
        edm::LogInfo("TrackerDigiGeometryAnalyzer")<<"    Columns "<<p.ncolumns();
      }else{
        edm::LogInfo("TrackerDigiGeometryAnalyzer") <<" STRIP Det";
-       const StripTopology& p = (dynamic_cast<StripGeomDetType*>((*it)))->specificTopology();
+       const StripTopology& p = (dynamic_cast<const StripGeomDetType*>((*it)))->specificTopology();
        edm::LogInfo("TrackerDigiGeometryAnalyzer")<<"    Strips    "<<p.nstrips();
      }
    }

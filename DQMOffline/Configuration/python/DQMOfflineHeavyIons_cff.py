@@ -13,8 +13,10 @@ from DQM.RPCMonitorClient.RPCTier0Source_cff import *
 from DQM.CSCMonitorModule.csc_dqm_sourceclient_offline_cff import *
 from DQM.EcalPreshowerMonitorModule.es_dqm_source_offline_cff import *
 from DQM.BeamMonitor.AlcaBeamMonitorHeavyIons_cff import *
+from DQMOffline.L1Trigger.L1TriggerDqmOffline_cff import *
 
 DQMOfflineHeavyIonsPreDPG = cms.Sequence( dqmDcsInfo *
+                                          l1TriggerDqmOffline * # L1 emulator is run within this sequence for real data
                                           ecal_dqm_source_offline *
                                           hcalOfflineDQMSource *
                                           SiStripDQMTier0_hi *
@@ -30,27 +32,62 @@ DQMOfflineHeavyIonsDPG = cms.Sequence( DQMOfflineHeavyIonsPreDPG *
 from DQMOffline.Muon.muonMonitors_cff import *
 from DQMOffline.JetMET.jetMETDQMOfflineSourceHI_cff import *
 from DQMOffline.EGamma.egammaDQMOffline_cff import *
-from DQMOffline.L1Trigger.L1TriggerDqmOffline_cff import *
 from DQMOffline.Trigger.DQMOffline_Trigger_cff import *
 #from DQMOffline.RecoB.PrimaryVertexMonitor_cff import *
 from DQM.Physics.DQMPhysics_cff import *
+from DQM.TrackingMonitorSource.TrackingSourceConfig_Tier0_HeavyIons_cff import *
 
-egammaDQMOffline.remove(electronAnalyzerSequence)
+
+triggerOfflineDQMSource.remove(jetMETHLTOfflineAnalyzer)
+
+#egammaDQMOffline.remove(electronAnalyzerSequence)
+egammaDQMOffline.remove(zmumugammaAnalysis)
+egammaDQMOffline.remove(zmumugammaOldAnalysis)
+#egammaDQMOffline.remove(photonAnalysis)
+photonAnalysis.phoProducer = cms.InputTag("gedPhotonsTmp")
 photonAnalysis.isHeavyIon = True
 photonAnalysis.barrelRecHitProducer = cms.InputTag("ecalRecHit", "EcalRecHitsEB")
 photonAnalysis.endcapRecHitProducer = cms.InputTag("ecalRecHit", "EcalRecHitsEE")
+
+triggerOfflineDQMSource.remove(ak4PFL1FastL2L3CorrectorChain)
+from DQMOffline.Trigger.FSQHLTOfflineSource_cfi import getFSQHI
+fsqHLTOfflineSource.todo = getFSQHI()
+
+
+dqmElectronGeneralAnalysis.ElectronCollection = cms.InputTag("gedGsfElectronsTmp")
+dqmElectronGeneralAnalysis.TrackCollection = cms.InputTag("hiGeneralTracks")
+dqmElectronGeneralAnalysis.VertexCollection = cms.InputTag("hiSelectedVertex")
+dqmElectronAnalysisAllElectrons.ElectronCollection = cms.InputTag("gedGsfElectronsTmp")
+dqmElectronAnalysisSelectionEt.ElectronCollection = cms.InputTag("gedGsfElectronsTmp")
+dqmElectronAnalysisSelectionEtIso.ElectronCollection = cms.InputTag("gedGsfElectronsTmp")
+dqmElectronTagProbeAnalysis.ElectronCollection = cms.InputTag("gedGsfElectronsTmp")
+
+
+stdPhotonAnalysis.isHeavyIon = True
+stdPhotonAnalysis.barrelRecHitProducer = cms.InputTag("ecalRecHit", "EcalRecHitsEB")
+stdPhotonAnalysis.endcapRecHitProducer = cms.InputTag("ecalRecHit", "EcalRecHitsEE")
 hltResults.RecHitsEBTag = cms.untracked.InputTag("ecalRecHit", "EcalRecHitsEB")
 hltResults.RecHitsEETag = cms.untracked.InputTag("ecalRecHit", "EcalRecHitsEE")
 
-DQMOfflineHeavyIonsPrePOG = cms.Sequence( muonMonitors 
+
+globalAnalyzer.inputTags.offlinePVs = cms.InputTag("hiSelectedVertex")
+trackerAnalyzer.inputTags.offlinePVs = cms.InputTag("hiSelectedVertex")
+tightAnalyzer.inputTags.offlinePVs = cms.InputTag("hiSelectedVertex")
+looseAnalyzer.inputTags.offlinePVs = cms.InputTag("hiSelectedVertex")
+
+
+DQMOfflineHeavyIonsPrePOG = cms.Sequence( muonMonitors
+                                          * TrackMonDQMTier0_hi
                                           * jetMETDQMOfflineSource
                                           * egammaDQMOffline
-                                          * l1TriggerDqmOffline
                                           * triggerOfflineDQMSource
                                           #* pvMonitor
                                           * alcaBeamMonitor
                                           * dqmPhysicsHI
                                           )
+
+#disabled, until an appropriate configuration is set
+hltTauOfflineMonitor_PFTaus.Matching.doMatching = False
 
 DQMOfflineHeavyIonsPOG = cms.Sequence( DQMOfflineHeavyIonsPrePOG *
                                        DQMMessageLogger )
@@ -58,5 +95,5 @@ DQMOfflineHeavyIonsPOG = cms.Sequence( DQMOfflineHeavyIonsPrePOG *
 DQMOfflineHeavyIons = cms.Sequence( DQMOfflineHeavyIonsPreDPG *
                                     DQMOfflineHeavyIonsPrePOG *
                                     DQMMessageLogger )
-    
+
 #DQMOfflineHeavyIonsPhysics = cms.Sequence( dqmPhysics )

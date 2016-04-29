@@ -397,6 +397,8 @@ class EventRange(_ParameterTypeBase):
             eevent = endParts[1]             
         else:
             raise RuntimeError('EventRange ctor must have 4 or 6 arguments')
+        # note int will return a long if the value is too large to fit in
+        # a smaller type
         return EventRange(int(brun), int(blumi), int(bevent),
                           int(erun), int(elumi), int(eevent))
 
@@ -620,6 +622,10 @@ class PSet(_ParameterTypeBase,_Parameterizable,_ConfigureComponent,_Labelable):
         _Parameterizable.__init__(self,*arg,**args)
     def value(self):
         return self
+    def isRef_(self):
+        """Returns true if this PSet is actually a reference to a different PSet
+            """
+        return hasattr(self,"refToPSet_")
     @staticmethod
     def _isValid(value):
         return True
@@ -665,6 +671,12 @@ class PSet(_ParameterTypeBase,_Parameterizable,_ConfigureComponent,_Labelable):
         newpset = parameterSet.newPSet()
         self.insertContentsInto(newpset)
         parameterSet.addPSet(self.isTracked(), myname, newpset)
+    def insertContentsInto(self, parameterSet):
+        if self.isRef_():
+            ref = parameterSet.getTopPSet_(self.refToPSet_.value())
+            ref.insertContentsInto(parameterSet)
+        else:
+            super(PSet, self).insertContentsInto(parameterSet)
 
 
 class vint32(_ValidatingParameterListBase):
@@ -1373,17 +1385,17 @@ if __name__ == "__main__":
             f = FileInPath("FWCore/ParameterSet/python/Types.py")
             self.assertEqual(f.configValue(), "'FWCore/ParameterSet/python/Types.py'")
         def testSecSource(self):
-            s1 = SecSource("PoolSource", fileNames = vstring("foo.root"))
-            self.assertEqual(s1.type_(), "PoolSource")
+            s1 = SecSource("EmbeddedRootSource", fileNames = vstring("foo.root"))
+            self.assertEqual(s1.type_(), "EmbeddedRootSource")
             self.assertEqual(s1.configValue(),
-"""PoolSource { """+"""
+"""EmbeddedRootSource { """+"""
     vstring fileNames = {
         'foo.root'
     }
 
 }
 """)
-            s1=SecSource("PoolSource",type=int32(1))
+            s1=SecSource("EmbeddedRootSource",type=int32(1))
             self.assertEqual(s1.type.value(),1)
         def testEventID(self):
             eid = EventID(2, 0, 3)

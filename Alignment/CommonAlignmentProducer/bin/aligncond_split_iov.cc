@@ -24,8 +24,11 @@
 #include "CondCore/IOVService/interface/IOVProxy.h"
 
 #include "CondFormats/Alignment/interface/Alignments.h"
-#include "CondFormats/Alignment/interface/AlignmentErrors.h"
+#include "CondFormats/Alignment/interface/AlignmentErrorsExtended.h"
 #include "CondFormats/Alignment/interface/AlignmentSurfaceDeformations.h"
+#include "CondFormats/SiPixelObjects/interface/SiPixelLorentzAngle.h"
+#include "CondFormats/SiStripObjects/interface/SiStripLorentzAngle.h"
+#include "CondFormats/SiStripObjects/interface/SiStripBackPlaneCorrection.h"
 
 #include <iterator>
 #include <iostream>
@@ -125,11 +128,20 @@ int cond::AlignSplitIOV::execute()
     if (payloadContainerName=="Alignments")
       objToken = processPayloadContainer<Alignments>(sourcedb, destdb, 
 						     ioviterator->token(), payloadContainerName);
-    else if (payloadContainerName=="AlignmentErrors")
-      objToken = processPayloadContainer<AlignmentErrors>(sourcedb, destdb,
+    else if (payloadContainerName=="AlignmentErrorsExtended")
+      objToken = processPayloadContainer<AlignmentErrorsExtended>(sourcedb, destdb,
 							  ioviterator->token(), payloadContainerName);
     else if (payloadContainerName=="AlignmentSurfaceDeformations")
       objToken = processPayloadContainer<AlignmentSurfaceDeformations>(sourcedb, destdb,
+								       ioviterator->token(), payloadContainerName);
+    else if (payloadContainerName=="SiPixelLorentzAngle")
+      objToken = processPayloadContainer<SiPixelLorentzAngle>(sourcedb, destdb,
+								       ioviterator->token(), payloadContainerName);
+    else if (payloadContainerName=="SiStripLorentzAngle")
+      objToken = processPayloadContainer<SiStripLorentzAngle>(sourcedb, destdb,
+								       ioviterator->token(), payloadContainerName);
+    else if (payloadContainerName=="SiStripBackPlaneCorrection")
+      objToken = processPayloadContainer<SiStripBackPlaneCorrection>(sourcedb, destdb,
 								       ioviterator->token(), payloadContainerName);
     else {
       return 1;

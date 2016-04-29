@@ -6,6 +6,8 @@
  *  Provide access to the DetLayers of muon detectors.
  *
  *  \author N. Amapane - CERN
+ *  
+ *  \modified by R. Radogna & C. Calabria & A. Sharma
  */
 
 #include "DataFormats/DetId/interface/DetId.h"
@@ -27,49 +29,77 @@ class MuonDetLayerGeometry : public DetLayerGeometry{
   virtual ~MuonDetLayerGeometry();
 
   /// return the DT DetLayers (barrel), inside-out
-  const std::vector<DetLayer*>& allDTLayers() const;
+  const std::vector<const DetLayer*>& allDTLayers() const;
 
   /// return the CSC DetLayers (endcap), -Z to +Z
-  const std::vector<DetLayer*>& allCSCLayers() const;
+  const std::vector<const DetLayer*>& allCSCLayers() const;
 
   /// return the forward (+Z) CSC DetLayers, inside-out
-  const std::vector<DetLayer*>& forwardCSCLayers() const;
+  const std::vector<const DetLayer*>& forwardCSCLayers() const;
 
   /// return the backward (-Z) CSC DetLayers, inside-out
-  const std::vector<DetLayer*>& backwardCSCLayers() const;
+  const std::vector<const DetLayer*>& backwardCSCLayers() const;
+
+  /////////////////////////////// GEMs
+  
+  /// return the GEM DetLayers (endcap), -Z to +Z
+  const std::vector<const DetLayer*>& allGEMLayers() const;
+  
+  /// return the forward (+Z) GEM DetLayers, inside-out
+  const std::vector<const DetLayer*>& forwardGEMLayers() const;
+  
+  /// return the backward (-Z) GEM DetLayers, inside-out
+  const std::vector<const DetLayer*>& backwardGEMLayers() const;
+  
+  //////////////////////////////
+
 
   /// return all RPC DetLayers, order: backward, barrel, forward
-  const std::vector<DetLayer*>& allRPCLayers() const;
+  const std::vector<const DetLayer*>& allRPCLayers() const;
 
   /// return the barrel RPC DetLayers, inside-out
-  const std::vector<DetLayer*>& barrelRPCLayers() const;
+  const std::vector<const DetLayer*>& barrelRPCLayers() const;
 
   /// return the endcap RPC DetLayers, -Z to +Z
-  const std::vector<DetLayer*>& endcapRPCLayers() const;
+  const std::vector<const DetLayer*>& endcapRPCLayers() const;
 
   /// return the forward (+Z) RPC DetLayers, inside-out
-  const std::vector<DetLayer*>& forwardRPCLayers() const;
+  const std::vector<const DetLayer*>& forwardRPCLayers() const;
 
   /// return the backward (-Z) RPC DetLayers, inside-out
-  const std::vector<DetLayer*>& backwardRPCLayers() const;
+  const std::vector<const DetLayer*>& backwardRPCLayers() const;
 
-  /// return all layers (DT+CSC+RPC), order: backward, barrel, forward
-  const std::vector<DetLayer*>& allLayers() const;
+  /// return all layers (DT+CSC+RPC+GEM), order: backward, barrel, forward
+  const std::vector<const DetLayer*>& allLayers() const;
 
   /// return all barrel DetLayers (DT+RPC), inside-out
-  const std::vector<DetLayer*>& allBarrelLayers() const;
+  const std::vector<const DetLayer*>& allBarrelLayers() const;
 
-  /// return all endcap DetLayers (CSC+RPC), -Z to +Z
-  const std::vector<DetLayer*>& allEndcapLayers() const;
+  /// return all endcap DetLayers (CSC+RPC+GEM), -Z to +Z
+  const std::vector<const DetLayer*>& allEndcapLayers() const;
 
-  /// return all forward (+Z) layers (CSC+RPC), inside-out
-  const std::vector<DetLayer*>& allForwardLayers() const;
+  /// return all forward (+Z) layers (CSC+RPC+GEM), inside-out
+  const std::vector<const DetLayer*>& allForwardLayers() const;
 
-  /// return all backward (-Z) layers (CSC+RPC), inside-out
-  const std::vector<DetLayer*>& allBackwardLayers() const;
+  /// return all backward (-Z) layers (CSC+RPC+GEM), inside-out
+  const std::vector<const DetLayer*>& allBackwardLayers() const;
+
+  /////////////////////////////// GEMs
+  
+  /// return all endcap DetLayers (CSC+GEM), -Z to +Z
+  const std::vector<const DetLayer*>& allEndcapCscGemLayers() const;
+  
+  /// return all endcap DetLayers (CSC+GEM), -Z to +Z
+  const std::vector<const DetLayer*>& allCscGemForwardLayers() const;
+  
+  /// return all endcap DetLayers (CSC+GEM), -Z to +Z
+  const std::vector<const DetLayer*>& allCscGemBackwardLayers() const;
+  
+  //////////////////////////////
+ 
   
   /// return the DetLayer which correspond to a certain DetId
-  virtual const DetLayer* idToLayer(const DetId& detId) const;
+  virtual const DetLayer* idToLayer(const DetId& detId) const override;
 
  private:
   /// Add CSC layers 
@@ -85,27 +115,49 @@ class MuonDetLayerGeometry : public DetLayerGeometry{
   /// All three vectors are ASSUMED to be sorted inside-out
   void addRPCLayers(const std::vector<DetLayer*>& barrelRPCLayers, const std::pair<std::vector<DetLayer*>, std::vector<DetLayer*> >& endcapRPCLayers);
 
+  /////////////////////////////// GEMs
+  
+  /// Add GEM layers 
+  /// gemlayers.first=forward (+Z), gemlayers.second=backward (-Z)
+  /// both vectors are ASSUMED to be sorted inside-out
+  void addGEMLayers(const std::pair<std::vector<DetLayer*>, std::vector<DetLayer*> >& gemlayers);
+  
+  //////////////////////////////
   
   DetId makeDetLayerId(const DetLayer* detLayer) const;
   
   void sortLayers();
 
-  std::vector<DetLayer*> cscLayers_fw;
-  std::vector<DetLayer*> cscLayers_bk;
-  std::vector<DetLayer*> cscLayers_all;
-  std::vector<DetLayer*> rpcLayers_all;
-  std::vector<DetLayer*> rpcLayers_endcap;
-  std::vector<DetLayer*> rpcLayers_fw;
-  std::vector<DetLayer*> rpcLayers_bk;
-  std::vector<DetLayer*> rpcLayers_barrel;
-  std::vector<DetLayer*> dtLayers;
-  std::vector<DetLayer*> allForward;
-  std::vector<DetLayer*> allBackward;
-  std::vector<DetLayer*> allEndcap;
-  std::vector<DetLayer*> allBarrel;
-  std::vector<DetLayer*> allDetLayers;
+  std::vector<const DetLayer*> cscLayers_fw;
+  std::vector<const DetLayer*> cscLayers_bk;
+  std::vector<const DetLayer*> cscLayers_all;
+  
+  /////////////////////////////// GEMs
+  
+  std::vector<const DetLayer*> gemLayers_fw;
+  std::vector<const DetLayer*> gemLayers_bk;
+  std::vector<const DetLayer*> gemLayers_all;
+
+
+  std::vector<const DetLayer*> rpcLayers_all;
+  std::vector<const DetLayer*> rpcLayers_endcap;
+  std::vector<const DetLayer*> rpcLayers_fw;
+  std::vector<const DetLayer*> rpcLayers_bk;
+  std::vector<const DetLayer*> rpcLayers_barrel;
+  std::vector<const DetLayer*> dtLayers;
+  std::vector<const DetLayer*> allForward;
+  std::vector<const DetLayer*> allBackward;
+  std::vector<const DetLayer*> allEndcap;
+  std::vector<const DetLayer*> allBarrel;
+  std::vector<const DetLayer*> allDetLayers;
     
-  std::map<DetId,DetLayer*> detLayersMap;
+////////////////////////////// GEMs
+
+  std::vector<const DetLayer*> allEndcapCscGem;
+  std::vector<const DetLayer*> allCscGemForward;
+  std::vector<const DetLayer*> allCscGemBackward;
+      
+  std::map<DetId,const DetLayer*> detLayersMap;
 };
 #endif
 

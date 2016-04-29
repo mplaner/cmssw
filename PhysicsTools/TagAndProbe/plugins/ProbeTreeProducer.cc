@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <ctype.h>
+#include "boost/bind.hpp"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDFilter.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -23,7 +24,6 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "PhysicsTools/TagAndProbe/interface/BaseTreeFiller.h"
 #include <set>
-#include "FWCore/ParameterSet/interface/Registry.h"
 
 class ProbeTreeProducer : public edm::EDFilter {
   public:
@@ -97,7 +97,7 @@ bool ProbeTreeProducer::filter(edm::Event& iEvent, const edm::EventSetup& iSetup
 
 void ProbeTreeProducer::endJob(){
     // ask to write the current PSet info into the TTree header
-    probeFiller_->writeProvenance(edm::getProcessParameterSet());
+    probeFiller_->writeProvenance(edm::getProcessParameterSetContainingModule(moduleDescription()));
 }
 
 //define this as a plug-in

@@ -63,6 +63,7 @@ CalibratedElectronProducer::CalibratedElectronProducer( const edm::ParameterSet 
     combinationRegressionInputPath = cfg.getParameter<std::string>("combinationRegressionInputPath");
     scaleCorrectionsInputPath = cfg.getParameter<std::string>("scaleCorrectionsInputPath");
     linCorrectionsInputPath   = cfg.getParameter<std::string>("linearityCorrectionsInputPath");
+    applyExtraHighEnergyProtection = cfg.getParameter<bool>("applyExtraHighEnergyProtection");
 
     //basic checks
     if ( isMC && ( dataset != "Summer11" && dataset != "Fall11"
@@ -289,7 +290,7 @@ void CalibratedElectronProducer::produce( edm::Event & event, const edm::EventSe
             // energy calibration for ecalDriven electrons
             if ( ele.core()->ecalDrivenSeed() || correctionsType==2 || combinationType==3 )
             {
-                theEnCorrector->calibrate(mySimpleElectron);
+                theEnCorrector->calibrate(mySimpleElectron, event.streamID());
 
                 // E-p combination
 
@@ -326,7 +327,7 @@ void CalibratedElectronProducer::produce( edm::Event & event, const edm::EventSe
                             std::cout << "[CalibratedGsfElectronProducer] "
                             << "You choose regression combination." << std::endl;
                         }
-                        myEpCombinationTool->combine(mySimpleElectron);
+                        myEpCombinationTool->combine(mySimpleElectron, applyExtraHighEnergyProtection);
                         theEnCorrector->correctLinearity(mySimpleElectron);
                         break;
                     default:

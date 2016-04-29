@@ -24,6 +24,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DQMServices/Core/interface/DQMStore.h"
+#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
 #include "DQM/SiPixelMonitorTrack/interface/SiPixelHitEfficiencyModule.h"
 
@@ -31,21 +32,24 @@
 #include "Alignment/TrackerAlignment/interface/TrackerAlignableId.h"
 #include "Alignment/OfflineValidation/interface/TrackerValidationVariables.h"
 #include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHitCollection.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHit.h"
 #include "Geometry/TrackerGeometryBuilder/interface/RectangularPixelTopology.h"
 #include "DataFormats/SiPixelDetId/interface/PixelBarrelName.h"
+#include "DataFormats/SiPixelDetId/interface/PixelBarrelNameUpgrade.h"
 #include "DataFormats/SiPixelDetId/interface/PixelEndcapName.h"
+#include "DataFormats/SiPixelDetId/interface/PixelEndcapNameUpgrade.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "TrackingTools/PatternTools/interface/TrajTrackAssociation.h"
 
-class SiPixelHitEfficiencySource : public edm::EDAnalyzer {
+class SiPixelHitEfficiencySource : public DQMEDAnalyzer {
   public:
     explicit SiPixelHitEfficiencySource(const edm::ParameterSet&);
             ~SiPixelHitEfficiencySource();
 
-    virtual void beginJob();
-    virtual void endJob(void);
-    virtual void beginRun(const edm::Run& r, edm::EventSetup const& iSetup);
+    virtual void dqmBeginRun(const edm::Run& r, edm::EventSetup const& iSetup);
+    virtual void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
     virtual void analyze(const edm::Event&, const edm::EventSetup&);
+    virtual void fillClusterProbability(int , int, bool, double );
 
   private: 
     edm::ParameterSet pSet_; 
@@ -55,11 +59,11 @@ class SiPixelHitEfficiencySource : public edm::EDAnalyzer {
     edm::EDGetTokenT<TrajTrackAssociationCollection> tracksrc_;
     edm::EDGetTokenT<edmNew::DetSetVector<SiPixelCluster> > clusterCollectionToken_;
     
+    edm::EDGetTokenT<MeasurementTrackerEvent> measurementTrackerEventToken_;
+
     bool applyEdgeCut_;
     double nSigma_EdgeCut_;
     
-    DQMStore* dbe_; 
-
     bool debug_; 
     bool modOn; 
     //barrel:
@@ -81,6 +85,24 @@ class SiPixelHitEfficiencySource : public edm::EDAnalyzer {
     double vtxZ_;
     double vtxndof_;
     double vtxchi2_;
+
+    bool isUpgrade;
+
+    //MEs for cluster probability
+    MonitorElement* meClusterProbabilityL1_Plus_;
+    MonitorElement* meClusterProbabilityL1_Minus_;
+
+    MonitorElement* meClusterProbabilityL2_Plus_;
+    MonitorElement* meClusterProbabilityL2_Minus_;
+
+    MonitorElement* meClusterProbabilityL3_Plus_;
+    MonitorElement* meClusterProbabilityL3_Minus_;
+
+    MonitorElement* meClusterProbabilityD1_Plus_;
+    MonitorElement* meClusterProbabilityD1_Minus_;
+
+    MonitorElement* meClusterProbabilityD2_Plus_;
+    MonitorElement* meClusterProbabilityD2_Minus_;
 
 };
 

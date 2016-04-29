@@ -19,7 +19,7 @@
 #include "CLHEP/Units/GlobalSystemOfUnits.h"
 
 HcalTB06BeamSD::HcalTB06BeamSD(G4String name, const DDCompactView & cpv,
-			       SensitiveDetectorCatalog & clg, 
+			       const SensitiveDetectorCatalog & clg,
 			       edm::ParameterSet const & p, 
 			       const SimTrackManager* manager) : 
   CaloSD(name, cpv, clg, p, manager) {
@@ -52,7 +52,7 @@ HcalTB06BeamSD::HcalTB06BeamSD(G4String name, const DDCompactView & cpv,
   value     = "WireChamber";
   DDSpecificsFilter filter1;
   DDValue           ddv1(attribute,value,0);
-  filter1.setCriteria(ddv1,DDSpecificsFilter::equals);
+  filter1.setCriteria(ddv1,DDCompOp::equals);
   DDFilteredView fv1(cpv);
   fv1.addFilter(filter1);
   wcNames = getNames(fv1);
@@ -67,7 +67,7 @@ HcalTB06BeamSD::HcalTB06BeamSD(G4String name, const DDCompactView & cpv,
   attribute = "ReadOutName";
   DDSpecificsFilter filter2;
   DDValue           ddv2(attribute,name,0);
-  filter2.setCriteria(ddv2,DDSpecificsFilter::equals);
+  filter2.setCriteria(ddv2,DDCompOp::equals);
   DDFilteredView fv2(cpv);
   fv2.addFilter(filter2);
   bool dodet = fv2.firstChild();

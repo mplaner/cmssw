@@ -5,26 +5,21 @@ import FWCore.ParameterSet.Config as cms
 ###############################################
 
 # REMOVE HITS ASSIGNED TO GOOD TRACKS FROM PREVIOUS ITERATIONS
-
-detachedTripletStepClusters = cms.EDProducer("TrackClusterRemover",
-    clusterLessSolution = cms.bool(True),
-    oldClusterRemovalInfo = cms.InputTag("pixelPairStepClusters"),
-    trajectories = cms.InputTag("pixelPairStepTracks"),
-    overrideTrkQuals = cms.InputTag('pixelPairStepSelector','pixelPairStep'),
-    TrackQuality = cms.string('highPurity'),
+from RecoLocalTracker.SubCollectionProducers.trackClusterRemover_cfi import *
+detachedTripletStepClusters = trackClusterRemover.clone(
+    maxChi2                                  = cms.double(9.0),
+    trajectories                             = cms.InputTag("pixelPairStepTracks"),
+    pixelClusters                            = cms.InputTag("siPixelClusters"),
+    stripClusters                            = cms.InputTag("siStripClusters"),
+    oldClusterRemovalInfo                    = cms.InputTag("pixelPairStepClusters"),
+    overrideTrkQuals                         = cms.InputTag('pixelPairStepSelector','QualityMasks'),
+    TrackQuality                             = cms.string('highPurity'),
     minNumberOfLayersWithMeasBeforeFiltering = cms.int32(0),
-    pixelClusters = cms.InputTag("siPixelClusters"),
-    stripClusters = cms.InputTag("siStripClusters"),
-    Common = cms.PSet(
-        maxChi2 = cms.double(9.0)
-    )
 )
 
 # SEEDING LAYERS
 import RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi
-detachedTripletStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.pixellayertriplets.clone(
-    ComponentName = 'detachedTripletStepSeedLayers'
-    )
+detachedTripletStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.PixelLayerTriplets.clone()
 detachedTripletStepSeedLayers.BPix.skipClusters = cms.InputTag('detachedTripletStepClusters')
 detachedTripletStepSeedLayers.FPix.skipClusters = cms.InputTag('detachedTripletStepClusters')
 
@@ -46,34 +41,32 @@ detachedTripletStepSeeds.SeedComparitorPSet = cms.PSet(
         FilterAtHelixStage = cms.bool(False),
         FilterPixelHits = cms.bool(True),
         FilterStripHits = cms.bool(False),
-        ClusterShapeHitFilterName = cms.string('ClusterShapeHitFilter')
+        ClusterShapeHitFilterName = cms.string('ClusterShapeHitFilter'),
+        ClusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCache')
     )
 
 # QUALITY CUTS DURING TRACK BUILDING
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-detachedTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'detachedTripletStepTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+detachedTripletStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     maxLostHitsFraction = cms.double(1./10.),
     constantValueForLostHitsFractionFilter = cms.double(0.701),
     minimumNumberOfHits = 3,
     minPt = 0.075
-    )
     )
 
 import TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProducer_cfi
 detachedTripletStepChi2Est = TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProducer_cfi.Chi2MeasurementEstimator.clone(
     ComponentName = cms.string('detachedTripletStepChi2Est'),
     nSigma = cms.double(3.0),
-    MaxChi2 = cms.double(9.0)
+    MaxChi2 = cms.double(9.0),
+    clusterChargeCut = cms.PSet(refToPSet_ = cms.string('SiStripClusterChargeCutNone')),
 )
 
 # TRACK BUILDING
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
-detachedTripletStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
-    ComponentName = 'detachedTripletStepTrajectoryBuilder',
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+detachedTripletStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone(
     MeasurementTrackerName = '',
-    trajectoryFilterName = 'detachedTripletStepTrajectoryFilter',
+    trajectoryFilter = cms.PSet(refToPSet_ = cms.string('detachedTripletStepTrajectoryFilter')),
     maxCand = 2,
     alwaysUseInvalidHits = False,
     estimator = cms.string('detachedTripletStepChi2Est'),
@@ -89,7 +82,7 @@ detachedTripletStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_c
     ### these two parameters are relevant only for the CachingSeedCleanerBySharedInput
     numHitsForSeedCleaner = cms.int32(50),
     onlyPixelHitsForSeedCleaner = cms.bool(True),
-    TrajectoryBuilder = 'detachedTripletStepTrajectoryBuilder',
+    TrajectoryBuilderPSet = cms.PSet(refToPSet_ = cms.string('detachedTripletStepTrajectoryBuilder')),
     doSeedingRegionRebuilding = True,
     useHitsSplitting = True
     )
@@ -97,7 +90,7 @@ detachedTripletStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_c
 from TrackingTools.TrajectoryCleaning.TrajectoryCleanerBySharedHits_cfi import trajectoryCleanerBySharedHits
 detachedTripletStepTrajectoryCleanerBySharedHits = trajectoryCleanerBySharedHits.clone(
         ComponentName = cms.string('detachedTripletStepTrajectoryCleanerBySharedHits'),
-            fractionShared = cms.double(0.13),
+            fractionShared = cms.double(0.19),
             allowSharedFirstHit = cms.bool(True)
             )
 detachedTripletStepTrackCandidates.TrajectoryCleaner = 'detachedTripletStepTrajectoryCleanerBySharedHits'
@@ -106,7 +99,7 @@ detachedTripletStepTrackCandidates.TrajectoryCleaner = 'detachedTripletStepTraje
 # TRACK FITTING
 import RecoTracker.TrackProducer.TrackProducer_cfi
 detachedTripletStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.clone(
-    AlgorithmName = cms.string('iter3'),
+    AlgorithmName = cms.string('detachedTripletStep'),
     src = 'detachedTripletStepTrackCandidates',
     Fitter = cms.string('FlexibleKFFittingSmoother')
     )
@@ -117,33 +110,33 @@ detachedTripletStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackPro
 import RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi
 detachedTripletStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.multiTrackSelector.clone(
     src='detachedTripletStepTracks',
-    useAnyMVA = cms.bool(True),
+    useAnyMVA = cms.bool(False),
     GBRForestLabel = cms.string('MVASelectorIter3'),
     trackSelectors= cms.VPSet(
         RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
             name = 'detachedTripletStepVtxLoose',
-            chi2n_par = 1.2,
+            chi2n_par = 1.6,
             res_par = ( 0.003, 0.001 ),
             minNumberLayers = 3,
-            d0_par1 = ( 1.1, 3.0 ),
-            dz_par1 = ( 1.1, 3.0 ),
-            d0_par2 = ( 1.2, 3.0 ),
-            dz_par2 = ( 1.2, 3.0 )
+            d0_par1 = ( 1.2, 3.0 ),
+            dz_par1 = ( 1.2, 3.0 ),
+            d0_par2 = ( 1.3, 3.0 ),
+            dz_par2 = ( 1.3, 3.0 )
             ),
         RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.looseMTS.clone(
             name = 'detachedTripletStepTrkLoose',
             chi2n_par = 0.7,
             res_par = ( 0.003, 0.001 ),
             minNumberLayers = 3,
-            d0_par1 = ( 1.4, 4.0 ),
-            dz_par1 = ( 1.4, 4.0 ),
-            d0_par2 = ( 1.4, 4.0 ),
-            dz_par2 = ( 1.4, 4.0 )
+            d0_par1 = ( 1.6, 4.0 ),
+            dz_par1 = ( 1.6, 4.0 ),
+            d0_par2 = ( 1.6, 4.0 ),
+            dz_par2 = ( 1.6, 4.0 )
             ),
         RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.tightMTS.clone(
             name = 'detachedTripletStepVtxTight',
             preFilterName = 'detachedTripletStepVtxLoose',
-            chi2n_par = 0.9,
+            chi2n_par = 0.7,
             res_par = ( 0.003, 0.001 ),
             minNumberLayers = 3,
             maxNumberLostLayers = 1,
@@ -160,7 +153,7 @@ detachedTripletStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector
             res_par = ( 0.003, 0.001 ),
             minNumberLayers = 5,
             maxNumberLostLayers = 1,
-            minNumber3DLayers = 4,
+            minNumber3DLayers = 3,
             d0_par1 = ( 1.1, 4.0 ),
             dz_par1 = ( 1.1, 4.0 ),
             d0_par2 = ( 1.1, 4.0 ),
@@ -182,17 +175,18 @@ detachedTripletStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector
         RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.highpurityMTS.clone(
             name = 'detachedTripletStepTrk',
             preFilterName = 'detachedTripletStepTrkTight',
-            chi2n_par = 0.3,
+            chi2n_par = 0.4,
             res_par = ( 0.003, 0.001 ),
             minNumberLayers = 5,
-            maxNumberLostLayers = 0,
+            maxNumberLostLayers = 1,
             minNumber3DLayers = 4,
             d0_par1 = ( 1.0, 4.0 ),
             dz_par1 = ( 1.0, 4.0 ),
             d0_par2 = ( 1.0, 4.0 ),
             dz_par2 = ( 1.0, 4.0 )
             )
-        ) #end of vpset
+        ),
+    vertices = cms.InputTag("pixelVertices") #end of vpset
     ) #end of clone
 
 
@@ -201,8 +195,6 @@ detachedTripletStep = RecoTracker.FinalTrackSelectors.trackListMerger_cfi.trackL
     TrackProducers = cms.VInputTag(cms.InputTag('detachedTripletStepTracks'),
                                    cms.InputTag('detachedTripletStepTracks')),
     hasSelector=cms.vint32(1,1),
-    shareFrac = cms.double(0.13),
-    indivShareFrac=cms.vdouble(0.13,0.13),
     selectedTrackQuals = cms.VInputTag(cms.InputTag("detachedTripletStepSelector","detachedTripletStepVtx"),
                                        cms.InputTag("detachedTripletStepSelector","detachedTripletStepTrk")),
     setsToMerge = cms.VPSet(cms.PSet( tLists=cms.vint32(0,1), pQual=cms.bool(True) )),
@@ -210,6 +202,7 @@ detachedTripletStep = RecoTracker.FinalTrackSelectors.trackListMerger_cfi.trackL
 )
 
 DetachedTripletStep = cms.Sequence(detachedTripletStepClusters*
+                                               detachedTripletStepSeedLayers*
                                                detachedTripletStepSeeds*
                                                detachedTripletStepTrackCandidates*
                                                detachedTripletStepTracks*

@@ -1,6 +1,7 @@
 #ifndef CondCore_CondDB_SessionImpl_h
 #define CondCore_CondDB_SessionImpl_h
 
+#include "CondCore/CondDB/interface/Types.h"
 #include "IOVSchema.h"
 #include "GTSchema.h"
 //
@@ -35,13 +36,19 @@ namespace cond {
       bool isOra = false;
       size_t clients = 0;
     };
+
+    BackendType checkBackendType( boost::shared_ptr<coral::ISessionProxy>& session, 
+				  const std::string& connectionString );
     
     class SessionImpl {
     public:
       typedef enum { THROW, DO_NOT_THROW, CREATE } FailureOnOpeningPolicy;
     public:
       SessionImpl();
-      SessionImpl( boost::shared_ptr<coral::ISessionProxy>& session, const std::string& connectionString );
+      SessionImpl( boost::shared_ptr<coral::ISessionProxy>& session, 
+		   const std::string& connectionString, 
+		   BackendType backType );
+
       ~SessionImpl();
       
       void close();
@@ -52,7 +59,8 @@ namespace cond {
       bool isTransactionActive( bool deep=true ) const;
 
       void openIovDb( FailureOnOpeningPolicy policy = THROW );
-      void openGTDb();
+      void openGTDb( FailureOnOpeningPolicy policy = THROW );
+      void openDb();
       IIOVSchema& iovSchema();
       IGTSchema& gtSchema();
       // only for the bridging...
@@ -63,6 +71,7 @@ namespace cond {
       boost::shared_ptr<coral::ISessionProxy> coralSession;
       // not really useful outside the ORA bridging...
       std::string connectionString;
+      BackendType theBackendType;
       std::unique_ptr<ITransaction> transaction;
       std::unique_ptr<IIOVSchema> iovSchemaHandle; 
       std::unique_ptr<IGTSchema> gtSchemaHandle; 

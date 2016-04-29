@@ -14,6 +14,7 @@
 #include "SimG4CMS/Calo/interface/HcalTestHistoManager.h"
 #include "SimG4CMS/Calo/interface/HcalTestNumberingScheme.h"
 #include "Geometry/HcalCommonData/interface/HcalNumberingFromDDD.h"
+#include "Geometry/HcalCommonData/interface/HcalDDDSimConstants.h"
 
 #include <iostream>
 #include <memory>
@@ -26,6 +27,10 @@ class BeginOfJob;
 class BeginOfRun;
 class BeginOfEvent;
 class EndOfEvent;
+
+namespace CLHEP {
+  class HepRandomEngine;
+}
 
 class HcalTestAnalysis : public SimWatcher,
 			 public Observer<const BeginOfJob *>, 
@@ -50,7 +55,7 @@ private:
   std::vector<int> layerGrouping(int);
   std::vector<int> towersToAdd(int centre, int nadd);
   void   fill(const EndOfEvent * ev);
-  void   qieAnalysis();
+  void   qieAnalysis(CLHEP::HepRandomEngine*);
   void   layerAnalysis();
   double timeOfFlight(int det, int layer, double eta);
 
@@ -65,11 +70,12 @@ private:
 
   // Private Tuples
   std::auto_ptr<HcalTestHistoManager>    tuplesManager;
-  HcalTestHistoClass   *    tuples;
+  HcalTestHistoClass        *tuples;
 
   // Numbering scheme
-  HcalNumberingFromDDD *    numberingFromDDD;
-  HcalTestNumberingScheme * org;
+  HcalNumberingFromDDD      *numberingFromDDD;
+  HcalDDDSimConstants       *hcons;
+  HcalTestNumberingScheme   *org;
 
   // Hits for qie analysis
   std::vector<CaloHit>      caloHitCache; 

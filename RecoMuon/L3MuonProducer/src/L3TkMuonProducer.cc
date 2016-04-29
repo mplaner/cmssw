@@ -7,7 +7,6 @@
  */
 
 // Framework
-#include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -65,7 +64,7 @@ bool L3TkMuonProducer::sharedSeed(const L3MuonTrajectorySeed& s1,const L3MuonTra
   //quit right away if first detId does not match. front exist because of ==0 ->quit test
   if(i1_b->geographicalId() != i2_b->geographicalId()) return false;
   //then check hit by hit if they are the same
-  for (i1=i1_b,i2=i2_b;i1!=i1_e,i2!=i2_e;++i1,++i2){
+  for (i1=i1_b,i2=i2_b;i1!=i1_e && i2!=i2_e;++i1,++i2){
     if (!i1->sharesInput(&(*i2),TrackingRecHit::all)) return false;
   }
   return true;
@@ -106,7 +105,7 @@ string printseed(const L3TkMuonProducer::SeedRef & s){
 }
 
 /// reconstruct muons
-void L3TkMuonProducer::produce(Event& event, const EventSetup& eventSetup){
+void L3TkMuonProducer::produce(Event& event, const EventSetup& eventSetup) {
   const string metname = "Muon|RecoMuon|L3TkMuonProducer";
   
   // Take the L3 container
@@ -226,8 +225,8 @@ void L3TkMuonProducer::produce(Event& event, const EventSetup& eventSetup){
     unsigned int iRH=0;
     for( trackingRecHit_iterator hit = trk.recHitsBegin(); hit != trk.recHitsEnd(); ++ hit,++iRH ) {
       outRecHits->push_back((*hit)->clone());
-      (*outTrackExtras)[i].add( TrackingRecHitRef( rHits, iRH));
     }
+    (*outTrackExtras)[i].setHits( rHits, 0, iRH);
   }
   
   LogDebug(metname)<<"made: "<<outTracks->size()<<" tracks, "<<outTrackExtras->size()<<" extras and "<<outRecHits->size()<<" rechits.";

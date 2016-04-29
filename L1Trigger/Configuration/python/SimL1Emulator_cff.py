@@ -6,6 +6,15 @@ import FWCore.ParameterSet.Config as cms
 # Jim Brooke, 24 April 2008
 # Vasile Mihai Ghete, 2009
 
+
+# This object is used to make changes for different running scenarios. In
+# this case for the Stage 1 trigger in run 2
+from Configuration.StandardSequences.Eras import eras
+# Note that this next file does nothing if the stage1L1Trigger era is not active, so
+# it is safe to import even if the Stage 1 trigger is not required. It *MUST* be
+# imported into this namespace, i.e. "from <file> import *".
+from L1Trigger.Configuration.ConditionalStage1Configuration_cff import *
+
 # ECAL TPG emulator and HCAL TPG run in the simulation sequence in order to be able 
 # to use unsuppressed digis produced by ECAL and HCAL simulation, respectively
 # in Configuration/StandardSequences/python/Digi_cff.py
@@ -104,6 +113,9 @@ simRpcTechTrigDigis.RPCDigiLabel = 'simMuonRPCDigis'
 import SimCalorimetry.HcalTrigPrimProducers.hcalTTPRecord_cfi
 simHcalTechTrigDigis = SimCalorimetry.HcalTrigPrimProducers.hcalTTPRecord_cfi.simHcalTTPRecord.clone()
 
+# CASTOR Techical Trigger
+import SimCalorimetry.CastorTechTrigProducer.castorTTRecord_cfi
+simCastorTechTrigDigis = SimCalorimetry.CastorTechTrigProducer.castorTTRecord_cfi.simCastorTTRecord.clone()
 
 # Global Trigger emulator
 import L1Trigger.GlobalTrigger.gtDigis_cfi
@@ -114,9 +126,14 @@ simGtDigis.GctInputTag = 'simGctDigis'
 simGtDigis.TechnicalTriggersInputTags = cms.VInputTag(
     cms.InputTag( 'simBscDigis' ), 
     cms.InputTag( 'simRpcTechTrigDigis' ),
-    cms.InputTag( 'simHcalTechTrigDigis' )
+    cms.InputTag( 'simHcalTechTrigDigis' ),
+    cms.InputTag( 'simCastorTechTrigDigis' )
     )
-
+#
+# Make some changes if using the Stage 1 trigger
+#
+eras.stage1L1Trigger.toModify( simGtDigis, GctInputTag = 'simCaloStage1LegacyFormatDigis' )
+eras.stage1L1Trigger.toModify( simGtDigis, TechnicalTriggersInputTags = cms.VInputTag() )
 
 ### L1 Trigger sequences
 
@@ -132,7 +149,8 @@ SimL1MuTrackFinders = cms.Sequence(
 SimL1TechnicalTriggers = cms.Sequence( 
     simBscDigis + 
     simRpcTechTrigDigis + 
-    simHcalTechTrigDigis )
+    simHcalTechTrigDigis +
+    simCastorTechTrigDigis )
 
 SimL1Emulator = cms.Sequence(
     simRctDigis + 
@@ -143,3 +161,9 @@ SimL1Emulator = cms.Sequence(
     simGmtDigis + 
     SimL1TechnicalTriggers + 
     simGtDigis )
+##
+## Make changes for Run 2
+##
+if eras.stage1L1Trigger.isChosen() :
+    from L1Trigger.L1TCalorimeter.L1TCaloStage1_cff import L1TCaloStage1
+    SimL1Emulator.replace( simGctDigis, L1TCaloStage1 )

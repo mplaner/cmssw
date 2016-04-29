@@ -22,7 +22,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -43,15 +43,13 @@
 // class declaration
 //
 
-class HcalHitSelection : public edm::EDProducer {
+class HcalHitSelection : public edm::stream::EDProducer<> {
    public:
       explicit HcalHitSelection(const edm::ParameterSet&);
       ~HcalHitSelection();
 
    private:
-      virtual void beginJob() override ;
       virtual void produce(edm::Event&, const edm::EventSetup&) override;
-      virtual void endJob() override ;
   
   edm::InputTag hbheTag,hoTag,hfTag;
   edm::EDGetTokenT<HBHERecHitCollection> tok_hbhe_;
@@ -65,12 +63,12 @@ class HcalHitSelection : public edm::EDProducer {
   edm::ESHandle<HcalChannelQuality> theHcalChStatus;
   edm::ESHandle<HcalSeverityLevelComputer> theHcalSevLvlComputer;
   std::set<DetId> toBeKept;
-  template <typename CollectionType> void skim( const edm::Handle<CollectionType> & input, std::auto_ptr<CollectionType> & output,int severityThreshold=0);
+  template <typename CollectionType> void skim( const edm::Handle<CollectionType> & input, std::auto_ptr<CollectionType> & output,int severityThreshold=0) const;
   
       // ----------member data ---------------------------
 };
 
-template <class CollectionType> void HcalHitSelection::skim( const edm::Handle<CollectionType> & input, std::auto_ptr<CollectionType> & output,int severityThreshold){
+template <class CollectionType> void HcalHitSelection::skim( const edm::Handle<CollectionType> & input, std::auto_ptr<CollectionType> & output,int severityThreshold) const {
   output->reserve(input->size());
   typename CollectionType::const_iterator begin=input->begin();
   typename CollectionType::const_iterator end=input->end();
@@ -150,7 +148,7 @@ HcalHitSelection::~HcalHitSelection()
 void
 HcalHitSelection::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  iSetup.get<HcalChannelQualityRcd>().get(theHcalChStatus);
+  iSetup.get<HcalChannelQualityRcd>().get("withTopo", theHcalChStatus);
   iSetup.get<HcalSeverityLevelComputerRcd>().get(theHcalSevLvlComputer);
 
   edm::Handle<HBHERecHitCollection> hbhe;
@@ -185,17 +183,6 @@ HcalHitSelection::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   skim(ho,ho_out,hoSeverityLevel);
   iEvent.put(ho_out,hoTag.label());
   
-}
-
-// ------------ method called once each job just before starting event loop  ------------
-void 
-HcalHitSelection::beginJob()
-{
-}
-
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-HcalHitSelection::endJob() {
 }
 
 //define this as a plug-in

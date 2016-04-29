@@ -1,7 +1,6 @@
 #include "RecoTracker/SpecialSeedGenerators/interface/CtfSpecialSeedGenerator.h"
-//#include "RecoTracker/SpecialSeedGenerators/interface/CosmicLayerTriplets.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 #include "DataFormats/GeometrySurface/interface/RectangularPlaneBounds.h"
 #include "TrackingTools/GeomPropagators/interface/StraightLinePlaneCrossing.h"
 
@@ -12,6 +11,7 @@
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 using namespace ctfseeding;
 
@@ -31,19 +31,22 @@ CtfSpecialSeedGenerator::CtfSpecialSeedGenerator(const edm::ParameterSet& conf):
 	edm::ParameterSet regfactoryPSet = conf_.getParameter<edm::ParameterSet>("RegionFactoryPSet");
   	std::string regfactoryName = regfactoryPSet.getParameter<std::string>("ComponentName");
   	theRegionProducer = TrackingRegionProducerFactory::get()->create(regfactoryName,regfactoryPSet, consumesCollector());
+
+	std::vector<edm::ParameterSet> pSets = conf_.getParameter<std::vector<edm::ParameterSet> >("OrderedHitsFactoryPSets");
+	std::vector<edm::ParameterSet>::const_iterator iPSet;
+        edm::ConsumesCollector iC = consumesCollector();
+	for (iPSet = pSets.begin(); iPSet != pSets.end(); iPSet++){
+		std::string hitsfactoryName = iPSet->getParameter<std::string>("ComponentName");
+		theGenerators.emplace_back(OrderedHitsGeneratorFactory::get()->create( hitsfactoryName, *iPSet, iC));
+        }
 }
 
 CtfSpecialSeedGenerator::~CtfSpecialSeedGenerator(){
+    if (theRegionProducer) { delete theRegionProducer; theRegionProducer = 0; }
 }
 
 void CtfSpecialSeedGenerator::endRun(edm::Run const&, edm::EventSetup const&){
     if (theSeedBuilder)    { delete theSeedBuilder;    theSeedBuilder = 0; }
-    if (theRegionProducer) { delete theRegionProducer; theRegionProducer = 0; }
-    std::vector<OrderedHitsGenerator*>::iterator iGen;	
-    for (iGen = theGenerators.begin(); iGen != theGenerators.end(); iGen++){
-        delete (*iGen);
-    }
-    theGenerators.clear();
 }
 
 void CtfSpecialSeedGenerator::beginRun(edm::Run const&, const edm::EventSetup& iSetup){
@@ -85,32 +88,10 @@ void CtfSpecialSeedGenerator::beginRun(edm::Run const&, const edm::EventSetup& i
 	edm::ESHandle<Propagator>  propagatorOppositeHandle;
         iSetup.get<TrackingComponentsRecord>().get("PropagatorWithMaterialOpposite",propagatorOppositeHandle);
 
-/*  	edm::ParameterSet hitsfactoryOutInPSet = conf_.getParameter<edm::ParameterSet>("OrderedHitsFactoryOutInPSet");
-  	std::string hitsfactoryOutInName = hitsfactoryOutInPSet.getParameter<std::string>("ComponentName");
-  	hitsGeneratorOutIn = OrderedHitsGeneratorFactory::get()->create( hitsfactoryOutInName, hitsfactoryOutInPSet);
-	std::string propagationDirection = hitsfactoryOutInPSet.getUntrackedParameter<std::string>("PropagationDirection", 
-											            "alongMomentum");
-	if (propagationDirection == "alongMomentum") outInPropagationDirection = alongMomentum;
-	else outInPropagationDirection = oppositeToMomentum;
-	edm::LogVerbatim("CtfSpecialSeedGenerator") << "hitsGeneratorOutIn done";
 
-	edm::ParameterSet hitsfactoryInOutPSet = conf_.getParameter<edm::ParameterSet>("OrderedHitsFactoryInOutPSet");
-        std::string hitsfactoryInOutName = hitsfactoryInOutPSet.getParameter<std::string>("ComponentName");
-        hitsGeneratorInOut = OrderedHitsGeneratorFactory::get()->create( hitsfactoryInOutName, hitsfactoryInOutPSet);
-
-	propagationDirection = hitsfactoryInOutPSet.getUntrackedParameter<std::string>("PropagationDirection",
-                                                                                        "alongMomentum");
-	if (propagationDirection == "alongMomentum") inOutPropagationDirection = alongMomentum;
-        else inOutPropagationDirection = oppositeToMomentum;
-	edm::LogVerbatim("CtfSpecialSeedGenerator") << "hitsGeneratorInOut done";
-	if (!hitsGeneratorOutIn || !hitsGeneratorInOut) 
-		throw cms::Exception("CtfSpecialSeedGenerator") << "Only corcrete implementation GenericPairOrTripletGenerator of OrderedHitsGenerator is allowed ";
-*/
 	std::vector<edm::ParameterSet> pSets = conf_.getParameter<std::vector<edm::ParameterSet> >("OrderedHitsFactoryPSets");
 	std::vector<edm::ParameterSet>::const_iterator iPSet;
 	for (iPSet = pSets.begin(); iPSet != pSets.end(); iPSet++){
-		std::string hitsfactoryName = iPSet->getParameter<std::string>("ComponentName");
-        	theGenerators.push_back(OrderedHitsGeneratorFactory::get()->create( hitsfactoryName, *iPSet));
         	std::string propagationDirection = iPSet->getParameter<std::string>("PropagationDirection");
         	if (propagationDirection == "alongMomentum") thePropDirs.push_back(alongMomentum);
         	else thePropDirs.push_back(oppositeToMomentum);
@@ -162,14 +143,12 @@ void CtfSpecialSeedGenerator::produce(edm::Event& e, const edm::EventSetup& iSet
 bool CtfSpecialSeedGenerator::run(const edm::EventSetup& iSetup,
 					       const edm::Event& e,
 					       TrajectorySeedCollection& output){
-	std::vector<TrackingRegion*> regions = theRegionProducer->regions(e, iSetup);
-	std::vector<TrackingRegion*>::const_iterator iReg;
+	std::vector<std::unique_ptr<TrackingRegion>> regions = theRegionProducer->regions(e, iSetup);
         bool ok = true;
-	for (iReg = regions.begin(); iReg != regions.end(); iReg++){
+	for (auto iReg = regions.begin(); iReg != regions.end(); iReg++){
 		if(!theSeedBuilder->momentumFromPSet()) theSeedBuilder->setMomentumTo((*iReg)->ptMin());
-		std::vector<OrderedHitsGenerator*>::const_iterator iGen;
 		int i = 0;
-		for (iGen = theGenerators.begin(); iGen != theGenerators.end(); iGen++){ 
+		for (auto iGen = theGenerators.begin(); iGen != theGenerators.end(); iGen++){
 		  ok = buildSeeds(iSetup, 
 			     e, 
 			     (*iGen)->run(**iReg, e, iSetup),
@@ -180,10 +159,6 @@ bool CtfSpecialSeedGenerator::run(const edm::EventSetup& iSetup,
                   if (!ok) break;
 		}
                 if (!ok) break;
-	}
-	//clear memory
-	for (std::vector<TrackingRegion*>::iterator iReg = regions.begin(); iReg != regions.end(); iReg++){
-		delete *iReg;
 	}
         return ok;
 }
@@ -224,7 +199,7 @@ bool CtfSpecialSeedGenerator::buildSeeds(const edm::EventSetup& iSetup,
 bool CtfSpecialSeedGenerator::preliminaryCheck(const SeedingHitSet& shs, const edm::EventSetup &es ){
 
         edm::ESHandle<TrackerTopology> tTopo;
-        es.get<IdealGeometryRecord>().get(tTopo);
+        es.get<TrackerTopologyRcd>().get(tTopo);
 
 	std::vector<std::pair<unsigned int, unsigned int> > vSubdetLayer;
 	//std::vector<std::string> vSeedLayerNames;
@@ -236,36 +211,36 @@ bool CtfSpecialSeedGenerator::preliminaryCheck(const SeedingHitSet& shs, const e
       unsigned int nHits = shs.size();
       for (unsigned int iHit=0; iHit < nHits; ++iHit) {
 		//hits for the seeds must be at positive y
-            const TrackingRecHit * trh = shs[iHit]->hit();
-		TransientTrackingRecHit::RecHitPointer recHit = theBuilder->build(trh);
-    		GlobalPoint hitPos = recHit->globalPosition();
-		//GlobalPoint point = 
-		//  theTracker->idToDet(iHits->geographicalId() )->surface().toGlobal(iHits->localPosition());
-		if (checkHitsAtPositiveY){ if (hitPos.y() < 0) return false;}
-		//***top-bottom
-		if (checkHitsAtNegativeY){ if (hitPos.y() > 0) return false;}
-		//***
-		//std::string name = iHits->seedinglayer().name(); 
-		//hits for the seeds must be in different layers
-		unsigned int subid=(*trh).geographicalId().subdetId();
-		unsigned int layer = tTopo->layer( (*trh).geographicalId());
-		std::vector<std::pair<unsigned int, unsigned int> >::const_iterator iter;
-		//std::vector<std::string>::const_iterator iNames;
-		if (checkHitsOnDifferentLayers){
-			
-			for (iter = vSubdetLayer.begin(); iter != vSubdetLayer.end(); iter++){
-				if (iter->first == subid && iter->second == layer) return false;
-			}
-			/*
-			for (iNames = vSeedLayerNames.begin(); iNames != vSeedLayerNames.end(); iNames++){
-				if (*iNames == name) return false;
-			}
-			*/
-		}
-		//vSeedLayerNames.push_back(iHits->seedinglayer().name());
-		vSubdetLayer.push_back(std::make_pair(subid, layer));	
+	auto trh = shs[iHit];
+	auto recHit = trh;
+	GlobalPoint hitPos = recHit->globalPosition();
+	//GlobalPoint point = 
+	//  theTracker->idToDet(iHits->geographicalId() )->surface().toGlobal(iHits->localPosition());
+	if (checkHitsAtPositiveY){ if (hitPos.y() < 0) return false;}
+	//***top-bottom
+	if (checkHitsAtNegativeY){ if (hitPos.y() > 0) return false;}
+	//***
+	//std::string name = iHits->seedinglayer().name(); 
+	//hits for the seeds must be in different layers
+	unsigned int subid=(*trh).geographicalId().subdetId();
+	unsigned int layer = tTopo->layer( (*trh).geographicalId());
+	std::vector<std::pair<unsigned int, unsigned int> >::const_iterator iter;
+	//std::vector<std::string>::const_iterator iNames;
+	if (checkHitsOnDifferentLayers){
+	  
+	  for (iter = vSubdetLayer.begin(); iter != vSubdetLayer.end(); iter++){
+	    if (iter->first == subid && iter->second == layer) return false;
+	  }
+	  /*
+	    for (iNames = vSeedLayerNames.begin(); iNames != vSeedLayerNames.end(); iNames++){
+	    if (*iNames == name) return false;
+	    }
+	  */
 	}
-	return true;
+	//vSeedLayerNames.push_back(iHits->seedinglayer().name());
+	vSubdetLayer.push_back(std::make_pair(subid, layer));	
+      }
+      return true;
 }
 
 

@@ -25,7 +25,6 @@ PSet script.   See notes in EventProcessor.cpp for details about it.
 #include "TError.h"
 
 #include "boost/program_options.hpp"
-#include "boost/shared_ptr.hpp"
 #include "tbb/task_scheduler_init.h"
 
 #include <cstring>
@@ -54,8 +53,8 @@ static char const* const kSizeOfStackForThreadOpt = "sizeOfStackForThreadsInKB";
 static char const* const kHelpOpt = "help";
 static char const* const kHelpCommandOpt = "help,h";
 static char const* const kStrictOpt = "strict";
-static char const* const kProgramName = "cmsRun";
 
+constexpr unsigned int kDefaultSizeOfStackForThreadsInKB = 10*1024; //10MB
 // -----------------------------------------------
 namespace {
   class EventProcessorWithSentry {
@@ -92,15 +91,14 @@ namespace {
     bool callEndJob_;
   };
   
-  void setNThreads(unsigned int iNThreads,
-		   unsigned int iStackSize,
-                   std::unique_ptr<tbb::task_scheduler_init>& oPtr) {
+  unsigned int setNThreads(unsigned int iNThreads,
+                           unsigned int iStackSize,
+                           std::unique_ptr<tbb::task_scheduler_init>& oPtr) {
     //The TBB documentation doesn't explicitly say this, but when the task_scheduler_init's
     // destructor is run it does a 'wait all' for all tasks to finish and then shuts down all the threads.
     // This provides a clean synchronization point.
     //We have to destroy the old scheduler before starting a new one in order to
     // get tbb to actually switch the number of threads. If we do not, tbb stays at 1 threads
-    edm::LogInfo("ThreadSetup") <<"setting # threads "<<iNThreads;
 
     //stack size is given in KB but passed in as bytes
     iStackSize *= 1024;
@@ -108,10 +106,12 @@ namespace {
     oPtr.reset();
     if(0==iNThreads) {
       //Allow TBB to decide how many threads. This is normally the number of CPUs in the machine.
-      oPtr = std::unique_ptr<tbb::task_scheduler_init>{new tbb::task_scheduler_init{tbb::task_scheduler_init::automatic,iStackSize}};
-    } else {
-      oPtr = std::unique_ptr<tbb::task_scheduler_init>{new tbb::task_scheduler_init{static_cast<int>(iNThreads),iStackSize}};
+      iNThreads = tbb::task_scheduler_init::default_num_threads();
     }
+    oPtr = std::unique_ptr<tbb::task_scheduler_init>{new tbb::task_scheduler_init{static_cast<int>(iNThreads),iStackSize}};
+    edm::LogInfo("ThreadSetup") <<"setting # threads "<<iNThreads;
+
+    return iNThreads;
   }
 }
 
@@ -124,13 +124,13 @@ int main(int argc, char* argv[]) {
   // may be using TBB.
   bool setNThreadsOnCommandLine = false;
   std::unique_ptr<tbb::task_scheduler_init> tsiPtr{new tbb::task_scheduler_init{1}};
-  boost::shared_ptr<edm::Presence> theMessageServicePresence;
+  std::shared_ptr<edm::Presence> theMessageServicePresence;
   std::unique_ptr<std::ofstream> jobReportStreamPtr;
-  boost::shared_ptr<edm::serviceregistry::ServiceWrapper<edm::JobReport> > jobRep;
+  std::shared_ptr<edm::serviceregistry::ServiceWrapper<edm::JobReport> > jobRep;
   EventProcessorWithSentry proc;
 
   try {
-    try {
+    returnCode = edm::convertException::wrap([&]()->int {
 
       // NOTE: MacOs X has a lower rlimit for opened file descriptor than Linux (256
       // in Snow Leopard vs 512 in SLC5). This is a problem for some of the workflows
@@ -166,11 +166,11 @@ int main(int argc, char* argv[]) {
       // Load the message service plug-in
 
       if(multiThreadML) {
-        theMessageServicePresence = boost::shared_ptr<edm::Presence>(edm::PresenceFactory::get()->
+        theMessageServicePresence = std::shared_ptr<edm::Presence>(edm::PresenceFactory::get()->
           makePresence("MessageServicePresence").release());
       }
       else {
-        theMessageServicePresence = boost::shared_ptr<edm::Presence>(edm::PresenceFactory::get()->
+        theMessageServicePresence = std::shared_ptr<edm::Presence>(edm::PresenceFactory::get()->
           makePresence("SingleThreadMSPresence").release());
       }
 
@@ -232,14 +232,15 @@ int main(int argc, char* argv[]) {
         return 0;
       }
       
+      unsigned int nThreadsOnCommandLine{0};
       if(vm.count(kNumberOfThreadsOpt)) {
         setNThreadsOnCommandLine=true;
         unsigned int nThreads = vm[kNumberOfThreadsOpt].as<unsigned int>();
-        unsigned int stackSize=0;
+        unsigned int stackSize=kDefaultSizeOfStackForThreadsInKB;
         if(vm.count(kSizeOfStackForThreadOpt)) {
-	  stackSize=vm[kSizeOfStackForThreadOpt].as<unsigned int>();
-	}
-        setNThreads(nThreads,stackSize,tsiPtr);
+          stackSize=vm[kSizeOfStackForThreadOpt].as<unsigned int>();
+        }
+        nThreadsOnCommandLine=setNThreads(nThreads,stackSize,tsiPtr);
       }
 
       if (!vm.count(kParameterSetOpt)) {
@@ -275,9 +276,9 @@ int main(int argc, char* argv[]) {
 
       context = "Processing the python configuration file named ";
       context += fileName;
-      boost::shared_ptr<edm::ProcessDesc> processDesc;
+      std::shared_ptr<edm::ProcessDesc> processDesc;
       try {
-        boost::shared_ptr<edm::ParameterSet> parameterSet = edm::readConfig(fileName, argc, argv);
+        std::shared_ptr<edm::ParameterSet> parameterSet = edm::readConfig(fileName, argc, argv);
         processDesc.reset(new edm::ProcessDesc(parameterSet));
       }
       catch(cms::Exception& iException) {
@@ -290,24 +291,38 @@ int main(int argc, char* argv[]) {
       context = "Setting up number of threads";
       {
         if(not setNThreadsOnCommandLine) {
-          boost::shared_ptr<edm::ParameterSet> pset = processDesc->getProcessPSet();
+          std::shared_ptr<edm::ParameterSet> pset = processDesc->getProcessPSet();
           if(pset->existsAs<edm::ParameterSet>("options",false)) {
             auto const& ops = pset->getUntrackedParameterSet("options");
             if(ops.existsAs<unsigned int>("numberOfThreads",false)) {
               unsigned int nThreads = ops.getUntrackedParameter<unsigned int>("numberOfThreads");
-	      unsigned int stackSize=0;
-	      if(ops.existsAs<unsigned int>("sizeOfStackForThreadsInKB",0)) {
-		stackSize = ops.getUntrackedParameter<unsigned int>("sizeOfStackForThreadsInKB");
-	      }
-              setNThreads(nThreads,stackSize,tsiPtr);
+              unsigned int stackSize=kDefaultSizeOfStackForThreadsInKB;
+              if(ops.existsAs<unsigned int>("sizeOfStackForThreadsInKB",false)) {
+                stackSize = ops.getUntrackedParameter<unsigned int>("sizeOfStackForThreadsInKB");
+              }
+              const auto nThreadsUsed = setNThreads(nThreads,stackSize,tsiPtr);
+              if(nThreadsUsed != nThreads) {
+                auto newOp = pset->getUntrackedParameterSet("options");
+                newOp.addUntrackedParameter<unsigned int>("numberOfThreads",nThreadsUsed);
+                pset->insertParameterSet(true,"options",edm::ParameterSetEntry(newOp,false));
+              }
             }
           }
+        } else {
+          //inject it into the top level ParameterSet
+          edm::ParameterSet newOp;
+          std::shared_ptr<edm::ParameterSet> pset = processDesc->getProcessPSet();
+          if(pset->existsAs<edm::ParameterSet>("options",false)) {
+            newOp = pset->getUntrackedParameterSet("options");
+          }
+          newOp.addUntrackedParameter<unsigned int>("numberOfThreads",nThreadsOnCommandLine);
+          pset->insertParameterSet(true,"options",edm::ParameterSetEntry(newOp,false));
         }
       }
 
       context = "Initializing default service configurations";
       std::vector<std::string> defaultServices;
-      defaultServices.reserve(7);
+      defaultServices.reserve(8);
       defaultServices.push_back("MessageLogger");
       defaultServices.push_back("InitRootHandlers");
 #ifdef linux
@@ -317,6 +332,9 @@ int main(int argc, char* argv[]) {
       defaultServices.push_back("AdaptorConfig");
       defaultServices.push_back("SiteLocalConfigService");
       defaultServices.push_back("StatisticsSenderService");
+      // This default is disabled pending widespread testing.  See conversation
+      // in PR #10056
+      //defaultServices.push_back("CondorStatusService");
 
       // Default parameters will be used for the default services
       // if they are not overridden from the configuration files.
@@ -358,26 +376,8 @@ int main(int argc, char* argv[]) {
 
       context = "Calling endJob";
       proc->endJob();
-    }
-    catch (cms::Exception& e) {
-      throw;
-    }
-    // The functions in the following catch blocks throw an edm::Exception
-    catch(std::bad_alloc& bda) {
-      edm::convertException::badAllocToEDM();
-    }
-    catch (std::exception& e) {
-      edm::convertException::stdToEDM(e);
-    }
-    catch(std::string& s) {
-      edm::convertException::stringToEDM(s);
-    }
-    catch(char const* c) {
-      edm::convertException::charPtrToEDM(c);
-    }
-    catch (...) {
-      edm::convertException::unknownToEDM();
-    }
+      return returnCode;
+    });
   }
   // All exceptions which are not handled before propagating
   // into main will get caught here.

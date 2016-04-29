@@ -130,10 +130,10 @@ namespace
 
 PFRecoTauChargedHadronFromTrackPlugin::return_type PFRecoTauChargedHadronFromTrackPlugin::operator()(const reco::PFJet& jet) const 
 {
-  //if ( verbosity_ ) {
-  //  std::cout << "<PFRecoTauChargedHadronFromTrackPlugin::operator()>:" << std::endl;
-  //  std::cout << " pluginName = " << name() << std::endl;
-  //}
+  if ( verbosity_ ) {
+    edm::LogPrint("TauChHFromTrack") << "<PFRecoTauChargedHadronFromTrackPlugin::operator()>:" ;
+    edm::LogPrint("TauChHFromTrack") << " pluginName = " << name() ;
+  }
 
   ChargedHadronVector output;
 
@@ -143,13 +143,14 @@ PFRecoTauChargedHadronFromTrackPlugin::return_type PFRecoTauChargedHadronFromTra
   evt.getByToken(Tracks_token, tracks);
 
   qcuts_->setPV(vertexAssociator_.associatedVertex(jet));
-
+  float jEta=jet.eta();
+  float jPhi=jet.phi();
   size_t numTracks = tracks->size();
   for ( size_t iTrack = 0; iTrack < numTracks; ++iTrack ) {
     reco::TrackRef track(tracks, iTrack);
 
     // consider tracks in vicinity of tau-jet candidate only
-    double dR = deltaR(track->eta(), track->phi(), jet.eta(), jet.phi());
+    double dR = deltaR(track->eta(), track->phi(), jEta,jPhi);
     double dRmatch = dRcone_;
     if ( dRconeLimitedToJetArea_ ) {
       double jetArea = jet.jetArea();
@@ -246,9 +247,9 @@ PFRecoTauChargedHadronFromTrackPlugin::return_type PFRecoTauChargedHadronFromTra
 
     setChargedHadronP4(*chargedHadron);
 
-    //if ( verbosity_ ) {
-    //  chargedHadron->print(std::cout);
-    //}
+    if ( verbosity_ ) {
+      edm::LogPrint("TauChHFromTrack") << *chargedHadron;
+    }
 
     output.push_back(chargedHadron);
   }

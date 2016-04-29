@@ -6,15 +6,17 @@
 
 // framework include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+
 class PFCandidate;
 
-class FSPFProducer : public edm::EDProducer {
+class FSPFProducer : public edm::stream::EDProducer <> {
  public:
   explicit FSPFProducer(const edm::ParameterSet&);
   ~FSPFProducer();
@@ -33,7 +35,8 @@ class FSPFProducer : public edm::EDProducer {
   std::vector<double> EM_HF_ScaleFactor;
   
   double energy_threshold(double eta);
-  
+
+  edm::EDGetTokenT<reco::PFCandidateCollection> pfCandidateToken;
 };
 
 #endif

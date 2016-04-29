@@ -1,18 +1,25 @@
 #include "CondFormats/Alignment/interface/Alignments.h"
-#include "CondFormats/Alignment/interface/AlignmentErrors.h"
+#include "CondFormats/Alignment/interface/AlignmentErrorsExtended.h"
 #include "CondFormats/Alignment/interface/AlignmentSurfaceDeformations.h" 
 #include "CondFormats/Alignment/interface/Definitions.h" 
 #include "CLHEP/Vector/RotationInterfaces.h" 
 #include "CondFormats/Alignment/interface/AlignmentSorter.h"
 #include "CondFormats/AlignmentRecord/interface/TrackerSurveyRcd.h"
-#include "CondFormats/AlignmentRecord/interface/TrackerSurveyErrorRcd.h"
+#include "CondFormats/AlignmentRecord/interface/TrackerSurveyErrorExtendedRcd.h"
 #include "CondFormats/AlignmentRecord/interface/TrackerAlignmentRcd.h"
-#include "CondFormats/AlignmentRecord/interface/TrackerAlignmentErrorRcd.h"
+#include "CondFormats/AlignmentRecord/interface/TrackerAlignmentErrorExtendedRcd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESTransientHandle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+
+#include "FWCore/Utilities/interface/InputTag.h"
+
+#include "CondFormats/SiPixelObjects/interface/SiPixelQuality.h" 
+#include "CondFormats/DataRecord/interface/SiPixelQualityRcd.h" 
+#include "CalibFormats/SiStripObjects/interface/SiStripQuality.h" 
+#include "CalibTracker/Records/interface/SiStripQualityRcd.h" 
 
 #include "Alignment/CommonAlignment/interface/AlignableObjectId.h"
 #include "Geometry/CommonTopologies/interface/SurfaceDeformationFactory.h"
@@ -45,14 +52,13 @@
 //#include "Geometry/Records/interface/PGeometricDetRcd.h"
 
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-#include "Geometry/Records/interface/IdealGeometryRecord.h"
+#include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
 #include <iostream>
 #include <fstream>
 #include <sstream> 
 
-TrackerGeometryCompare::TrackerGeometryCompare(const edm::ParameterSet& cfg) :
-  m_params( cfg ), 	
+TrackerGeometryCompare::TrackerGeometryCompare(const edm::ParameterSet& cfg) :	
   referenceTracker(0),
   dummyTracker(0),
   currentTracker(0),
@@ -60,6 +66,8 @@ TrackerGeometryCompare::TrackerGeometryCompare(const edm::ParameterSet& cfg) :
   theSurveyValues(0),
   theSurveyErrors(0),
   _commonTrackerLevel(align::invalid),
+  _moduleListFile(0),
+  _moduleList(0),
   _inputRootFile1(0),
   _inputRootFile2(0),
   _inputTree01(0),
@@ -72,6 +80,7 @@ TrackerGeometryCompare::TrackerGeometryCompare(const edm::ParameterSet& cfg) :
   firstEvent_(true),
   m_vtkmap(13)	 
 {
+	_moduleListName = cfg.getUntrackedParameter< std::string > ("moduleList");
 	
 	//input is ROOT
 	_inputFilename1 = cfg.getUntrackedParameter< std::string > ("inputROOTFile1");
@@ -139,6 +148,8 @@ TrackerGeometryCompare::TrackerGeometryCompare(const edm::ParameterSet& cfg) :
 	_theFile = new TFile(_filename.c_str(),"RECREATE");
 	_alignTree = new TTree("alignTree","alignTree");//,"id:level:mid:mlevel:sublevel:x:y:z:r:phi:a:b:c:dx:dy:dz:dr:dphi:da:db:dc");
 	_alignTree->Branch("id", &_id, "id/I");
+	_alignTree->Branch("badModuleQuality", &_badModuleQuality, "badModuleQuality/I");
+	_alignTree->Branch("inModuleList", &_inModuleList, "inModuleList/I");
 	_alignTree->Branch("level", &_level, "level/I");
 	_alignTree->Branch("mid", &_mid, "mid/I");
 	_alignTree->Branch("mlevel", &_mlevel, "mlevel/I");
@@ -230,7 +241,7 @@ void TrackerGeometryCompare::analyze(const edm::Event&, const edm::EventSetup& i
 
         //Retrieve tracker topology from geometry
         edm::ESHandle<TrackerTopology> tTopoHandle;
-        iSetup.get<IdealGeometryRecord>().get(tTopoHandle);
+        iSetup.get<TrackerTopologyRcd>().get(tTopoHandle);
         const TrackerTopology* const tTopo = tTopoHandle.product();
 
 	//upload the ROOT geometries
@@ -243,7 +254,7 @@ void TrackerGeometryCompare::analyze(const edm::Event&, const edm::EventSetup& i
 	}
 	
 	//compare the goemetries
-	compareGeometries(referenceTracker,currentTracker,tTopo);
+	compareGeometries(referenceTracker,currentTracker,tTopo,iSetup);
 	compareSurfaceDeformations(_inputTree11, _inputTree12); 
 	
 	//write out ntuple
@@ -251,7 +262,7 @@ void TrackerGeometryCompare::analyze(const edm::Event&, const edm::EventSetup& i
 	
 	if (_writeToDB){
 		Alignments* myAlignments = currentTracker->alignments();
-		AlignmentErrors* myAlignmentErrors = currentTracker->alignmentErrors();
+		AlignmentErrorsExtended* myAlignmentErrorsExtended = currentTracker->alignmentErrors();
 		
 		// 2. Store alignment[Error]s to DB
 		edm::Service<cond::service::PoolDBOutputService> poolDbService;
@@ -260,7 +271,7 @@ void TrackerGeometryCompare::analyze(const edm::Event&, const edm::EventSetup& i
 			throw cms::Exception("NotAvailable") << "PoolDBOutputService not available";
 		
 		poolDbService->writeOne<Alignments>(&(*myAlignments), poolDbService->beginOfTime(), "TrackerAlignmentRcd");
-		poolDbService->writeOne<AlignmentErrors>(&(*myAlignmentErrors), poolDbService->beginOfTime(), "TrackerAlignmentErrorRcd");
+		poolDbService->writeOne<AlignmentErrorsExtended>(&(*myAlignmentErrorsExtended), poolDbService->beginOfTime(), "TrackerAlignmentErrorExtendedRcd");
 		
 	}		
 
@@ -276,12 +287,25 @@ void TrackerGeometryCompare::createROOTGeometry(const edm::EventSetup& iSetup){
 		
 	//Retrieve tracker topology from geometry
 	edm::ESHandle<TrackerTopology> tTopoHandle;
-	iSetup.get<IdealGeometryRecord>().get(tTopoHandle);
+	iSetup.get<TrackerTopologyRcd>().get(tTopoHandle);
 	const TrackerTopology* const tTopo = tTopoHandle.product();
 
+	// Fill module IDs from file into a list
+	_moduleListFile.open(_moduleListName);
+	if (_moduleListFile.is_open()){
+		std::string line;
+		while(!_moduleListFile.eof()){
+			std::getline(_moduleListFile,line);
+			_moduleList.push_back(std::atoi(line.c_str()));	
+		}
+	}
+	else{
+		std::cout << "Error: Module list not found! Please verify that given list exists!" << std::endl;
+	} 
+	
 	//declare alignments
 	Alignments* alignments1 = new Alignments();
-	AlignmentErrors* alignmentErrors1 = new AlignmentErrors();	
+	AlignmentErrorsExtended* alignmentErrors1 = new AlignmentErrorsExtended();	
 	if (_inputFilename1 != "IDEAL"){
 		_inputRootFile1 = new TFile(_inputFilename1.c_str());
 		TTree* _inputTree01 = (TTree*) _inputRootFile1->Get(_inputTreenameAlign.c_str());
@@ -306,17 +330,17 @@ void TrackerGeometryCompare::createROOTGeometry(const edm::EventSetup& iSetup){
 			
 			//dummy errors
 			CLHEP::HepSymMatrix clhepSymMatrix(3,0);
-			AlignTransformError transformError(clhepSymMatrix, detid1);
+			AlignTransformErrorExtended transformError(clhepSymMatrix, detid1);
 			alignmentErrors1->m_alignError.push_back(transformError);
 		}		
 		
 		// to get the right order
 		std::sort( alignments1->m_align.begin(), alignments1->m_align.end(), lessAlignmentDetId<AlignTransform>() );
-		std::sort( alignmentErrors1->m_alignError.begin(), alignmentErrors1->m_alignError.end(), lessAlignmentDetId<AlignTransformError>() );
+		std::sort( alignmentErrors1->m_alignError.begin(), alignmentErrors1->m_alignError.end(), lessAlignmentDetId<AlignTransformErrorExtended>() );
 	}
 	//------------------
 	Alignments* alignments2 = new Alignments();
-	AlignmentErrors* alignmentErrors2 = new AlignmentErrors();
+	AlignmentErrorsExtended* alignmentErrors2 = new AlignmentErrorsExtended();
 	if (_inputFilename2 != "IDEAL"){	
 		_inputRootFile2 = new TFile(_inputFilename2.c_str());
 		TTree* _inputTree02 = (TTree*) _inputRootFile2->Get(_inputTreenameAlign.c_str());
@@ -341,13 +365,13 @@ void TrackerGeometryCompare::createROOTGeometry(const edm::EventSetup& iSetup){
 			
 			//dummy errors
 			CLHEP::HepSymMatrix clhepSymMatrix(3,0);
-			AlignTransformError transformError(clhepSymMatrix, detid2);
+			AlignTransformErrorExtended transformError(clhepSymMatrix, detid2);
 			alignmentErrors2->m_alignError.push_back(transformError); 
 		}			
 		
 		//to get the right order
 		std::sort( alignments2->m_align.begin(), alignments2->m_align.end(), lessAlignmentDetId<AlignTransform>() );
-		std::sort( alignmentErrors2->m_alignError.begin(), alignmentErrors2->m_alignError.end(), lessAlignmentDetId<AlignTransformError>() );
+		std::sort( alignmentErrors2->m_alignError.begin(), alignmentErrors2->m_alignError.end(), lessAlignmentDetId<AlignTransformErrorExtended>() );
 	}
 	
 	//accessing the initial geometry
@@ -355,13 +379,15 @@ void TrackerGeometryCompare::createROOTGeometry(const edm::EventSetup& iSetup){
 	iSetup.get<IdealGeometryRecord>().get(cpv);
 	edm::ESHandle<GeometricDet> theGeometricDet;
 	iSetup.get<IdealGeometryRecord>().get(theGeometricDet);
+	edm::ESHandle<PTrackerParameters> ptp;
+	iSetup.get<PTrackerParametersRcd>().get( ptp );
 	TrackerGeomBuilderFromGeometricDet trackerBuilder;
 	
 	edm::ESHandle<Alignments> globalPositionRcd;
 	iSetup.get<TrackerDigiGeometryRecord>().getRecord<GlobalPositionRcd>().get(globalPositionRcd);
 	
 	//reference tracker
-	TrackerGeometry* theRefTracker = trackerBuilder.build(&*theGeometricDet, m_params); 
+	TrackerGeometry* theRefTracker = trackerBuilder.build(&*theGeometricDet, *ptp); 
 	if (_inputFilename1 != "IDEAL"){
 		GeometryAligner aligner1;
 		aligner1.applyAlignments<TrackerGeometry>( &(*theRefTracker), &(*alignments1), &(*alignmentErrors1),
@@ -402,7 +428,7 @@ void TrackerGeometryCompare::createROOTGeometry(const edm::EventSetup& iSetup){
 	}
 		
 	//currernt tracker
-	TrackerGeometry* theCurTracker = trackerBuilder.build(&*theGeometricDet,m_params); 
+	TrackerGeometry* theCurTracker = trackerBuilder.build(&*theGeometricDet, *ptp); 
 	if (_inputFilename2 != "IDEAL"){
 		GeometryAligner aligner2;
 		aligner2.applyAlignments<TrackerGeometry>( &(*theCurTracker), &(*alignments2), &(*alignmentErrors2),
@@ -583,7 +609,7 @@ void TrackerGeometryCompare::compareSurfaceDeformations(TTree* refTree, TTree* c
   return ; 	
 }
 
-void TrackerGeometryCompare::compareGeometries(Alignable* refAli, Alignable* curAli, const TrackerTopology* tTopo){
+void TrackerGeometryCompare::compareGeometries(Alignable* refAli, Alignable* curAli, const TrackerTopology* tTopo, const edm::EventSetup& iSetup){
 
 	using namespace align ; 
 	
@@ -647,12 +673,12 @@ void TrackerGeometryCompare::compareGeometries(Alignable* refAli, Alignable* cur
 		TRtot(7) = lRtotal.x(); TRtot(8) = lRtotal.y(); TRtot(9) = lRtotal.z();
 		TRtot(10) = lWtotal.x(); TRtot(11) = lWtotal.y(); TRtot(12) = lWtotal.z();
 
-		fillTree(refAli, TRtot, tTopo);
+		fillTree(refAli, TRtot, tTopo, iSetup);
 	}
 
 	// another added level for difference between det and detunit
 	for (unsigned int i = 0; i < nComp; ++i) 
-	  compareGeometries(refComp[i],curComp[i],tTopo);	
+	  compareGeometries(refComp[i],curComp[i],tTopo,iSetup);	
 
 }
 
@@ -753,9 +779,36 @@ void TrackerGeometryCompare::diffCommonTrackerSystem(Alignable *refAli, Alignabl
 	
 }
 
-void TrackerGeometryCompare::fillTree(Alignable *refAli, const AlgebraicVector& diff, const TrackerTopology* tTopo){
+void TrackerGeometryCompare::fillTree(Alignable *refAli, const AlgebraicVector& diff, const TrackerTopology* tTopo,  const edm::EventSetup& iSetup){
+	
+	//Get bad modules
+	edm::ESHandle<SiPixelQuality> SiPixelModules;
+	iSetup.get<SiPixelQualityRcd>().get(SiPixelModules);
+	edm::ESHandle<SiStripQuality> SiStripModules;
+	iSetup.get<SiStripQualityRcd>().get(SiStripModules);
 	
 	_id = refAli->id();
+	
+	_badModuleQuality = 0;
+	//check if module has a bad quality tag
+	if (SiPixelModules->IsModuleBad(_id)){
+		_badModuleQuality = 1;
+		
+	}
+	if (SiStripModules->IsModuleBad(_id)){
+		_badModuleQuality = 1;		
+	}
+	
+	//check if module is in a given list of bad/untouched etc. modules
+	_inModuleList = 0;
+	for (unsigned int i = 0 ; i< _moduleList.size(); i++){
+		if ( _moduleList[i] == _id)
+		{
+			_inModuleList = 1;
+			break;
+		}
+	}
+	
 	_level = refAli->alignableObjectId();
 	//need if ali has no mother
 	if (refAli->mother()){
@@ -835,7 +888,7 @@ void TrackerGeometryCompare::fillTree(Alignable *refAli, const AlgebraicVector& 
 	
 }
 
-void TrackerGeometryCompare::surveyToTracker(AlignableTracker* ali, Alignments* alignVals, AlignmentErrors* alignErrors){
+void TrackerGeometryCompare::surveyToTracker(AlignableTracker* ali, Alignments* alignVals, AlignmentErrorsExtended* alignErrors){
 	
 	//getting the right alignables for the alignment record
 	std::vector<Alignable*> detPB = ali->pixelHalfBarrelGeomDets();
@@ -876,14 +929,14 @@ void TrackerGeometryCompare::surveyToTracker(AlignableTracker* ali, Alignments* 
 		CLHEP::Hep3Vector clhepVector(pos.x(),pos.y(),pos.z());
 		CLHEP::HepRotation clhepRotation( CLHEP::HepRep3x3(rot.xx(),rot.xy(),rot.xz(),rot.yx(),rot.yy(),rot.yz(),rot.zx(),rot.zy(),rot.zz()));
 		AlignTransform transform(clhepVector, clhepRotation, (*k)->id());
-		AlignTransformError transformError(CLHEP::HepSymMatrix(3,1), (*k)->id());
+		AlignTransformErrorExtended transformError(CLHEP::HepSymMatrix(3,1), (*k)->id());
 		alignVals->m_align.push_back(transform);
 		alignErrors->m_alignError.push_back(transformError);
 	}
 	
 	//to get the right order
 	std::sort( alignVals->m_align.begin(), alignVals->m_align.end(), lessAlignmentDetId<AlignTransform>() );
-	std::sort( alignErrors->m_alignError.begin(), alignErrors->m_alignError.end(), lessAlignmentDetId<AlignTransformError>() );
+	std::sort( alignErrors->m_alignError.begin(), alignErrors->m_alignError.end(), lessAlignmentDetId<AlignTransformErrorExtended>() );
 	
 }
 

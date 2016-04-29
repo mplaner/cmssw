@@ -5,7 +5,6 @@
 #define CalibratedPatElectronProducer_h
 
 #include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Common/interface/EDProduct.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -40,6 +39,7 @@ class CalibratedPatElectronProducer: public edm::EDProducer
         std::string combinationRegressionInputPath;
         std::string scaleCorrectionsInputPath;
         std::string linCorrectionsInputPath;
+	bool applyExtraHighEnergyProtection;
 
         ElectronEnergyCalibrator *theEnCorrector;
         EpCombinationTool *myEpCombinationTool;

@@ -9,10 +9,7 @@
 #include "DataFormats/Provenance/interface/ProcessHistory.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 
-// This is very ugly, but I am told OK for white box  unit tests 
-#define private public
 #include "DataFormats/Provenance/interface/IndexIntoFile.h"
-#undef private
 
 #include <string>
 #include <iostream>
@@ -346,7 +343,7 @@ void TestIndexIntoFile2::testAddEntryAndFixAndSort() {
   ptr->push_back(4);
   ptr->push_back(8);
 
-  boost::shared_ptr<IndexIntoFile::EventFinder> shptr(ptr);
+  std::shared_ptr<IndexIntoFile::EventFinder> shptr(ptr);
   indexIntoFile.setEventFinder(shptr);
 
   indexIntoFile.fillEventNumbers();

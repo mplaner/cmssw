@@ -20,6 +20,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "TClass.h"
 
 #include <algorithm>
 #include <cstring>
@@ -35,10 +36,19 @@ namespace edm {
 
   static
   void
-  maybeThrowMissingDictionaryException(TypeID const& productType, bool isElement, std::vector<std::string> const& missingDictionaries) {
-    if(binary_search_all(missingDictionaries, productType.className())) {
-      checkDictionaries(isElement ? productType.className() : wrappedClassName(productType.className()), false);
-      throwMissingDictionariesException();
+  maybeThrowMissingDictionaryException(TypeID const& productType, bool isElement, std::vector<TypeID> const& missingDictionaries) {
+    if(isElement) {
+      if(binary_search_all(missingDictionaries, productType)) {
+        checkTypeDictionary(productType);
+        throwMissingDictionariesException();
+      }
+    } else {
+      TClass* cl = TClass::GetClass(wrappedClassName(productType.className()).c_str());
+      TypeID wrappedProductType = TypeID(cl->GetTypeInfo());
+      if(binary_search_all(missingDictionaries, wrappedProductType)) {
+        checkClassDictionary(wrappedProductType);
+        throwMissingDictionariesException();
+      }
     }
   }
 
@@ -60,7 +70,7 @@ namespace edm {
   std::shared_ptr<cms::Exception>
   makeNotFoundException(char const* where, KindOfType kindOfType,
                         TypeID const& productType, std::string const& label, std::string const& instance, std::string const& process) {
-    std::shared_ptr<cms::Exception> exception(new Exception(errors::ProductNotFound));
+    std::shared_ptr<cms::Exception> exception = std::make_shared<Exception>(errors::ProductNotFound);
     if (kindOfType == PRODUCT_TYPE) {
       *exception << "Principal::" << where << ": Found zero products matching all criteria\nLooking for type: " << productType << "\n"
                  << "Looking for module label: " << label << "\n" << "Looking for productInstanceName: " << instance << "\n"
@@ -100,7 +110,10 @@ namespace edm {
 
   namespace {
     void failedToRegisterConsumesMany(edm::TypeID const& iType) {
-      LogInfo("GetManyWithoutRegistration")<<"::getManyByType called for "<<iType<<" without a corresponding consumesMany being called for this module. \n";
+      cms::Exception exception("GetManyWithoutRegistration");
+      exception << "::getManyByType called for " << iType
+                << " without a corresponding consumesMany being called for this module. \n";
+      throw exception;
     }
     
     void failedToRegisterConsumes(KindOfType kindOfType,
@@ -108,11 +121,13 @@ namespace edm {
                                   std::string const& moduleLabel,
                                   std::string const& productInstanceName,
                                   std::string const& processName) {
-      LogInfo("GetByLabelWithoutRegistration")<<"::getByLabel without corresponding call to consumes or mayConsumes for this module.\n"
-      << (kindOfType == PRODUCT_TYPE ? "  type: " : " type: edm::Veiw<")<<productType
-      << (kindOfType == PRODUCT_TYPE ? "\n  module label: " : ">\n  module label: ")<<moduleLabel
-      <<"\n  product instance name: '"<<productInstanceName
-      <<"'\n  process name: '"<<processName<<"'\n";
+      cms::Exception exception("GetByLabelWithoutRegistration");
+      exception << "::getByLabel without corresponding call to consumes or mayConsumes for this module.\n"
+                << (kindOfType == PRODUCT_TYPE ? "  type: " : " type: edm::View<") << productType
+                << (kindOfType == PRODUCT_TYPE ? "\n  module label: " : ">\n  module label: ") << moduleLabel
+                <<"\n  product instance name: '" << productInstanceName
+                <<"'\n  process name: '" << processName << "'\n";
+      throw exception;
     }
 }
 
@@ -122,8 +137,8 @@ namespace edm {
     return s_nextIdentifier.fetch_add(1,std::memory_order_acq_rel);
   }
   
-  Principal::Principal(boost::shared_ptr<ProductRegistry const> reg,
-                       boost::shared_ptr<ProductHolderIndexHelper const> productLookup,
+  Principal::Principal(std::shared_ptr<ProductRegistry const> reg,
+                       std::shared_ptr<ProductHolderIndexHelper const> productLookup,
                        ProcessConfiguration const& pc,
                        BranchType bt,
                        HistoryAppender* historyAppender) :
@@ -155,7 +170,7 @@ namespace edm {
         if(bd.isAlias()) {
           hasAliases = true;
         } else {
-          boost::shared_ptr<BranchDescription const> cbd(new BranchDescription const(bd));
+          auto cbd = std::make_shared<BranchDescription const>(bd);
           if(bd.produced()) {
             if(bd.moduleLabel() == source) {
               addSourceProduct(cbd);
@@ -176,7 +191,7 @@ namespace edm {
       for(auto const& prod : prodsList) {
         BranchDescription const& bd = prod.second;
         if(bd.isAlias() && bd.branchType() == branchType_) {
-          boost::shared_ptr<BranchDescription const> cbd(new BranchDescription const(bd));
+          auto cbd = std::make_shared<BranchDescription const>(bd);
           addAliasedProduct(cbd);
         }
       }
@@ -202,7 +217,7 @@ namespace edm {
           ProductHolderIndexHelper::IndexAndNames const& product = indexAndNames.at(i);
           if (product.startInProcessNames() == 0) {
             if (productHolderIndex != ProductHolderIndexInvalid) {
-              boost::shared_ptr<ProductHolderBase> newHolder(new NoProcessProductHolder(matchingHolders, ambiguous, this));
+              std::shared_ptr<ProductHolderBase> newHolder = std::make_shared<NoProcessProductHolder>(matchingHolders, ambiguous, this);
               productHolders_.at(productHolderIndex) = newHolder;
               matchingHolders.assign(lookupProcessNames.size(), ProductHolderIndexInvalid);
               ambiguous.assign(lookupProcessNames.size(), false);
@@ -223,7 +238,7 @@ namespace edm {
           }
         }
       }
-      boost::shared_ptr<ProductHolderBase> newHolder(new NoProcessProductHolder(matchingHolders, ambiguous, this));
+      std::shared_ptr<ProductHolderBase> newHolder = std::make_shared<NoProcessProductHolder>(matchingHolders, ambiguous, this);
       productHolders_.at(productHolderIndex) = newHolder;
     }
   }
@@ -255,7 +270,7 @@ namespace edm {
     for(auto const& prod : prodsList) {
       BranchDescription const& bd = prod.second;
       if(!bd.produced() && (bd.branchType() == branchType_)) {
-        boost::shared_ptr<BranchDescription const> cbd(new BranchDescription const(bd));
+        auto cbd = std::make_shared<BranchDescription const>(bd);
         ProductHolderBase* phb = getExistingProduct(cbd->branchID());
         if(phb == nullptr || phb->branchDescription().branchName() != cbd->branchName()) {
             return false;
@@ -267,31 +282,31 @@ namespace edm {
   }
 
   void
-  Principal::addScheduledProduct(boost::shared_ptr<BranchDescription const> bd) {
+  Principal::addScheduledProduct(std::shared_ptr<BranchDescription const> bd) {
     std::auto_ptr<ProductHolderBase> phb(new ScheduledProductHolder(bd));
     addProductOrThrow(phb);
   }
 
   void
-  Principal::addSourceProduct(boost::shared_ptr<BranchDescription const> bd) {
+  Principal::addSourceProduct(std::shared_ptr<BranchDescription const> bd) {
     std::auto_ptr<ProductHolderBase> phb(new SourceProductHolder(bd));
     addProductOrThrow(phb);
   }
 
   void
-  Principal::addInputProduct(boost::shared_ptr<BranchDescription const> bd) {
+  Principal::addInputProduct(std::shared_ptr<BranchDescription const> bd) {
     std::auto_ptr<ProductHolderBase> phb(new InputProductHolder(bd, this));
     addProductOrThrow(phb);
   }
 
   void
-  Principal::addUnscheduledProduct(boost::shared_ptr<BranchDescription const> bd) {
+  Principal::addUnscheduledProduct(std::shared_ptr<BranchDescription const> bd) {
     std::auto_ptr<ProductHolderBase> phb(new UnscheduledProductHolder(bd, this));
     addProductOrThrow(phb);
   }
 
   void
-  Principal::addAliasedProduct(boost::shared_ptr<BranchDescription const> bd) {
+  Principal::addAliasedProduct(std::shared_ptr<BranchDescription const> bd) {
     ProductHolderIndex index = preg_->indexFrom(bd->originalBranchID());
     assert(index != ProductHolderIndexInvalid);
 
@@ -315,7 +330,7 @@ namespace edm {
   Principal::deleteProduct(BranchID const& id) {
     ProductHolderBase* phb = getExistingProduct(id);
     assert(nullptr != phb);
-    auto itFound = productPtrs_.find(phb->product().get());
+    auto itFound = productPtrs_.find(phb->product());
     if(itFound != productPtrs_.end()) {
       productPtrs_.erase(itFound);
     } 
@@ -341,12 +356,12 @@ namespace edm {
       processHistoryID_ = processHistoryPtr_->id();
     }
     else {
-      boost::shared_ptr<ProcessHistory const> inputProcessHistory;
+      std::shared_ptr<ProcessHistory const> inputProcessHistory;
       if (hist.isValid()) {
         //does not own the pointer
         auto noDel =[](void const*){};
         inputProcessHistory =
-        boost::shared_ptr<ProcessHistory const>(processHistoryRegistry.getMapped(hist),noDel);
+        std::shared_ptr<ProcessHistory const>(processHistoryRegistry.getMapped(hist),noDel);
         if (inputProcessHistory.get() == nullptr) {
           throw Exception(errors::LogicError)
             << "Principal::fillPrincipal\n"
@@ -355,7 +370,7 @@ namespace edm {
         }
       } else {
         //Since this is static we don't want it deleted
-        inputProcessHistory = boost::shared_ptr<ProcessHistory const>(&s_emptyProcessHistory,[](void const*){});
+        inputProcessHistory = std::shared_ptr<ProcessHistory const>(&s_emptyProcessHistory,[](void const*){});
       }
       processHistoryID_ = hist;
       processHistoryPtr_ = inputProcessHistory;        
@@ -390,7 +405,17 @@ namespace edm {
   ProductHolderBase*
   Principal::getExistingProduct(ProductHolderBase const& productHolder) {
     ProductHolderBase* phb = getExistingProduct(productHolder.branchDescription().branchID());
-    assert(nullptr == phb || BranchKey(productHolder.branchDescription()) == BranchKey(phb->branchDescription()));
+    if(nullptr != phb && BranchKey(productHolder.branchDescription()) != BranchKey(phb->branchDescription())) {
+      BranchDescription const& newProduct = phb->branchDescription();
+      BranchDescription const& existing = productHolder.branchDescription();
+      if(newProduct.branchName() != existing.branchName() && newProduct.branchID() == existing.branchID()) {
+        throw cms::Exception("HashCollision") << "Principal::getExistingProduct\n" <<
+          " Branch " << newProduct.branchName() << " has same branch ID as branch " << existing.branchName() << "\n" <<
+          "Workaround: change process name or product instance name of " << newProduct.branchName() << "\n";
+      } else {
+        assert(nullptr == phb || BranchKey(productHolder.branchDescription()) == BranchKey(phb->branchDescription()));
+      }
+    }
     return phb;
   }
 
@@ -401,7 +426,7 @@ namespace edm {
     assert (!bd.friendlyClassName().empty());
     assert (!bd.moduleLabel().empty());
     assert (!bd.processName().empty());
-    SharedProductPtr phb(productHolder);
+    SharedProductPtr phb(productHolder.release());
 
     ProductHolderIndex index = preg_->indexFrom(bd.branchID());
     assert(index != ProductHolderIndexInvalid);
@@ -446,9 +471,10 @@ namespace edm {
                         TypeID const& typeID,
                         InputTag const& inputTag,
                         EDConsumerBase const* consumer,
+                        SharedResourcesAcquirer* sra,
                         ModuleCallingContext const* mcc) const {
 
-    ProductData const* result = findProductByLabel(kindOfType, typeID, inputTag, consumer, mcc);
+    ProductData const* result = findProductByLabel(kindOfType, typeID, inputTag, consumer, sra, mcc);
     if(result == 0) {
       return BasicHandle(makeHandleExceptionFactory([=]()->std::shared_ptr<cms::Exception> {
         return makeNotFoundException("getByLabel", kindOfType, typeID, inputTag.label(), inputTag.instance(), inputTag.process());
@@ -464,9 +490,10 @@ namespace edm {
                         std::string const& instance,
                         std::string const& process,
                         EDConsumerBase const* consumer,
+                        SharedResourcesAcquirer* sra,
                         ModuleCallingContext const* mcc) const {
 
-    ProductData const* result = findProductByLabel(kindOfType, typeID, label, instance, process,consumer, mcc);
+    ProductData const* result = findProductByLabel(kindOfType, typeID, label, instance, process,consumer, sra, mcc);
     if(result == 0) {
       return BasicHandle(makeHandleExceptionFactory([=]()->std::shared_ptr<cms::Exception> {
         return makeNotFoundException("getByLabel", kindOfType, typeID, label, instance, process);
@@ -476,17 +503,18 @@ namespace edm {
   }
 
   BasicHandle
-  Principal::getByToken(KindOfType kindOfType,
-                        TypeID const& typeID,
+  Principal::getByToken(KindOfType,
+                        TypeID const&,
                         ProductHolderIndex index,
                         bool skipCurrentProcess,
                         bool& ambiguous,
+                        SharedResourcesAcquirer* sra,
                         ModuleCallingContext const* mcc) const {
     assert(index !=ProductHolderIndexInvalid);
-    boost::shared_ptr<ProductHolderBase> const& productHolder = productHolders_[index];
+    std::shared_ptr<ProductHolderBase> const& productHolder = productHolders_[index];
     assert(0!=productHolder.get());
     ProductHolderBase::ResolveStatus resolveStatus;
-    ProductData const* productData = productHolder->resolveProduct(resolveStatus, skipCurrentProcess, mcc);
+    ProductData const* productData = productHolder->resolveProduct(resolveStatus, skipCurrentProcess, sra, mcc);
     if(resolveStatus == ProductHolderBase::Ambiguous) {
       ambiguous = true;
       return BasicHandle();
@@ -501,16 +529,17 @@ namespace edm {
   Principal::prefetch(ProductHolderIndex index,
                       bool skipCurrentProcess,
                       ModuleCallingContext const* mcc) const {
-    boost::shared_ptr<ProductHolderBase> const& productHolder = productHolders_.at(index);
+    std::shared_ptr<ProductHolderBase> const& productHolder = productHolders_.at(index);
     assert(0!=productHolder.get());
     ProductHolderBase::ResolveStatus resolveStatus;
-    productHolder->resolveProduct(resolveStatus, skipCurrentProcess, mcc);
+    productHolder->resolveProduct(resolveStatus, skipCurrentProcess, nullptr, mcc);
   }
 
   void
   Principal::getManyByType(TypeID const& typeID,
                            BasicHandleVec& results,
                            EDConsumerBase const* consumer,
+                           SharedResourcesAcquirer* sra,
                            ModuleCallingContext const* mcc) const {
 
     assert(results.empty());
@@ -562,7 +591,7 @@ namespace edm {
       if(!matches.isFullyResolved(i)) {
         if(!holders.empty()) {
           // Process the ones with a particular module label and instance
-          findProducts(holders, typeID, results, mcc);
+          findProducts(holders, typeID, results, sra, mcc);
           holders.clear();
         }
       } else {
@@ -573,15 +602,16 @@ namespace edm {
     }
     // Do not miss the last subset of products
     if(!holders.empty()) {
-      findProducts(holders, typeID, results, mcc);
+      findProducts(holders, typeID, results, sra, mcc);
     }
     return;
   }
 
   void
   Principal::findProducts(std::vector<ProductHolderBase const*> const& holders,
-                          TypeID const& typeID,
+                          TypeID const&,
                           BasicHandleVec& results,
+                          SharedResourcesAcquirer* sra,
                           ModuleCallingContext const* mcc) const {
 
     for (auto iter = processHistoryPtr_->rbegin(),
@@ -598,7 +628,7 @@ namespace edm {
           }
 
           ProductHolderBase::ResolveStatus resolveStatus;
-          ProductData const* productData = productHolder->resolveProduct(resolveStatus, false, mcc);
+          ProductData const* productData = productHolder->resolveProduct(resolveStatus, false, sra, mcc);
           if(productData) {
             // Skip product if not available.
             results.emplace_back(*productData);
@@ -613,6 +643,7 @@ namespace edm {
                                 TypeID const& typeID,
                                 InputTag const& inputTag,
                                 EDConsumerBase const* consumer,
+                                SharedResourcesAcquirer* sra,
                                 ModuleCallingContext const* mcc) const {
 
     bool skipCurrentProcess = inputTag.willSkipCurrentProcess();
@@ -650,10 +681,10 @@ namespace edm {
     }
 
     
-    boost::shared_ptr<ProductHolderBase> const& productHolder = productHolders_[index];
+    std::shared_ptr<ProductHolderBase> const& productHolder = productHolders_[index];
 
     ProductHolderBase::ResolveStatus resolveStatus;
-    ProductData const* productData = productHolder->resolveProduct(resolveStatus, skipCurrentProcess, mcc);
+    ProductData const* productData = productHolder->resolveProduct(resolveStatus, skipCurrentProcess, sra, mcc);
     if(resolveStatus == ProductHolderBase::Ambiguous) {
       throwAmbiguousException("findProductByLabel", typeID, inputTag.label(), inputTag.instance(), inputTag.process());
     }
@@ -667,6 +698,7 @@ namespace edm {
                                 std::string const& instance,
                                 std::string const& process,
                                 EDConsumerBase const* consumer,
+                                SharedResourcesAcquirer* sra,
                                 ModuleCallingContext const* mcc) const {
 
     ProductHolderIndex index = productLookup().index(kindOfType,
@@ -691,10 +723,10 @@ namespace edm {
       failedToRegisterConsumes(kindOfType,typeID,label,instance,process);
     }
     
-    boost::shared_ptr<ProductHolderBase> const& productHolder = productHolders_[index];
+    std::shared_ptr<ProductHolderBase> const& productHolder = productHolders_[index];
 
     ProductHolderBase::ResolveStatus resolveStatus;
-    ProductData const* productData = productHolder->resolveProduct(resolveStatus, false, mcc);
+    ProductData const* productData = productHolder->resolveProduct(resolveStatus, false, sra, mcc);
     if(resolveStatus == ProductHolderBase::Ambiguous) {
       throwAmbiguousException("findProductByLabel", typeID, label, instance, process);
     }
@@ -707,6 +739,7 @@ namespace edm {
       findProductByLabel(PRODUCT_TYPE,
                          typeID,
                          tag,
+                         nullptr,
                          nullptr,
                          mcc);
     return productData;
@@ -727,12 +760,12 @@ namespace edm {
     }
     if(getProd) {
       ProductHolderBase::ResolveStatus status;
-      phb->resolveProduct(status,false,mcc);
+      phb->resolveProduct(status,false,nullptr, mcc);
     }
     if(!phb->provenance() || (!phb->product() && !phb->productProvenancePtr())) {
       return OutputHandle();
     }
-    return OutputHandle(WrapperHolder(phb->product().get(), phb->productData().getInterface()), &phb->branchDescription(), phb->productProvenancePtr());
+    return OutputHandle(phb->product(), &phb->branchDescription(), phb->productProvenancePtr());
   }
 
   Provenance
@@ -745,7 +778,7 @@ namespace edm {
 
     if(phb->onDemand()) {
       ProductHolderBase::ResolveStatus status;
-      if(not phb->resolveProduct(status,false,mcc) ) {
+      if(not phb->resolveProduct(status,false, nullptr, mcc) ) {
         throwProductNotFoundException("getProvenance(onDemand)", errors::ProductNotFound, bid);
       }
     }
@@ -782,48 +815,60 @@ namespace edm {
     reader_->mergeReaders(other.reader());
   }
 
-  WrapperHolder
+  WrapperBase const*
   Principal::getIt(ProductID const&) const {
     assert(nullptr);
-    return WrapperHolder();
+    return nullptr;
+  }
+
+  WrapperBase const*
+  Principal::getThinnedProduct(ProductID const&, unsigned int&) const {
+    assert(nullptr);
+    return nullptr;
   }
 
   void
-  Principal::checkUniquenessAndType(WrapperOwningHolder const& prod, ProductHolderBase const* phb) const {
-    if(!prod.isValid()) return;
+  Principal::getThinnedProducts(ProductID const&,
+                                  std::vector<WrapperBase const*>&,
+                                  std::vector<unsigned int>&) const {
+    assert(nullptr);
+  }
+
+  void
+  Principal::checkUniquenessAndType(WrapperBase const* prod, ProductHolderBase const* phb) const {
+    if(prod == nullptr) return;
     // These are defensive checks against things that should never happen, but have.
     // Checks that the same physical product has not already been put into the event.
-    bool alreadyPresent = !productPtrs_.insert(prod.wrapper()).second;
+    bool alreadyPresent = !productPtrs_.insert(prod).second;
     if(alreadyPresent) {
-      phb->checkType(prod);
-      const_cast<WrapperOwningHolder&>(prod).reset();
+      phb->checkType(*prod);
       throwCorruptionException("checkUniquenessAndType", phb->branchDescription().branchName());
     }
     // Checks that the real type of the product matches the branch.
-    phb->checkType(prod);
+    phb->checkType(*prod);
   }
 
   void
-  Principal::putOrMerge(WrapperOwningHolder const& prod, ProductHolderBase const* phb) const {
+  Principal::putOrMerge(std::unique_ptr<WrapperBase> prod, ProductHolderBase const* phb) const {
     bool willBePut = phb->putOrMergeProduct();
     if(willBePut) {
-      checkUniquenessAndType(prod, phb);
-      phb->putProduct(prod);
+      checkUniquenessAndType(prod.get(), phb);
+      phb->putProduct(std::move(prod));
     } else {
-      phb->checkType(prod);
-      phb->mergeProduct(prod);
+      phb->checkType(*prod);
+      phb->mergeProduct(std::move(prod));
     }
   }
 
   void
-  Principal::putOrMerge(WrapperOwningHolder const& prod, ProductProvenance& prov, ProductHolderBase* phb) {
+  Principal::putOrMerge(std::unique_ptr<WrapperBase> prod, ProductProvenance& prov, ProductHolderBase* phb) {
     bool willBePut = phb->putOrMergeProduct();
     if(willBePut) {
-      checkUniquenessAndType(prod, phb);
-      phb->putProduct(prod, prov);
+      checkUniquenessAndType(prod.get(), phb);
+      phb->putProduct(std::move(prod), prov);
     } else {
-      phb->checkType(prod);
-      phb->mergeProduct(prod, prov);
+      phb->checkType(*prod);
+      phb->mergeProduct(std::move(prod), prov);
     }
   }
 
@@ -839,7 +884,7 @@ namespace edm {
           if(!productHolders_[index]) {
             // no product holder.  Must add one. The new entry must be an input product holder.
             assert(!bd.produced());
-            boost::shared_ptr<BranchDescription const> cbd(new BranchDescription const(bd));
+            auto cbd = std::make_shared<BranchDescription const>(bd);
             addInputProduct(cbd);
           }
         }

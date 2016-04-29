@@ -1,6 +1,7 @@
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
@@ -40,6 +41,12 @@ HitTripletProducer::HitTripletProducer(const edm::ParameterSet& conf)
   edm::LogInfo("HitTripletProducer")<<" CTOR";
   hCPU = new TH1D ("hCPU","hCPU",140,0.,0.070);
   hNum = new TH1D ("hNum","hNum",250,0.,500.);
+
+  edm::ParameterSet orderedPSet =
+      theConfig.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet");
+  std::string orderedName = orderedPSet.getParameter<std::string>("ComponentName");
+  edm::ConsumesCollector iC = consumesCollector();
+  theGenerator = OrderedHitsGeneratorFactory::get()->create( orderedName, orderedPSet, iC);
 }
 
 HitTripletProducer::~HitTripletProducer() 
@@ -56,11 +63,6 @@ HitTripletProducer::~HitTripletProducer()
 void HitTripletProducer::init(const edm::EventSetup& es)
 {
   std::cout << "INIT called" << std::endl;
-  edm::ParameterSet orderedPSet =
-      theConfig.getParameter<edm::ParameterSet>("OrderedHitsFactoryPSet");
-  std::string orderedName = orderedPSet.getParameter<std::string>("ComponentName");
-  theGenerator = OrderedHitsGeneratorFactory::get()->create( orderedName, orderedPSet);
-
   edm::ParameterSet regfactoryPSet =
       theConfig.getParameter<edm::ParameterSet>("RegionFactoryPSet");
   std::string regfactoryName = regfactoryPSet.getParameter<std::string>("ComponentName");
@@ -79,7 +81,7 @@ void HitTripletProducer::analyze(
 
 //  GlobalTrackingRegion region;
 
-  typedef std::vector<TrackingRegion* > Regions;
+  typedef std::vector<std::unique_ptr<TrackingRegion> > Regions;
   Regions regions = theRegionProducer->regions(ev,es);
   const TrackingRegion & region = *regions[0];
 
@@ -91,6 +93,8 @@ void HitTripletProducer::analyze(
 //  hCPU->Fill( timer.lastMeasurement().real() );
   hNum->Fill(triplets.size());
   edm::LogInfo("HitTripletProducer") << "size of triplets: "<<triplets.size();
+
+  theGenerator->clear();
 
 }
 

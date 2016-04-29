@@ -1,63 +1,96 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.PatAlgos.tools.cmsswVersionTools import pickRelValInputFiles
 
-# /RelValProdTTbar/CMSSW_7_0_0_pre11-START70_V4-v1/AODSIM
+# /RelValTTbar_13/CMSSW_7_6_0_pre7-PU25ns_76X_mcRun2_asymptotic_v5-v1/MINIAODSIM
+filesRelValTTbarPileUpMINIAODSIM = cms.untracked.vstring(
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre7'
+                        #, relVal        = 'RelValTTbar_13'
+                        #, globalTag     = 'PU25ns_76X_mcRun2_asymptotic_v5'
+                        #, dataTier      = 'MINIAODSIM'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        '/store/relval/CMSSW_7_6_0_pre7/RelValTTbar_13/MINIAODSIM/PU25ns_76X_mcRun2_asymptotic_v5-v1/00000/36527390-E371-E511-ABF5-00259059642E.root'
+    )
+
+# /RelValProdTTbar_13/CMSSW_7_6_0_pre7-76X_mcRun2_asymptotic_v5-v1/AODSIM
 filesRelValProdTTbarAODSIM = cms.untracked.vstring(
-    pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_0_0_pre11'
-                        , relVal        = 'RelValProdTTbar'
-                        , globalTag     = 'START70_V4'
-                        , dataTier      = 'AODSIM'
-                        , maxVersions   = 2
-                        , numberOfFiles = 1
-                        )
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre7'
+                        #, relVal        = 'RelValProdTTbar_13'
+                        #, globalTag     = '76X_mcRun2_asymptotic_v5'
+                        #, dataTier      = 'AODSIM'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        '/store/relval/CMSSW_7_6_0_pre7/RelValProdTTbar_13/AODSIM/76X_mcRun2_asymptotic_v5-v1/00000/0E9A5DE8-1D71-E511-A205-00261894380D.root'
     )
 
-filesRelValProdTTbarAODSIM = cms.untracked.vstring(
-    '/store/relval/CMSSW_7_0_0_pre11/RelValProdTTbar/AODSIM/START70_V4-v1/00000/D0516C65-766A-E311-B744-00259059642E.root'
+# /RelValTTbar_13/CMSSW_7_6_0_pre7-76X_mcRun2_asymptotic_v5-v1/GEN-SIM-RECO
+filesRelValTTbarGENSIMRECO = cms.untracked.vstring(
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre7'
+                        #, relVal        = 'RelValTTbar_13'
+                        #, globalTag     = '76X_mcRun2_asymptotic_v5'
+                        #, dataTier      = 'GEN-SIM-RECO'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        '/store/relval/CMSSW_7_6_0_pre7/RelValTTbar_13/GEN-SIM-RECO/76X_mcRun2_asymptotic_v5-v1/00000/7678A3E9-FE70-E511-8177-0025905B85B2.root'
     )
 
-# /RelValProdTTbar/CMSSW_7_0_0_pre8-START70_V1-v1/GEN-SIM-RECO
-filesRelValProdTTbarGENSIMRECO = cms.untracked.vstring(
-    pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_0_0_pre11'
-                        , relVal        = 'RelValProdTTbar'
-                        , globalTag     = 'START70_V4'
-                        , dataTier      = 'GEN-SIM-RECO'
-                        , maxVersions   = 2
-                        , numberOfFiles = 1
-                        )
+# /RelValTTbar_13/CMSSW_7_6_0_pre4-PU25ns_76X_mcRun2_asymptotic_v1_FastSim-v1/GEN-SIM-DIGI-RECO
+filesRelValTTbarPileUpFastSimGENSIMDIGIRECO = cms.untracked.vstring(
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre4'
+                        #, relVal        = 'RelValTTbar_13'
+                        #, globalTag     = 'PU25ns_76X_mcRun2_asymptotic_v1_FastSim'
+                        #, dataTier      = 'GEN-SIM-DIGI-RECO'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        #'/store/relval/CMSSW_7_6_0_pre4/RelValTTbar_13/GEN-SIM-DIGI-RECO/PU25ns_76X_mcRun2_asymptotic_v1_FastSim-v1/00000/0026DA13-BF4F-E511-A342-0025905A6088.root'
+    # temporary: produce fastsim sample on the fly
+    # can be restored as soon as relval samples are available with the new fastsim rechits
+    "file:ttbarForFastSimTest.root"
     )
 
-# /RelValTTbar/CMSSW_7_0_0_pre8-PU_START70_V1-v1/GEN-SIM-RECO
+# /RelValTTbar_13/CMSSW_7_6_0_pre7-PU25ns_76X_mcRun2_asymptotic_v5-v1/GEN-SIM-RECO
 filesRelValTTbarPileUpGENSIMRECO = cms.untracked.vstring(
-    pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_0_0_pre11'
-                        , relVal        = 'RelValTTbar_13'
-                        , globalTag     = 'PU50ns_POSTLS162_V5'
-                        , dataTier      = 'GEN-SIM-RECO'
-                        , maxVersions   = 1
-                        , numberOfFiles = 1
-                        )
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre7'
+                        #, relVal        = 'RelValTTbar_13'
+                        #, globalTag     = 'PU25ns_76X_mcRun2_asymptotic_v5'
+                        #, dataTier      = 'GEN-SIM-RECO'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        '/store/relval/CMSSW_7_6_0_pre7/RelValTTbar_13/GEN-SIM-RECO/PU25ns_76X_mcRun2_asymptotic_v5-v1/00000/02CAB78F-E371-E511-BAC3-0025905A6084.root'
     )
 
-# /SingleMu/CMSSW_6_2_0_pre8-PRE_62_V8_RelVal_mu2012D-v1/RECO
+# /SingleMu/CMSSW_7_6_0_pre7-76X_dataRun1_HLT_frozen_v4_RelVal_mu2012D-v1/MINIAOD
+filesRelValSingleMuMINIAOD = cms.untracked.vstring(
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre7'
+                        #, relVal        = 'SingleMu'
+                        #, globalTag     = '76X_dataRun1_HLT_frozen_v4_RelVal_mu2012D'
+                        #, dataTier      = 'MINIAOD'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        '/store/relval/CMSSW_7_6_0_pre7/SingleMu/MINIAOD/76X_dataRun1_HLT_frozen_v4_RelVal_mu2012D-v1/00000/04E2CB97-6172-E511-B58F-002590596486.root'
+    )
+
+# /SingleMu/CMSSW_7_6_0_pre7-76X_dataRun1_HLT_frozen_v4_RelVal_mu2012D-v1/RECO
 filesSingleMuRECO = cms.untracked.vstring(
-    pickRelValInputFiles( cmsswVersion  = 'CMSSW_6_2_0_pre8' # no 70X data RelVals at CERN
-                        , relVal        = 'SingleMu'
-                        , dataTier      = 'RECO'
-                        , globalTag     = 'PRE_62_V8_RelVal_mu2012D'
-                        , maxVersions   = 1
-                        , numberOfFiles = 1
-                        )
-    # only one block available at CERN
-    # FIXME: need to fix DBS query in 'pickRelValInputFiles' to identify them properly
-    # ==> query for file requiring dataset AND site does not work in DBS :-(
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/029F8FA5-D7E0-E211-BCCF-001E67398430.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/1A9A0FE7-D5E0-E211-9868-003048F01164.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/4E0F44F0-D5E0-E211-9A0A-003048CF6780.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/6E43C4C0-DBE0-E211-B452-003048D37366.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/A426EC8A-DAE0-E211-BE58-D8D385FF4A94.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/A45F6ADF-D8E0-E211-948B-003048FE9D54.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/CE1D92A1-D9E0-E211-B7F0-C860001BD934.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/D61C12DD-E9E0-E211-8A9E-5404A63886D2.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/E4F44285-DFE0-E211-BEA9-0025B3203918.root',
-       #'/store/relval/CMSSW_6_2_0_pre8/SingleMu/RECO/PRE_62_V8_RelVal_mu2012B-v1/00000/F848CDC3-D6E0-E211-BA88-003048F009C4.root'
+    #pickRelValInputFiles( cmsswVersion  = 'CMSSW_7_6_0_pre7'
+                        #, relVal        = 'SingleMu'
+                        #, dataTier      = 'RECO'
+                        #, globalTag     = '76X_dataRun1_HLT_frozen_v4_RelVal_mu2012D'
+                        #, maxVersions   = 1
+                        #, numberOfFiles = 1
+                        #, useDAS        = True
+                        #)
+        '/store/relval/CMSSW_7_6_0_pre7/SingleMu/RECO/76X_dataRun1_HLT_frozen_v4_RelVal_mu2012D-v1/00000/000026F5-2172-E511-B57C-0025905B8582.root'
     )

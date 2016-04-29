@@ -8,7 +8,7 @@
 #include <string>
 #include <boost/regex.hpp>
 #include <iostream>
-#include <map>
+#include "tbb/concurrent_unordered_map.h"
 
 //NOTE:  This should probably be rewritten so that we break the class name into a tree where the template arguments are the node.  On the way down the tree
 // we look for '<' or ',' and on the way up (caused by finding a '>') we can apply the transformation to the output string based on the class name for the
@@ -41,7 +41,10 @@ namespace edm {
     }
     static boost::regex const reWrapper("edm::Wrapper<(.*)>");
     static boost::regex const reString("std::basic_string<char>");
+    static boost::regex const reString2("std::string");
     static boost::regex const reSorted("edm::SortedCollection<(.*), *edm::StrictWeakOrdering<\\1 *> >");
+    static boost::regex const reULongLong("ULong64_t");
+    static boost::regex const reLongLong("Long64_t");
     static boost::regex const reUnsigned("unsigned ");
     static boost::regex const reLong("long ");
     static boost::regex const reVector("std::vector");
@@ -70,7 +73,10 @@ namespace edm {
        std::string name = regex_replace(iIn, reWrapper, "$1");
        name = regex_replace(name,reAIKR,"");
        name = regex_replace(name,reString,"String");
+       name = regex_replace(name,reString2,"String");
        name = regex_replace(name,reSorted,"sSorted<$1>");
+       name = regex_replace(name,reULongLong,"ull");
+       name = regex_replace(name,reLongLong,"ll");
        name = regex_replace(name,reUnsigned,"u");
        name = regex_replace(name,reLong,"l");
        name = regex_replace(name,reVector,"s");
@@ -133,8 +139,8 @@ namespace edm {
        return result;
     }
     std::string friendlyName(std::string const& iFullName) {
-       typedef std::map<std::string, std::string> Map;
-       static thread_local Map s_fillToFriendlyName;
+       typedef tbb::concurrent_unordered_map<std::string, std::string> Map;
+       static Map s_fillToFriendlyName;
        auto itFound = s_fillToFriendlyName.find(iFullName);
        if(s_fillToFriendlyName.end()==itFound) {
           itFound = s_fillToFriendlyName.insert(Map::value_type(iFullName, handleNamespaces(subFriendlyName(standardRenames(iFullName))))).first;

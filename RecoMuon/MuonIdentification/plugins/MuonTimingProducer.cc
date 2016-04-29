@@ -21,7 +21,7 @@
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDProducer.h"
+//#include "FWCore/Framework/interface/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -63,17 +63,6 @@ MuonTimingProducer::~MuonTimingProducer()
 //
 // member functions
 //
-
-// ------------ method called once each job just before starting event loop  ------------
-void 
-MuonTimingProducer::beginJob()
-{
-}
-
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-MuonTimingProducer::endJob() {
-}
 
 // ------------ method called to produce the data  ------------
 void

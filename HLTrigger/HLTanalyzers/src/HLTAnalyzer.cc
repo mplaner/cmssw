@@ -6,6 +6,7 @@
 
 #include "HLTrigger/HLTanalyzers/interface/HLTAnalyzer.h"
 #include "HLTMessages.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 typedef std::pair<const char *, const edm::InputTag *> MissingCollectionInfo;
 
@@ -24,7 +25,8 @@ bool getCollection(const edm::Event & event, std::vector<MissingCollectionInfo> 
 }
 
 // Boiler-plate constructor definition of an analyzer module:
-HLTAnalyzer::HLTAnalyzer(edm::ParameterSet const& conf) {
+HLTAnalyzer::HLTAnalyzer(edm::ParameterSet const& conf) :
+  hlt_analysis_(conf, consumesCollector(), *this) {
     
     // If your module takes parameters, here is where you would define
     // their names and types, and access them to initialize internal
@@ -300,6 +302,8 @@ HLTAnalyzer::HLTAnalyzer(edm::ParameterSet const& conf) {
     ActivityR9Token_ = consumes<reco::RecoEcalCandidateIsolationMap>(ActivityR9_);
     ActivityR9IDToken_ = consumes<reco::RecoEcalCandidateIsolationMap>(ActivityR9ID_);
     ActivityHoverEHToken_ = consumes<reco::RecoEcalCandidateIsolationMap>(ActivityHoverEH_);
+    EcalRecHitEBToken_ = consumes<EcalRecHitCollection>(edm::InputTag("hltEcalRegionalEgammaRecHit:EcalRecHitsEB"));
+    EcalRecHitEEToken_ = consumes<EcalRecHitCollection>(edm::InputTag("hltEcalRegionalEgammaRecHit:EcalRecHitsEE"));
 
     CandIsoToken_ = consumes<reco::RecoEcalCandidateCollection>(CandIso_);
     CandNonIsoToken_ = consumes<reco::RecoEcalCandidateCollection>(CandNonIso_);
@@ -533,13 +537,14 @@ void HLTAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetu
     edm::Handle<reco::VertexCollection> recoVertexsOffline0;
 
     // new stuff for the egamma EleId
-    edm::InputTag ecalRechitEBTag (std::string("hltEcalRegionalEgammaRecHit:EcalRecHitsEB"));
-    edm::InputTag ecalRechitEETag (std::string("hltEcalRegionalEgammaRecHit:EcalRecHitsEE"));
-    EcalClusterLazyTools lazyTools( iEvent, iSetup, ecalRechitEBTag, ecalRechitEETag);
+    EcalClusterLazyTools lazyTools( iEvent, iSetup, EcalRecHitEBToken_, EcalRecHitEEToken_ );
     
     edm::Handle<reco::HFEMClusterShapeAssociationCollection> electronHFClusterAssociation;  
     iEvent.getByToken(HFEMClusterShapeAssociationToken_,electronHFClusterAssociation);
 
+	edm::ESHandle<CaloTowerTopology> caloTowerTopology;
+	iSetup.get<HcalRecNumberingRecord>().get(caloTowerTopology);	
+	
     edm::ESHandle<MagneticField>                theMagField;
     iSetup.get<IdealMagneticFieldRecord>().get(theMagField);
     
@@ -757,6 +762,7 @@ void HLTAnalyzer::analyze(edm::Event const& iEvent, edm::EventSetup const& iSetu
 			  caloTowersCleanerUpperR45,
 			  caloTowersCleanerLowerR45,
 			  caloTowersCleanerNoR45,
+              &*caloTowerTopology,
 			  recoPFMet,
                           towerThreshold_,
                           _MinPtGammas,
@@ -904,7 +910,7 @@ void HLTAnalyzer::endJob() {
     if (m_file)
         m_file->cd();
     
-    const edm::ParameterSet &thepset = edm::getProcessParameterSet();   
+    const edm::ParameterSet &thepset = edm::getProcessParameterSetContainingModule(moduleDescription());
     TList *list = HltTree->GetUserInfo();   
     list->Add(new TObjString(thepset.dump().c_str()));   
     

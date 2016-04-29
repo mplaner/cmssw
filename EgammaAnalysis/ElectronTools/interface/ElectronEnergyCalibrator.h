@@ -8,11 +8,10 @@
 #include <sstream>
 #include <iostream>
 
-using std::string;
-using std::vector;
-using std::ifstream;
-using std::istringstream;
-using std::cout;
+
+namespace edm {
+  class StreamID;
+}
 
 struct correctionValues
 {
@@ -68,16 +67,16 @@ class ElectronEnergyCalibrator
 		    init();
     	}
 
-        void calibrate(SimpleElectron &electron);
+        void calibrate(SimpleElectron &electron, edm::StreamID const&);
         void correctLinearity(SimpleElectron &electron);
 
     private:
         void init();
-        void splitString( const string &fullstr, 
-                          vector<string> &elements, 
-                          const string &delimiter
+        void splitString( const std::string &fullstr, 
+                          std::vector<std::string> &elements, 
+                          const std::string &delimiter
                         );
-        double stringToDouble(const string &str);
+        double stringToDouble(const std::string &str);
       
         double newEnergy_ ;
         double newEnergyError_ ;

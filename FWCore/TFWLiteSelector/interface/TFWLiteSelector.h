@@ -43,11 +43,11 @@
 //
 
 // system include files
+#include <memory>
+
 class TList;
 
 // user include files
-
-#include "boost/shared_ptr.hpp"
 
 #include "FWCore/TFWLiteSelector/interface/TFWLiteSelectorBasic.h"
 
@@ -82,7 +82,7 @@ class TFWLiteSelector : public TFWLiteSelectorBasic
       }
       
       // ---------- member data --------------------------------
-      boost::shared_ptr<TWorker> worker_;
+      std::shared_ptr<TWorker> worker_;
       ClassDef(TFWLiteSelector,2)
 };
 

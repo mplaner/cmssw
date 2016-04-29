@@ -13,8 +13,6 @@
 
 #include <memory>
 
-#include "boost/shared_ptr.hpp"
-
 namespace edm {
   class EventPrincipal;
   class ProcessConfiguration;
@@ -42,11 +40,11 @@ namespace edm {
 
     virtual void endJob();
 
-    boost::shared_ptr<VectorInputSource> makeSecInput(ParameterSet const& ps);
+    std::shared_ptr<VectorInputSource> makeSecInput(ParameterSet const& ps);
 
-    std::unique_ptr<ProductRegistry> productRegistry_;
+    std::shared_ptr<ProductRegistry> productRegistry_;
 
-    boost::shared_ptr<VectorInputSource> const secInput_;
+    std::shared_ptr<VectorInputSource> const secInput_;
 
     std::unique_ptr<ProcessConfiguration> processConfiguration_;
 
@@ -56,7 +54,7 @@ namespace edm {
 
     bool specified_;
 
-    bool lumiSpecified_;
+    bool sameLumiBlock_;
 
     bool firstEvent_;
 

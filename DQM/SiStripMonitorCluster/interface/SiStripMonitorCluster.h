@@ -25,6 +25,8 @@
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/Common/interface/DetSetVectorNew.h"
 
+#include "DQMServices/Core/interface/DQMEDAnalyzer.h"
+
 class DQMStore;
 class SiStripDetCabling;
 class SiStripCluster;
@@ -34,15 +36,14 @@ class APVCyclePhaseCollection;
 class SiStripDCSStatus;
 class GenericTriggerEventFlag;
 
-class SiStripMonitorCluster : public edm::EDAnalyzer {
+class SiStripMonitorCluster : public DQMEDAnalyzer {
  public:
   explicit SiStripMonitorCluster(const edm::ParameterSet&);
   ~SiStripMonitorCluster();
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
-  //virtual void beginJob() ;
-  virtual void endJob() ;
-  virtual void beginRun(const edm::Run&, const edm::EventSetup&);
-
+  void bookHistograms(DQMStore::IBooker &, edm::Run const &, edm::EventSetup const &) override;
+  void dqmBeginRun(const edm::Run&, const edm::EventSetup&) ;
+  
   struct ModMEs{ // MEs for one single detector module
 
     MonitorElement* NumberOfClusters = 0;
@@ -55,6 +56,7 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
     MonitorElement* ClusterSignalOverNoiseVsPos = 0;
     MonitorElement* ModuleLocalOccupancy = 0;
     MonitorElement* NrOfClusterizedStrips = 0; // can be used at client level for occupancy calculations
+    MonitorElement* Module_ClusWidthVsAmpTH2 = 0;
   };
 
   struct LayerMEs{ // MEs for Layer Level
@@ -70,6 +72,7 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
     MonitorElement* LayerLocalOccupancyTrend = 0;
     MonitorElement* LayerNumberOfClusterProfile = 0;
     MonitorElement* LayerClusterWidthProfile = 0;
+    MonitorElement* LayerClusWidthVsAmpTH2 = 0;
 
   };
 
@@ -81,6 +84,9 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
     MonitorElement* SubDetClusterApvTH2 = 0;
     MonitorElement* SubDetClusterDBxCycleProf = 0;
     MonitorElement* SubDetApvDBxProf2 = 0;
+    MonitorElement* SubDetClusterChargeTH1 = 0;
+    MonitorElement* SubDetClusterWidthTH1 = 0;
+    MonitorElement* SubDetClusWidthVsAmpTH2 = 0;
   };
 
   struct ClusterProperties { // Cluster Properties
@@ -99,18 +105,19 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
   MonitorElement* StripNoise3Cycle = 0;
   MonitorElement* NumberOfPixelClus = 0;
   MonitorElement* NumberOfStripClus = 0;
-
   MonitorElement* BPTXrateTrend = 0;
+  MonitorElement* NclusVsCycleTimeProf2D = 0;
+  MonitorElement* ClusWidthVsAmpTH2 = 0;
 
  private:
 
-  void createMEs(const edm::EventSetup& es);
-  void createLayerMEs(std::string label, int ndets);
-  void createModuleMEs(ModMEs& mod_single, uint32_t detid);
-  void createSubDetMEs(std::string label);
+  void createMEs(const edm::EventSetup& es , DQMStore::IBooker & ibooker);
+  void createLayerMEs(std::string label, int ndets , DQMStore::IBooker & ibooker );
+  void createModuleMEs(ModMEs& mod_single, uint32_t detid , DQMStore::IBooker & ibooker);
+  void createSubDetMEs(std::string label , DQMStore::IBooker & ibooker);
   int FindRegion(int nstrip,int npixel);
   void fillModuleMEs(ModMEs& mod_mes, ClusterProperties& cluster);
-  void fillLayerMEs(LayerMEs&, ClusterProperties& cluster, float timeinorbit);
+  void fillLayerMEs(LayerMEs&, ClusterProperties& cluster);
 
   void ResetModuleMEs(uint32_t idet);
 
@@ -118,11 +125,10 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
   inline void fillME(MonitorElement* ME,float value1,float value2){if (ME!=0)ME->Fill(value1,value2);}
   inline void fillME(MonitorElement* ME,float value1,float value2,float value3){if (ME!=0)ME->Fill(value1,value2,value3);}
   inline void fillME(MonitorElement* ME,float value1,float value2,float value3,float value4){if (ME!=0)ME->Fill(value1,value2,value3,value4);}
-  MonitorElement * bookMETrend(const char*, const char*);
-  MonitorElement* bookME1D(const char* ParameterSetLabel, const char* HistoName);
+  MonitorElement * bookMETrend(const char* , DQMStore::IBooker & ibooker);
+  MonitorElement* bookME1D(const char* ParameterSetLabel, const char* HistoName , DQMStore::IBooker & ibooker);
+  MonitorElement* bookME2D(const char* ParameterSetLabel, const char* HistoName , DQMStore::IBooker & ibooker);
 
- private:
-  DQMStore* dqmStore_;
   edm::ParameterSet conf_;
   std::map<uint32_t, ModMEs> ModuleMEsMap;
   std::map<std::string, LayerMEs> LayerMEsMap;
@@ -144,6 +150,7 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
 
   int runNb, eventNb;
   int firstEvent;
+  float trendVar;
 
   bool layerswitchncluson;
   bool layerswitchcluschargeon;
@@ -157,6 +164,7 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
   bool layerswitchnrclusterizedstrip;
   bool layerswitchnumclusterprofon;
   bool layerswitchclusterwidthprofon;
+  bool layer_clusterWidth_vs_amplitude_on;
   
   bool globalswitchstripnoise2apvcycle;
   bool globalswitchstripnoise3apvcycle;
@@ -172,17 +180,24 @@ class SiStripMonitorCluster : public edm::EDAnalyzer {
   bool moduleswitchcluswidthon;
   bool moduleswitchlocaloccupancy;
   bool moduleswitchnrclusterizedstrip;
+  bool module_clusterWidth_vs_amplitude_on;
   bool subdetswitchtotclusprofon;
   bool subdetswitchapvcycleprofon;
   bool subdetswitchapvcycleth2on;
   bool subdetswitchapvcycledbxprof2on;
   bool subdetswitchdbxcycleprofon;
   bool subdetswitchtotclusth1on;
+  bool subdetswitchcluschargeon;
+  bool subdetswitchcluswidthon;
+  bool subdet_clusterWidth_vs_amplitude_on;
   bool globalswitchapvcycledbxth2on;
   bool globalswitchcstripvscpix;
   bool globalswitchMultiRegions;
   bool clustertkhistomapon;
   bool createTrendMEs;
+  bool trendVsLs_;
+  bool globalswitchnclusvscycletimeprof2don;
+  bool clusterWidth_vs_amplitude_on;
 
   bool Mod_On_;
   bool ClusterHisto_;

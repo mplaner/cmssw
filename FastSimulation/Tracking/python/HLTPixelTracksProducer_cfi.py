@@ -9,7 +9,7 @@ hltPixelTracks = cms.EDProducer("PixelTracksProducer",
         ComponentName = cms.string('PixelFitterByHelixProjections'),
         TTRHBuilder = cms.string('WithoutRefit')
     ),
-    SeedProducer = cms.InputTag("pixelTripletSeeds","PixelTriplet"),
+    SeedProducer = cms.InputTag("pixelTripletSeeds"),
     RegionFactoryPSet = cms.PSet(
         RegionPSetBlock,
         ComponentName = cms.string('GlobalRegionProducer')
@@ -24,6 +24,8 @@ hltPixelTracks = cms.EDProducer("PixelTracksProducer",
     )
 )
 
+
+
 hltFastPixelHitsVertex = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
 hltFastPixelTracks = hltPixelTracks.clone()
 hltFastPixelTracksRecover = hltPixelTracks.clone()
@@ -32,11 +34,33 @@ hltFastPrimaryVertexbbPhi = FastSimulation.HighLevelTrigger.DummyModule_cfi.dumm
 hltPixelTracksFastPVbbPhi = hltPixelTracks.clone()
 hltPixelTracksRecoverbbPhi = hltPixelTracks.clone()
 
+hltPixelTracksReg = hltPixelTracks.clone()
+hltPixelTracksHybrid = hltPixelTracks.clone()
+hltPixelTracksL3Muon = hltPixelTracks.clone()
+hltPixelTracksGlbTrkMuon = hltPixelTracks.clone()
+hltPixelTracksHighPtTkMuIso = hltPixelTracks.clone()
+hltPixelTracksForPhotons = hltPixelTracks.clone()
+hltPixelTracksForEgamma = hltPixelTracks.clone()
+hltPixelTracksElectrons = hltPixelTracks.clone()
+hltPixelTracksForHighPt = hltPixelTracks.clone()
+hltHighPtPixelTracks = hltPixelTracks.clone()
+
+hltPixelTracksForNoPU = hltPixelTracks.clone()
+hltDummyLocalPixel = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+HLTDoLocalPixelSequenceRegForNoPU = cms.Sequence(hltDummyLocalPixel)
+
 hltFastPixelHitsVertexVHbb = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
 hltFastPixelTracksVHbb = hltPixelTracks.clone()
 hltFastPixelTracksRecoverVHbb = hltPixelTracks.clone()
 
 hltFastPrimaryVertex = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+hltFastPVPixelVertexFilter = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
 hltFastPVPixelTracks = hltPixelTracks.clone()
 hltFastPVPixelTracksRecover = hltPixelTracks.clone()
 
+hltPixelLayerPairs = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+hltPixelLayerTriplets = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+hltPixelLayerTripletsReg = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+hltPixelLayerTripletsHITHB = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+hltPixelLayerTripletsHITHE = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()
+hltMixedLayerPairs = FastSimulation.HighLevelTrigger.DummyModule_cfi.dummyModule.clone()

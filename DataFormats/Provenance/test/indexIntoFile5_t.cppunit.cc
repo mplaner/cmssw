@@ -9,10 +9,7 @@
 #include "DataFormats/Provenance/interface/ProcessHistory.h"
 #include "DataFormats/Provenance/interface/ProcessHistoryRegistry.h"
 
-// This is very ugly, but I am told OK for white box  unit tests 
-#define private public
 #include "DataFormats/Provenance/interface/IndexIntoFile.h"
-#undef private
 
 #include <string>
 #include <iostream>
@@ -260,7 +257,7 @@ void TestIndexIntoFile5::testDuplicateCheckerFunctions() {
     ptr11->push_back(1);
     ptr11->push_back(2);
 
-    boost::shared_ptr<IndexIntoFile::EventFinder> shptr11(ptr11);
+    std::shared_ptr<IndexIntoFile::EventFinder> shptr11(ptr11);
     indexIntoFile11.setEventFinder(shptr11);
 
     TestEventFinder* ptr12(new TestEventFinder);
@@ -273,7 +270,7 @@ void TestIndexIntoFile5::testDuplicateCheckerFunctions() {
     ptr12->push_back(1);
     ptr12->push_back(4);
 
-    boost::shared_ptr<IndexIntoFile::EventFinder> shptr12(ptr12);
+    std::shared_ptr<IndexIntoFile::EventFinder> shptr12(ptr12);
     indexIntoFile12.setEventFinder(shptr12);
 
     TestEventFinder* ptr22(new TestEventFinder);
@@ -286,7 +283,7 @@ void TestIndexIntoFile5::testDuplicateCheckerFunctions() {
     ptr22->push_back(1);
     ptr22->push_back(4);
 
-    boost::shared_ptr<IndexIntoFile::EventFinder> shptr22(ptr22);
+    std::shared_ptr<IndexIntoFile::EventFinder> shptr22(ptr22);
     indexIntoFile22.setEventFinder(shptr22);
 
     if (j == 0) {

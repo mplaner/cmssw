@@ -1,4 +1,5 @@
 #include "RecoMET/METProducers/interface/BeamHaloSummaryProducer.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 /*
   [class]:  BeamHaloSummaryProducer
@@ -46,6 +47,13 @@ BeamHaloSummaryProducer::BeamHaloSummaryProducer(const edm::ParameterSet& iConfi
   T_HcalPhiWedgeToF = (float)iConfig.getParameter<double>("t_HcalPhiWedgeToF");
   T_HcalPhiWedgeConfidence = (float)iConfig.getParameter<double>("t_HcalPhiWedgeConfidence");
 
+  problematicStripMinLength = (int)iConfig.getParameter<int>("problematicStripMinLength");
+
+  cschalodata_token_ = consumes<CSCHaloData>(IT_CSCHaloData);
+  ecalhalodata_token_ = consumes<EcalHaloData>(IT_EcalHaloData);
+  hcalhalodata_token_ = consumes<HcalHaloData>(IT_HcalHaloData);
+  globalhalodata_token_ = consumes<GlobalHaloData>(IT_GlobalHaloData);
+
   produces<BeamHaloSummary>();
 }
 
@@ -56,7 +64,8 @@ void BeamHaloSummaryProducer::produce(Event& iEvent, const EventSetup& iSetup)
 
   // CSC Specific Halo Data
   Handle<CSCHaloData> TheCSCHaloData;
-  iEvent.getByLabel(IT_CSCHaloData, TheCSCHaloData);
+  //  iEvent.getByLabel(IT_CSCHaloData, TheCSCHaloData);
+  iEvent.getByToken(cschalodata_token_, TheCSCHaloData);
 
   const CSCHaloData CSCData = (*TheCSCHaloData.product() );
 
@@ -87,11 +96,29 @@ void BeamHaloSummaryProducer::produce(Event& iEvent, const EventSetup& iSetup)
       (CSCData.NumberOfHaloTracks() && CSCData.NumberOfOutOfTimeTriggers() ) )
     TheBeamHaloSummary->GetCSCHaloReport()[3] = 1;
 
+  //CSCTight Id for 2015
+  if( (CSCData.NumberOfHaloTriggers_TrkMuUnVeto() && CSCData.NumberOfHaloTracks()) ||
+      (CSCData.NOutOfTimeHits() > 10 && CSCData.NumberOfHaloTriggers_TrkMuUnVeto() ) ||
+      (CSCData.NOutOfTimeHits() > 10 && CSCData.NumberOfHaloTracks() ) ||
+      CSCData.GetSegmentsInBothEndcaps_Loose_TrkMuUnVeto() ||
+      (CSCData.NTracksSmalldT() && CSCData.NumberOfHaloTracks() ) ||
+      (CSCData.NFlatHaloSegments() > 3 && (CSCData.NumberOfHaloTriggers_TrkMuUnVeto() || CSCData.NumberOfHaloTracks()) ))
+    TheBeamHaloSummary->GetCSCHaloReport()[4] = 1;
+
+  //Update
+  if(  (CSCData.NumberOfHaloTriggers_TrkMuUnVeto() && CSCData.NFlatHaloSegments_TrkMuUnVeto() ) ||
+       CSCData.GetSegmentsInBothEndcaps_Loose_dTcut_TrkMuUnVeto() ||
+       CSCData.GetSegmentIsCaloMatched()
+       )
+    TheBeamHaloSummary->GetCSCHaloReport()[5] = 1;
+
+
 
   //Ecal Specific Halo Data
   Handle<EcalHaloData> TheEcalHaloData;
-  iEvent.getByLabel(IT_EcalHaloData, TheEcalHaloData);
-  
+  //  iEvent.getByLabel(IT_EcalHaloData, TheEcalHaloData);
+  iEvent.getByToken(ecalhalodata_token_, TheEcalHaloData);
+
   const EcalHaloData EcalData = (*TheEcalHaloData.product() );
   
   bool EcalLooseId = false, EcalTightId = false;
@@ -135,7 +162,7 @@ void BeamHaloSummaryProducer::produce(Event& iEvent, const EventSetup& iSetup)
   //Access selected SuperClusters
   for(unsigned int n = 0 ; n < EcalData.GetSuperClusters().size() ; n++ )
     {
-      edm::Ref<SuperClusterCollection> cluster(EcalData.GetSuperClusters(), n );
+      edm::Ref<SuperClusterCollection> cluster(EcalData.GetSuperClusters()[n] );
       
       float angle = vm_Angle[cluster];
       float roundness = vm_Roundness[cluster];
@@ -162,7 +189,9 @@ void BeamHaloSummaryProducer::produce(Event& iEvent, const EventSetup& iSetup)
 
   // Hcal Specific Halo Data
   Handle<HcalHaloData> TheHcalHaloData;
-  iEvent.getByLabel(IT_HcalHaloData, TheHcalHaloData);
+  //  iEvent.getByLabel(IT_HcalHaloData, TheHcalHaloData);
+  iEvent.getByToken(hcalhalodata_token_, TheHcalHaloData);
+
   const HcalHaloData HcalData = (*TheHcalHaloData.product() );
   const std::vector<PhiWedge> HcalWedges = HcalData.GetPhiWedges();
   bool HcalLooseId = false, HcalTightId = false;
@@ -200,9 +229,20 @@ void BeamHaloSummaryProducer::produce(Event& iEvent, const EventSetup& iSetup)
   if( HcalTightId ) 
     TheBeamHaloSummary->GetHcalHaloReport()[1] = 1;
 
+
+  for( unsigned int i = 0 ; i < HcalData.getProblematicStrips().size() ; i++ ) {
+    auto const& problematicStrip = HcalData.getProblematicStrips()[i];
+    if(problematicStrip.cellTowerIds.size() < (unsigned int)problematicStripMinLength) continue;
+
+    TheBeamHaloSummary->getProblematicStrips().push_back(problematicStrip);
+  }
+
+
   // Global Halo Data
   Handle<GlobalHaloData> TheGlobalHaloData;
-  iEvent.getByLabel(IT_GlobalHaloData, TheGlobalHaloData);
+  //  iEvent.getByLabel(IT_GlobalHaloData, TheGlobalHaloData);
+  iEvent.getByToken(globalhalodata_token_, TheGlobalHaloData);
+
   bool GlobalLooseId = false;
   bool GlobalTightId = false;
   const GlobalHaloData GlobalData = (*TheGlobalHaloData.product() );

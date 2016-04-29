@@ -61,12 +61,13 @@ namespace cond {
     bool TAG::Table::select( const std::string& name, 
 			     cond::TimeType& timeType, 
 			     std::string& objectType, 
+			     cond::SynchronizationType& synchronizationType,
 			     cond::Time_t& endOfValidity,
 			     std::string& description, 
 			     cond::Time_t&  lastValidatedTime ){
-      Query< TIME_TYPE, OBJECT_TYPE, END_OF_VALIDITY, DESCRIPTION, LAST_VALIDATED_TIME > q( m_schema );
+      Query< TIME_TYPE, OBJECT_TYPE, SYNCHRONIZATION, END_OF_VALIDITY, DESCRIPTION, LAST_VALIDATED_TIME > q( m_schema );
       q.addCondition<NAME>( name );
-      for ( auto row : q ) std::tie( timeType, objectType, endOfValidity, description, lastValidatedTime ) = row;
+      for ( auto row : q ) std::tie( timeType, objectType, synchronizationType, endOfValidity, description, lastValidatedTime ) = row;
       
       return q.retrievedRows();
     }
@@ -113,7 +114,7 @@ namespace cond {
       buffer.addWhereCondition<NAME>( name );
       updateTable( m_schema, tname, buffer );
     }
-    
+
     IOV::Table::Table( coral::ISchema& schema ):
       m_schema( schema ){
     }
@@ -138,6 +139,7 @@ namespace cond {
     size_t IOV::Table::selectGroups( const std::string& tag, std::vector<cond::Time_t>& groups ){
       Query< SINCE_GROUP > q( m_schema, true );
       q.addCondition<TAG_NAME>( tag );
+      q.groupBy(SINCE_GROUP::group());
       q.addOrderClause<SINCE_GROUP>();
       for( auto row : q ){
 	groups.push_back(std::get<0>(row));
@@ -149,6 +151,7 @@ namespace cond {
       Query< SINCE_GROUP > q( m_schema, true );
       q.addCondition<TAG_NAME>( tag );
       q.addCondition<INSERTION_TIME>( snapshotTime,"<=" );
+      q.groupBy(SINCE_GROUP::group());
       q.addOrderClause<SINCE_GROUP>();
       for( auto row : q ){
 	groups.push_back(std::get<0>(row));
@@ -207,6 +210,23 @@ namespace cond {
       return iovs.size()-initialSize;
     }
 
+    size_t IOV::Table::selectSnapshot( const std::string& tag,
+                                       const boost::posix_time::ptime& snapshotTime,
+                                       std::vector<std::tuple<cond::Time_t,cond::Hash> >& iovs){
+      Query< SINCE, PAYLOAD_HASH > q( m_schema );
+      q.addCondition<TAG_NAME>( tag );
+      q.addCondition<INSERTION_TIME>( snapshotTime,"<=" );
+      q.addOrderClause<SINCE>();
+      q.addOrderClause<INSERTION_TIME>( false );
+      size_t initialSize = iovs.size();
+      for ( auto row : q ) {
+        // starting from the second iov in the array, skip the rows with older timestamp                                                                            
+        if( iovs.size()-initialSize && std::get<0>(iovs.back()) == std::get<0>(row) ) continue;
+        iovs.push_back( row );
+      }
+      return iovs.size()-initialSize;
+    }
+
     bool IOV::Table::getLastIov( const std::string& tag, cond::Time_t& since, cond::Hash& hash ){
       Query< SINCE, PAYLOAD_HASH > q( m_schema );
       q.addCondition<TAG_NAME>( tag );
@@ -216,6 +236,20 @@ namespace cond {
 	since = std::get<0>(row);
 	hash = std::get<1>(row);
 	return true;
+      }
+      return false;
+    }
+
+    bool IOV::Table::getSnapshotLastIov( const std::string& tag, const boost::posix_time::ptime& snapshotTime, cond::Time_t& since, cond::Hash& hash ){
+      Query< SINCE, PAYLOAD_HASH > q( m_schema );
+      q.addCondition<TAG_NAME>( tag );
+      q.addCondition<INSERTION_TIME>( snapshotTime,"<=" );
+      q.addOrderClause<SINCE>( false );
+      q.addOrderClause<INSERTION_TIME>( false );
+      for ( auto row : q ) {
+        since = std::get<0>(row);
+        hash = std::get<1>(row);
+        return true;
       }
       return false;
     }
@@ -255,6 +289,12 @@ namespace cond {
       for( auto row : iovs ) inserter.insert( std::tuple_cat( std::tie(tag),row ) );
       
       inserter.flush();
+    }
+
+    void IOV::Table::erase( const std::string& tag ){
+      DeleteBuffer buffer;
+      buffer.addWhereCondition<TAG_NAME>( tag );
+      deleteFromTable( m_schema, tname, buffer );  
     }
     
     PAYLOAD::Table::Table( coral::ISchema& schema ):
@@ -296,34 +336,37 @@ namespace cond {
 
     bool PAYLOAD::Table::select( const cond::Hash& payloadHash, 
 				 std::string& objectType, 
-				 cond::Binary& payloadData ){
-      Query< DATA, OBJECT_TYPE > q( m_schema );
+				 cond::Binary& payloadData,
+				 cond::Binary& streamerInfoData ){
+      Query< DATA, STREAMER_INFO, OBJECT_TYPE > q( m_schema );
       q.addCondition<HASH>( payloadHash );
       for ( auto row : q ) {
-	std::tie( payloadData, objectType ) = row;
+	std::tie( payloadData, streamerInfoData, objectType ) = row;
       }
       return q.retrievedRows();
     }
     
     bool PAYLOAD::Table::insert( const cond::Hash& payloadHash, 
     				 const std::string& objectType,
-    				 const cond::Binary& payloadData, 				      
+    				 const cond::Binary& payloadData, 
+				 const cond::Binary& streamerInfoData,				      
     				 const boost::posix_time::ptime& insertionTime ){
-      cond::Binary dummy;
-      std::string streamerType("ROOT5");
-      dummy.copy( streamerType );
       std::string version("dummy");
-      RowBuffer< HASH, OBJECT_TYPE, DATA, STREAMER_INFO, VERSION, INSERTION_TIME > dataToInsert( std::tie( payloadHash, objectType, payloadData, dummy, version, insertionTime ) ); 
+      cond::Binary sinfoData( streamerInfoData );
+      if( !sinfoData.size() ) sinfoData.copy( std::string("0") );   
+      RowBuffer< HASH, OBJECT_TYPE, DATA, STREAMER_INFO, VERSION, INSERTION_TIME > dataToInsert( std::tie( payloadHash, objectType, payloadData, sinfoData, version, insertionTime ) ); 
       bool failOnDuplicate = false;
       return insertInTable( m_schema, tname, dataToInsert.get(), failOnDuplicate );
     }
 
-    cond::Hash PAYLOAD::Table::insertIfNew( const std::string& payloadObjectType, const cond::Binary& payloadData, 
+    cond::Hash PAYLOAD::Table::insertIfNew( const std::string& payloadObjectType, 
+					    const cond::Binary& payloadData, 
+					    const cond::Binary& streamerInfoData,
 					    const boost::posix_time::ptime& insertionTime ){
       cond::Hash payloadHash = makeHash( payloadObjectType, payloadData );
       // the check on the hash existance is only required to avoid the error message printing in SQLite! once this is removed, this check is useless... 
       if( !select( payloadHash ) ){
-	insert( payloadHash, payloadObjectType, payloadData, insertionTime );
+	insert( payloadHash, payloadObjectType, payloadData, streamerInfoData, insertionTime );
       }
       return payloadHash;
     }
@@ -338,21 +381,21 @@ namespace cond {
     
     void TAG_MIGRATION::Table::create(){
       if( exists() ){
-	throwException( "TAG_MIGRATIONtable already exists in this schema.",
-			"TAG::create");
+	throwException( "TAG_MIGRATION table already exists in this schema.",
+			"TAG_MIGRATION::create");
       }
-      TableDescription< SOURCE_ACCOUNT, SOURCE_TAG, TAG_NAME, INSERTION_TIME > descr( tname );
+      TableDescription< SOURCE_ACCOUNT, SOURCE_TAG, TAG_NAME, STATUS_CODE, INSERTION_TIME > descr( tname );
       descr.setPrimaryKey<SOURCE_ACCOUNT, SOURCE_TAG>();
       descr.setForeignKey< TAG_NAME, TAG::NAME >( "TAG_NAME_FK" );
       createTable( m_schema, descr.get() );
     }
     
-    bool TAG_MIGRATION::Table::select( const std::string& sourceAccount, const std::string& sourceTag, std::string& tagName ){
-      Query< TAG_NAME > q( m_schema );
+    bool TAG_MIGRATION::Table::select( const std::string& sourceAccount, const std::string& sourceTag, std::string& tagName, int& statusCode ){
+      Query< TAG_NAME, STATUS_CODE > q( m_schema );
       q.addCondition<SOURCE_ACCOUNT>( sourceAccount );
       q.addCondition<SOURCE_TAG>( sourceTag );
       for ( auto row : q ) {
-	std::tie( tagName ) = row;
+	std::tie( tagName, statusCode ) = row;
       }
       
       return q.retrievedRows();
@@ -360,17 +403,72 @@ namespace cond {
     }
     
     void TAG_MIGRATION::Table::insert( const std::string& sourceAccount, const std::string& sourceTag, const std::string& tagName, 
-				const boost::posix_time::ptime& insertionTime ){
-      RowBuffer< SOURCE_ACCOUNT, SOURCE_TAG, TAG_NAME, INSERTION_TIME > 
-    dataToInsert( std::tie( sourceAccount, sourceTag, tagName, insertionTime ) );
+				       int statusCode, const boost::posix_time::ptime& insertionTime ){
+      RowBuffer< SOURCE_ACCOUNT, SOURCE_TAG, TAG_NAME, STATUS_CODE, INSERTION_TIME > 
+	dataToInsert( std::tie( sourceAccount, sourceTag, tagName, statusCode, insertionTime ) );
       insertInTable( m_schema, tname, dataToInsert.get() );
     }
+
+    void TAG_MIGRATION::Table::updateValidationCode( const std::string& sourceAccount, const std::string& sourceTag, int statusCode ){
+      UpdateBuffer buffer;
+      buffer.setColumnData< STATUS_CODE >( std::tie( statusCode ) );
+      buffer.addWhereCondition<SOURCE_ACCOUNT>( sourceAccount );
+      buffer.addWhereCondition<SOURCE_TAG>( sourceTag );
+      updateTable( m_schema, tname, buffer );  
+    }
     
+    PAYLOAD_MIGRATION::Table::Table( coral::ISchema& schema ):
+      m_schema( schema ){
+    }
+
+    bool PAYLOAD_MIGRATION::Table::exists(){
+      return existsTable( m_schema, tname );  
+    }
+    
+    void PAYLOAD_MIGRATION::Table::create(){
+      if( exists() ){
+	throwException( "PAYLOAD_MIGRATION table already exists in this schema.",
+			"PAYLOAD_MIGRATION::create");
+      }
+      TableDescription< SOURCE_ACCOUNT, SOURCE_TOKEN, PAYLOAD_HASH, INSERTION_TIME > descr( tname );
+      descr.setPrimaryKey<SOURCE_ACCOUNT, SOURCE_TOKEN>();
+      descr.setForeignKey< PAYLOAD_HASH, PAYLOAD::HASH >( "PAYLOAD_HASH_FK" );
+      createTable( m_schema, descr.get() );
+    }
+    
+    bool PAYLOAD_MIGRATION::Table::select( const std::string& sourceAccount, const std::string& sourceToken, std::string& payloadId ){
+      Query< PAYLOAD_HASH > q( m_schema );
+      q.addCondition<SOURCE_ACCOUNT>( sourceAccount );
+      q.addCondition<SOURCE_TOKEN>( sourceToken );
+      for ( auto row : q ) {
+	std::tie( payloadId ) = row;
+      }
+      
+      return q.retrievedRows();
+    }
+    
+    void PAYLOAD_MIGRATION::Table::insert( const std::string& sourceAccount, const std::string& sourceToken, const std::string& payloadId, 
+					   const boost::posix_time::ptime& insertionTime ){
+      RowBuffer< SOURCE_ACCOUNT, SOURCE_TOKEN, PAYLOAD_HASH, INSERTION_TIME > 
+	dataToInsert( std::tie( sourceAccount, sourceToken, payloadId, insertionTime ) );
+      insertInTable( m_schema, tname, dataToInsert.get() );
+    }
+
+    void PAYLOAD_MIGRATION::Table::update( const std::string& sourceAccount, const std::string& sourceToken, const std::string& payloadId, 
+					   const boost::posix_time::ptime& insertionTime ){
+      UpdateBuffer buffer;
+      buffer.setColumnData< PAYLOAD_HASH, INSERTION_TIME >( std::tie( payloadId, insertionTime ) );
+      buffer.addWhereCondition<SOURCE_ACCOUNT>( sourceAccount ); 
+      buffer.addWhereCondition<SOURCE_TOKEN>( sourceToken ); 
+      updateTable( m_schema, tname, buffer );
+    }
+
     IOVSchema::IOVSchema( coral::ISchema& schema ):
       m_tagTable( schema ),
       m_iovTable( schema ),
       m_payloadTable( schema ),
-      m_tagMigrationTable( schema ){
+      m_tagMigrationTable( schema ),
+      m_payloadMigrationTable( schema ){
     }
       
     bool IOVSchema::exists(){
@@ -407,6 +505,13 @@ namespace cond {
       return m_tagMigrationTable;
     }
     
+    IPayloadMigrationTable& IOVSchema::payloadMigrationTable(){
+      return m_payloadMigrationTable;
+    }
+
+    std::string IOVSchema::parsePoolToken( const std::string& ){
+      throwException("CondDB V2 can't parse a pool token.","IOVSchema::parsePoolToken");
+    }
   }
 }
 

@@ -1,7 +1,9 @@
 import FWCore.ParameterSet.Config as cms
+import RecoLocalCalo.HcalRecProducers.HBHEMethod3Parameters_cfi as method3
 
 hbheprereco = cms.EDProducer(
     "HcalHitReconstructor",
+    method3.m3Parameters,
     correctionPhaseNS = cms.double(6.0),
     digiLabel = cms.InputTag("hcalDigis"),
     Subdetector = cms.string('HBHE'),
@@ -13,6 +15,11 @@ hbheprereco = cms.EDProducer(
     tsFromDB = cms.bool(True),
     recoParamsFromDB = cms.bool(True),
     useLeakCorrection = cms.bool(False),
+    dataOOTCorrectionName = cms.string("HBHE"),
+    dataOOTCorrectionCategory = cms.string("Data"),
+    mcOOTCorrectionName = cms.string("HBHE"),
+    mcOOTCorrectionCategory = cms.string("MC"),
+    puCorrMethod = cms.int32(2),
 
     # Set time slice for first digi to be stored in aux word
     # (HBHE uses time slices 4-7 for reco)
@@ -26,6 +33,9 @@ hbheprereco = cms.EDProducer(
     setTimingShapedCutsFlags  = cms.bool(True),
     setTimingTrustFlags       = cms.bool(False), # timing flags currently only implemented for HF
     setPulseShapeFlags        = cms.bool(True),
+
+    # Enable negative energy filter
+    setNegativeFlags          = cms.bool(True),
 
     flagParameters= cms.PSet(nominalPedestal=cms.double(3.0),  #fC
                              hitEnergyMinimum=cms.double(1.0), #GeV
@@ -101,5 +111,25 @@ hbheprereco = cms.EDProducer(
                                           win_gain   = cms.double(3.0),
                                           ignorelowest=cms.bool(True),
                                           ignorehighest=cms.bool(False)
-                                          )
-    )
+                                          ),
+    applyPedConstraint    = cms.bool(True),
+    applyTimeConstraint   = cms.bool(True),
+    applyPulseJitter      = cms.bool(False),  
+    applyUnconstrainedFit = cms.bool(False),   #Turn on original Method 2
+    applyTimeSlew         = cms.bool(True),   #units
+    ts4Min                = cms.double(0.),   #fC
+    ts4Max                = cms.double(100.),   #fC
+    pulseJitter           = cms.double(1.),   #GeV/bin
+    meanTime              = cms.double(0.), #ns
+    timeSigma             = cms.double(5.),  #ns
+    meanPed               = cms.double(0.),   #GeV
+    pedSigma              = cms.double(0.5),  #GeV
+    noise                 = cms.double(1),    #fC
+    timeMin               = cms.double(-12.5),  #ns
+    timeMax               = cms.double(12.5),  #ns
+    ts3chi2               = cms.double(5.),   #chi2 (not used)
+    ts4chi2               = cms.double(15.),  #chi2 for triple pulse 
+    ts345chi2             = cms.double(100.), #chi2 (not used)
+    chargeMax             = cms.double(6.),    #Charge cut (fC) for uncstrianed Fit 
+    fitTimes              = cms.int32(1)       # -1 means no constraint on number of fits per channel
+)

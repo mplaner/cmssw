@@ -39,7 +39,8 @@ SiStripMonitorClusterBPTX = SiStripMonitorCluster.clone()
 SiStripMonitorClusterBPTX.Mod_On = False
 SiStripMonitorClusterBPTX.TH1TotalNumberOfClusters.subdetswitchon   = True
 SiStripMonitorClusterBPTX.TProfClustersApvCycle.subdetswitchon      = True
-SiStripMonitorClusterBPTX.TProfTotalNumberOfClusters.subdetswitchon = True
+SiStripMonitorClusterBPTX.TProfTotalNumberOfClusters.subdetswitchon = True 
+SiStripMonitorClusterBPTX.TrendVsLS = True
 SiStripMonitorClusterBPTX.TH2CStripVsCpixel.globalswitchon       = True
 SiStripMonitorClusterBPTX.TH1MultiplicityRegions.globalswitchon  = True
 SiStripMonitorClusterBPTX.TH1MainDiagonalPosition.globalswitchon = True
@@ -93,7 +94,6 @@ SiStripMonitorTrackMB.andOrHlt = cms.bool(True) # True:=OR; False:=AND
 ### TrackerMonitorTrack defined and used only for MinimumBias ####
 from DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi import *
 MonitorTrackResiduals.trajectoryInput = 'generalTracks'
-MonitorTrackResiduals.OutputMEsInRootFile = False
 MonitorTrackResiduals.Mod_On        = False
 MonitorTrackResiduals.andOr         = cms.bool( False )
 MonitorTrackResiduals.dbLabel       = cms.string("SiStripDQMTrigger")
@@ -116,12 +116,27 @@ SiStripDetInfoFileReade = cms.Service("SiStripDetInfoFileReader")
 from  DPGAnalysis.SiStripTools.eventwithhistoryproducerfroml1abc_cfi import *
 
 # APV Phase Producer
-from DPGAnalysis.SiStripTools.apvcyclephaseproducerfroml1ts2011_cfi import *
+from DPGAnalysis.SiStripTools.apvcyclephaseproducerfroml1tsDB_cfi import *
 
 # temporary patch in order to have BXlumi 
 from RecoLuminosity.LumiProducer.lumiProducer_cff import *
 
 # Sequence
+#removed modules using TkDetMap service
+#SiStripDQMTier0 = cms.Sequence(
+#    APVPhases*consecutiveHEs*siStripFEDCheck
+#    *MonitorTrackResiduals
+#    *dqmInfoSiStrip)
+
+#SiStripDQMTier0Common = cms.Sequence(
+#    APVPhases*consecutiveHEs*siStripFEDCheck
+#    *dqmInfoSiStrip)
+
+#SiStripDQMTier0MinBias = cms.Sequence(
+#    APVPhases*consecutiveHEs*siStripFEDCheck
+#    *SiStripMonitorTrackMB*MonitorTrackResiduals
+#    *dqmInfoSiStrip)
+
 SiStripDQMTier0 = cms.Sequence(
     APVPhases*consecutiveHEs*siStripFEDCheck*siStripFEDMonitor*SiStripMonitorDigi*SiStripMonitorClusterBPTX
     *SiStripMonitorTrackCommon*MonitorTrackResiduals
@@ -136,4 +151,6 @@ SiStripDQMTier0MinBias = cms.Sequence(
     APVPhases*consecutiveHEs*siStripFEDCheck*siStripFEDMonitor*SiStripMonitorDigi*SiStripMonitorClusterBPTX
     *SiStripMonitorTrackMB*MonitorTrackResiduals
     *dqmInfoSiStrip)
+
+
 

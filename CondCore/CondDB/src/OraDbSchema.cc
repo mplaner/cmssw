@@ -69,11 +69,15 @@ namespace cond {
     }
       
     bool OraTagTable::select( const std::string& name, cond::TimeType& timeType, std::string& objectType, 
-			      cond::Time_t& endOfValidity, std::string& description, cond::Time_t& lastValidatedTime ){
+			      cond::SynchronizationType&, cond::Time_t& endOfValidity, 
+			      std::string& description, cond::Time_t& lastValidatedTime ){
       if(!m_cache.load( name )) return false;
+      if( m_cache.iovSequence().size()==0 ) return false;
       timeType = m_cache.iovSequence().timetype();
-      if( m_cache.iovSequence().payloadClasses().size()==0 ) throwException( "No payload type information found.","OraTagTable::select");
-      objectType = *m_cache.iovSequence().payloadClasses().begin();
+      std::string ptok = m_cache.iovSequence().head(1).front().token();
+      objectType = m_cache.session().classNameForItem( ptok );
+      //if( m_cache.iovSequence().payloadClasses().size()==0 ) throwException( "No payload type information found.","OraTagTable::select");
+      //objectType = *m_cache.iovSequence().payloadClasses().begin();
       endOfValidity = m_cache.iovSequence().lastTill();
       description = m_cache.iovSequence().comment();
       lastValidatedTime = m_cache.iovSequence().tail(1).back().since();
@@ -81,10 +85,11 @@ namespace cond {
     }
 
     bool OraTagTable::getMetadata( const std::string& name, std::string& description, 
-				   boost::posix_time::ptime&, boost::posix_time::ptime& ){
+				   boost::posix_time::ptime&, boost::posix_time::ptime& modificationTime){
       if(!m_cache.load( name )) return false;
       description = m_cache.iovSequence().comment();
-      // TO DO: get insertion / modification time from the Logger?      
+      modificationTime = cond::time::to_boost( m_cache.iovSequence().timestamp() );
+      // TO DO: get insertion time from the Logger?      
       return true;
     }
       
@@ -92,7 +97,9 @@ namespace cond {
 			      cond::SynchronizationType, cond::Time_t endOfValidity, const std::string& description, 
 			      cond::Time_t, const boost::posix_time::ptime& ){
       std::string tok = m_cache.editor().create( timeType, endOfValidity );
-      m_cache.editor().stamp( description );
+      if( !m_cache.validationMode() ){
+	m_cache.editor().stamp( description );
+      }
       m_cache.addTag( name, tok );
     }
       
@@ -103,7 +110,7 @@ namespace cond {
       if( tok.empty() ) throwException( "Tag \""+name+"\" has not been found in the database.","OraTagTable::update");
       m_cache.editor().load( tok );
       m_cache.editor().updateClosure( endOfValidity );
-      m_cache.editor().stamp( description );
+      if( !m_cache.validationMode() ) m_cache.editor().stamp( description );
     }
       
     void OraTagTable::updateValidity( const std::string&, cond::Time_t, 
@@ -111,14 +118,30 @@ namespace cond {
       // can't be done in this case...
     }
 
+    void OraTagTable::setValidationMode(){
+      m_cache.setValidationMode();
+    }
+
     OraPayloadTable::OraPayloadTable( DbSession& session ):
       m_session( session ){
     }
 
-    bool OraPayloadTable::select( const cond::Hash& payloadHash, std::string& objectType, cond::Binary& payloadData ){
-      ora::Object obj = m_session.getObject( payloadHash );
+    bool OraPayloadTable::select( const cond::Hash& payloadHash, 
+				  std::string& objectType, 
+				  cond::Binary& payloadData, 
+				  cond::Binary& //streamerInfoData
+				){
+      ora::Object obj;
+      try {
+	obj = m_session.getObject( payloadHash );
+      } catch( const ora::Exception& e ){
+	// hack to trap the non-existance of the object
+	if( e.explainSelf().find("has not been found in the database. from ReadBuffer::read") != std::string::npos ) {
+	  return false;
+	} else throw;
+      } 
       objectType = obj.typeName();
-      payloadData = cond::Binary( obj.makeShared() );
+      payloadData.fromOraObject(obj );
       return true;
     }
 
@@ -127,10 +150,11 @@ namespace cond {
       return true;
     }
       
-    cond::Hash OraPayloadTable::insertIfNew( const std::string& objectType, const cond::Binary& payloadData, 
+    cond::Hash OraPayloadTable::insertIfNew( const std::string& objectType, 
+					     const cond::Binary& payloadData, 
+					     const cond::Binary&, //streamerInfoData
 					     const boost::posix_time::ptime& ){
-      void* ptr = payloadData.share().get();
-      ora::Object obj( ptr, objectType );
+      ora::Object obj = payloadData.oraObject();
       std::string tok = m_session.storeObject( obj, objectType );
       m_session.flush();
       return tok;
@@ -186,12 +210,24 @@ namespace cond {
       return ret;      
     }
 
-    bool OraIOVTable::getLastIov( const std::string& tag, cond::Time_t& since, cond::Hash& hash ){
+    size_t OraIOVTable::selectSnapshot( const std::string& tag, const boost::posix_time::ptime&, 
+					std::vector<std::tuple<cond::Time_t,cond::Hash> >& iovs){
+      // no (easy) way to do it...                                                                                                                                  
+      return selectLatest( tag, iovs );
+    }
+
+     bool OraIOVTable::getLastIov( const std::string& tag, cond::Time_t& since, cond::Hash& hash ){
       if(!m_cache.load( tag ) || m_cache.iovSequence().size()==0 ) return false;
       cond::IOVElementProxy last = *(--m_cache.iovSequence().end());
       since = last.since();
       hash = last.token();
       return true;
+    }
+
+    bool OraIOVTable::getSnapshotLastIov( const std::string& tag, const boost::posix_time::ptime&, 
+				  cond::Time_t& since, cond::Hash& hash ){
+      // no (easy) way to do it...                                                                                                                                  
+      return getLastIov( tag, since, hash );
     }
 
     bool OraIOVTable::getSize( const std::string& tag, size_t& size ){
@@ -209,19 +245,34 @@ namespace cond {
 				 const boost::posix_time::ptime& ){
       if(!m_cache.load(tag)) throwException("Tag "+tag+" has not been found in the database.",
 					    "OraIOVTable::insertOne");
-      m_cache.editor().append( since, payloadHash );
+      if( m_cache.editor().timetype() != cond::hash ){
+	m_cache.editor().append( since, payloadHash );
+      } else {
+	m_cache.editor().freeInsert( since, payloadHash );
+      }
     }
 
     void OraIOVTable::insertMany( const std::string& tag, 
 				  const std::vector<std::tuple<cond::Time_t,cond::Hash,boost::posix_time::ptime> >& iovs ){
       if(!m_cache.load(tag)) throwException("Tag "+tag+" has not been found in the database.",
 					    "OraIOVTable::insertOne");
-      std::vector<std::pair<cond::Time_t, std::string > > data;
-      data.reserve( iovs.size() );
-      for( auto v : iovs ){
-	data.push_back( std::make_pair( std::get<0>(v), std::get<1>(v) ) );
+      if( m_cache.editor().timetype() != cond::hash ){
+	std::vector<std::pair<cond::Time_t, std::string > > data;
+	data.reserve( iovs.size() );
+	for( auto v : iovs ){
+	  data.push_back( std::make_pair( std::get<0>(v), std::get<1>(v) ) );
+	}
+	m_cache.editor().bulkAppend( data );
+      } else {
+        for( auto v: iovs ){
+	  insertOne( tag, std::get<0>(v), std::get<1>(v), std::get<2>(v) );
+	}
       }
-      m_cache.editor().bulkAppend( data );
+    }
+
+    void OraIOVTable::erase( const std::string& ){
+      throwException( "Erase iovs from ORA database is not supported.",
+		      "OraIOVTable::erase" );
     }
 
     OraIOVSchema::OraIOVSchema( DbSession& session ):
@@ -253,7 +304,17 @@ namespace cond {
       
     ITagMigrationTable& OraIOVSchema::tagMigrationTable(){
       throwException("Tag Migration interface is not available in this implementation.",
-		     "OraIOVSchema::tagMigrationTabl");
+		     "OraIOVSchema::tagMigrationTable");
+    }
+
+    IPayloadMigrationTable& OraIOVSchema::payloadMigrationTable(){
+      throwException("Payload Migration interface is not available in this implementation.",
+		     "OraIOVSchema::payloadMigrationTable");
+    }
+
+    std::string OraIOVSchema::parsePoolToken( const std::string& poolToken ){
+      cond::PoolTokenParser parser( m_cache.session().storage() );
+      return parser.parse( poolToken ).toString();
     }
 
     OraGTTable::OraGTTable( DbSession& session ):
@@ -262,7 +323,7 @@ namespace cond {
 
     bool OraGTTable::select( const std::string& name ){
       cond::TagCollectionRetriever gtRetriever( m_session, "", "" );
-      return gtRetriever.existsTagCollection( name+"::All" );
+      return gtRetriever.existsTagCollection( name );
     }
       
     bool OraGTTable::select( const std::string& name, cond::Time_t& validity, boost::posix_time::ptime& snapshotTime){
@@ -321,6 +382,12 @@ namespace cond {
       m_session( session ),
       m_gtTable( session ),
       m_gtMapTable( session ){
+    }
+
+
+    void OraGTSchema::create(){
+      throwException("GT Schema can't be create in ORA implementation.",
+                     "OraGTSchema::create");
     }
       
     bool OraGTSchema::exists(){

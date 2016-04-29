@@ -12,10 +12,18 @@
 
 #include <iostream>
 
+//Using this function with the 'const static within s_dummyPSet'
+// guarantees that even if multiple threads call s_dummyPSet at the
+// same time, only the 'first' one registers the dummy PSet.
+static const edm::ParameterSet initializeDummyPSet() {
+  edm::ParameterSet dummy;
+  dummy.registerIt();
+  return std::move(dummy);
+}
+
 static const edm::ParameterSet* s_dummyPSet()
 {
-  static edm::ParameterSet dummyPSet;
-  dummyPSet.registerIt();
+  static const edm::ParameterSet dummyPSet{initializeDummyPSet()};
   return &dummyPSet;
 }
 
@@ -331,6 +339,10 @@ void HLTConfigData::dump(const std::string& what) const {
 
 const std::string& HLTConfigData::processName() const {
   return processName_;
+}
+
+const std::string& HLTConfigData::globalTag() const {
+  return globalTag_;
 }
 
 unsigned int HLTConfigData::size() const {

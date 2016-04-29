@@ -51,4 +51,3 @@ DQMOfflineCosmics = cms.Sequence( DQMOfflineCosmicsPreDPG *
                                   DQMMessageLogger )
 
 DQMOfflineCosmicsPhysics = cms.Sequence( dqmPhysicsCosmics )
-

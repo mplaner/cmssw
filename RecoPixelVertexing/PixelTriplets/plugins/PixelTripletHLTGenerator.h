@@ -7,10 +7,7 @@
     provided Layers
  */
 
-#include "RecoTracker/TkHitPairs/interface/HitPairGenerator.h"
-#include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGenerator.h"
 #include "CombinedHitTripletGenerator.h"
-#include "RecoTracker/TkSeedingLayers/interface/SeedingLayer.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "RecoPixelVertexing/PixelTriplets/interface/HitTripletGeneratorFromPairAndLayers.h"
@@ -25,18 +22,14 @@ class PixelTripletHLTGenerator : public HitTripletGeneratorFromPairAndLayers {
 typedef CombinedHitTripletGenerator::LayerCacheType       LayerCacheType;
 
 public:
-  PixelTripletHLTGenerator( const edm::ParameterSet& cfg); 
+  PixelTripletHLTGenerator( const edm::ParameterSet& cfg, edm::ConsumesCollector& iC);
 
   virtual ~PixelTripletHLTGenerator();
 
-  virtual void init( const HitPairGenerator & pairs,
-      const std::vector<ctfseeding::SeedingLayer> & layers, LayerCacheType* layerCache);
-
-  virtual void hitTriplets( const TrackingRegion& region, OrderedHitTriplets & trs, 
-      const edm::Event & ev, const edm::EventSetup& es);
-
-  const HitPairGenerator & pairGenerator() const { return *thePairGenerator; }
-  const std::vector<ctfseeding::SeedingLayer> & thirdLayers() const { return theLayers; }
+  virtual void hitTriplets( const TrackingRegion& region, OrderedHitTriplets & trs,
+                            const edm::Event & ev, const edm::EventSetup& es,
+                            SeedingLayerSetsHits::SeedingLayerSet pairLayers,
+                            const std::vector<SeedingLayerSetsHits::SeedingLayer>& thirdLayers) override;
 
 private:
   bool checkPhiInRange(float phi, float phi1, float phi2) const;
@@ -44,17 +37,13 @@ private:
       const std::pair<float,float> &r1, const std::pair<float,float> &r2) const; 
 
 private:
-  HitPairGenerator * thePairGenerator;
-  std::vector<ctfseeding::SeedingLayer> theLayers;
-  LayerCacheType * theLayerCache;
-
   bool useFixedPreFiltering;
   float extraHitRZtolerance;
   float extraHitRPhitolerance;
   bool useMScat;
   bool useBend;
   float dphi;
-  SeedComparitor * theComparitor;
+  std::unique_ptr<SeedComparitor> theComparitor;
 
 };
 #endif

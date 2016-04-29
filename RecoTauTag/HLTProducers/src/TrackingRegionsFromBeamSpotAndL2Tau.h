@@ -8,6 +8,7 @@
 
 #include "RecoTracker/TkTrackingRegions/interface/TrackingRegionProducer.h"
 #include "RecoTracker/TkTrackingRegions/interface/RectangularEtaPhiTrackingRegion.h"
+#include "RecoTracker/MeasurementDet/interface/MeasurementTrackerEvent.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -47,22 +48,18 @@ public:
     if (regionPSet.exists("searchOpt")) m_searchOpt = regionPSet.getParameter<bool>("searchOpt");
     else                                m_searchOpt = false;
 
-    m_measurementTrackerName ="";
-    m_whereToUseMeasurementTracker=0;
-    if (regionPSet.exists("measurementTrackerName"))
-    {
-      m_measurementTrackerName = regionPSet.getParameter<std::string>("measurementTrackerName");
-      if (regionPSet.exists("whereToUseMeasurementTracker"))
-        m_whereToUseMeasurementTracker = regionPSet.getParameter<double>("whereToUseMeasurementTracker");
+    m_whereToUseMeasurementTracker = RectangularEtaPhiTrackingRegion::stringToUseMeasurementTracker(regionPSet.getParameter<std::string>("whereToUseMeasurementTracker"));
+    if(m_whereToUseMeasurementTracker != RectangularEtaPhiTrackingRegion::UseMeasurementTracker::kNever) {
+      token_measurementTracker = iC.consumes<MeasurementTrackerEvent>(regionPSet.getParameter<edm::InputTag>("measurementTrackerName"));
     }
   }
   
   virtual ~TrackingRegionsFromBeamSpotAndL2Tau() {}
     
 
-  virtual std::vector<TrackingRegion* > regions(const edm::Event& e, const edm::EventSetup& es) const
+  virtual std::vector<std::unique_ptr<TrackingRegion> > regions(const edm::Event& e, const edm::EventSetup& es) const override
   {
-    std::vector<TrackingRegion* > result;
+    std::vector<std::unique_ptr<TrackingRegion> > result;
 
     // use beam spot to pick up the origin
     edm::Handle<reco::BeamSpot> bsHandle;
@@ -77,6 +74,13 @@ public:
     size_t n_objects = objects->size();
     if (n_objects == 0) return result;
 
+    const MeasurementTrackerEvent *measurementTracker = nullptr;
+    if(!token_measurementTracker.isUninitialized()) {
+      edm::Handle<MeasurementTrackerEvent> hmte;
+      e.getByToken(token_measurementTracker, hmte);
+      measurementTracker = hmte.product();
+    }
+
     // create maximum JetMaxN tracking regions in directions of 
     // highest pt jets that are above threshold and are within allowed eta
     // (we expect that jet collection was sorted in decreasing pt order)
@@ -88,7 +92,7 @@ public:
       
       GlobalVector direction(jet.momentum().x(), jet.momentum().y(), jet.momentum().z());
 
-      RectangularEtaPhiTrackingRegion* etaphiRegion = new RectangularEtaPhiTrackingRegion(
+      result.push_back(std::make_unique<RectangularEtaPhiTrackingRegion>(
           direction,
           origin,
           m_ptMin,
@@ -98,10 +102,9 @@ public:
           m_deltaPhi,
           m_whereToUseMeasurementTracker,
           m_precise,
-          m_measurementTrackerName,
+          measurementTracker,
           m_searchOpt
-      );
-      result.push_back(etaphiRegion);
+      ));
       ++n_regions;
     }
     //std::cout<<"nregions = "<<n_regions<<std::endl;
@@ -119,8 +122,8 @@ private:
   float m_jetMinPt;
   float m_jetMaxEta;
   int   m_jetMaxN;
-  std::string m_measurementTrackerName;
-  float m_whereToUseMeasurementTracker;
+  edm::EDGetTokenT<MeasurementTrackerEvent> token_measurementTracker;
+  RectangularEtaPhiTrackingRegion::UseMeasurementTracker m_whereToUseMeasurementTracker;
   bool m_searchOpt;
   edm::EDGetTokenT<reco::BeamSpot> token_beamSpot; 
   bool m_precise;

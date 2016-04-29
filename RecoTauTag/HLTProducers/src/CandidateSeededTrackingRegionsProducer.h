@@ -78,13 +78,9 @@ public:
     m_deltaEta         = regPSet.getParameter<double>("deltaEta");
     m_deltaPhi         = regPSet.getParameter<double>("deltaPhi");
     m_precise          = regPSet.getParameter<bool>("precise");
-    m_measurementTrackerName       = "";
-    m_whereToUseMeasurementTracker = 0;
-    if (regPSet.exists("measurementTrackerName"))
-    {
-      m_measurementTrackerName = regPSet.getParameter<std::string>("measurementTrackerName");
-      if (regPSet.exists("whereToUseMeasurementTracker"))
-        m_whereToUseMeasurementTracker = regPSet.getParameter<double>("whereToUseMeasurementTracker");
+    m_whereToUseMeasurementTracker = RectangularEtaPhiTrackingRegion::stringToUseMeasurementTracker(regPSet.getParameter<std::string>("whereToUseMeasurementTracker"));
+    if(m_whereToUseMeasurementTracker != RectangularEtaPhiTrackingRegion::UseMeasurementTracker::kNever) {
+      token_measurementTracker = iC.consumes<MeasurementTrackerEvent>(regPSet.getParameter<edm::InputTag>("measurementTrackerName"));
     }
     m_searchOpt = false;
     if (regPSet.exists("searchOpt")) m_searchOpt = regPSet.getParameter<bool>("searchOpt");
@@ -104,9 +100,9 @@ public:
   virtual ~CandidateSeededTrackingRegionsProducer() {}
     
 
-  virtual std::vector<TrackingRegion* > regions(const edm::Event& e, const edm::EventSetup& es) const
+  virtual std::vector<std::unique_ptr<TrackingRegion> > regions(const edm::Event& e, const edm::EventSetup& es) const override
   {
-    std::vector<TrackingRegion* > result;
+    std::vector<std::unique_ptr<TrackingRegion> > result;
 
     // pick up the candidate objects of interest
     edm::Handle< reco::CandidateView > objects;
@@ -158,6 +154,13 @@ public:
       }
     }
     
+    const MeasurementTrackerEvent *measurementTracker = nullptr;
+    if(!token_measurementTracker.isUninitialized()) {
+      edm::Handle<MeasurementTrackerEvent> hmte;
+      e.getByToken(token_measurementTracker, hmte);
+      measurementTracker = hmte.product();
+    }
+
     // create tracking regions (maximum MaxNRegions of them) in directions of the
     // objects of interest (we expect that the collection was sorted in decreasing pt order)
     int n_regions = 0;
@@ -168,7 +171,7 @@ public:
 
       for (size_t  j=0; j<origins.size() && n_regions < m_maxNRegions; ++j)
       {
-        result.push_back( new RectangularEtaPhiTrackingRegion(
+        result.push_back(std::make_unique<RectangularEtaPhiTrackingRegion>(
           direction,
           origins[j].first,
           m_ptMin,
@@ -178,7 +181,7 @@ public:
           m_deltaPhi,
           m_whereToUseMeasurementTracker,
           m_precise,
-          m_measurementTrackerName,
+          measurementTracker,
           m_searchOpt
         ));
         ++n_regions;
@@ -206,8 +209,8 @@ private:
   float m_deltaEta;
   float m_deltaPhi;
   bool m_precise;
-  std::string m_measurementTrackerName;
-  float m_whereToUseMeasurementTracker;
+  edm::EDGetTokenT<MeasurementTrackerEvent> token_measurementTracker;
+  RectangularEtaPhiTrackingRegion::UseMeasurementTracker m_whereToUseMeasurementTracker;
   bool m_searchOpt;
 
   float m_nSigmaZVertex;

@@ -1,15 +1,15 @@
 #ifndef DDCompactView_h
 #define DDCompactView_h
 
-#include <vector>
+# include "DetectorDescription/Core/interface/graphwalker.h"
+# include "DetectorDescription/Core/interface/DDLogicalPart.h"
+# include "DetectorDescription/Core/interface/DDPosData.h"
+# include <vector>
 
-#include "DetectorDescription/Core/interface/DDAlgo.h"
-#include "DetectorDescription/Core/interface/DDCompactViewImpl.h"
-#include "DetectorDescription/Core/interface/graphwalker.h"
-
-
+class DDCompactViewImpl;
 class DDPartSelector;
 class DDPhysicalPart;
+
 namespace DDI {
   class Material;
   class Solid;
@@ -87,12 +87,7 @@ public:
   //! pair ...
   typedef std::pair<DDLogicalPart,DDPosData*> pos_type;
   
-  //! not used
-  //:typedef GraphWalker<DDLogicalPart,DDPosData*> walker_type;
   typedef graphwalker<DDLogicalPart,DDPosData*> walker_type;
-  
-  //! not used
-  //:typedef walker_type::value_type value_type;
   
   //! type of representation of the compact-view (acyclic directed multigraph)
   /** Nodes are instances of DDLogicalPart, edges are pointers to instances of DDPosData */
@@ -111,16 +106,13 @@ public:
 
   //! returns the DDLogicalPart representing the root of the geometrical hierarchy
   const DDLogicalPart & root() const;
+  
+  //! The absolute position of the world
+  const DDPosData * worldPosition() const;
 
   //! Prototype version of calculating the weight of a detector component
   double weight(const DDLogicalPart & p) const;
 
-  //! positioning...
-  void algoPosPart(const DDLogicalPart & self,
-		   const DDLogicalPart & parent,
-		   DDAlgo & algo
-		   );
-  
   void position (const DDLogicalPart & self,
 		 const DDLogicalPart & parent,
 		 std::string copyno,
@@ -155,10 +147,10 @@ public:
 
   void lockdown();
   
- protected:
-  DDCompactViewImpl* rep_;
-
  private:
+  std::unique_ptr<DDCompactViewImpl> rep_;
+  std::unique_ptr<DDPosData> worldpos_ ;
+  
     // 2010-01-27 memory patch
     // for copying and protecting DD Store's after parsing is complete.
     DDI::Store<DDName, DDI::Material*> matStore_;

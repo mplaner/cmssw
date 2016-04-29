@@ -66,17 +66,10 @@ private:
       ModuleCallingContext const& mcc_;
     };
 
-    cms::Exception& exceptionContext(ModuleDescription const& iMD,
-                                     cms::Exception& iEx) {
-      iEx << iMD.moduleName() << "/" << iMD.moduleLabel() << "\n";
-      return iEx;
-    }
-
   }
 
   Worker::Worker(ModuleDescription const& iMD, 
 		 ExceptionToActionTable const* iActions) :
-    stopwatch_(),
     timesRun_(),
     timesVisited_(),
     timesPassed_(),
@@ -94,7 +87,7 @@ private:
   Worker::~Worker() {
   }
 
-  void Worker::setActivityRegistry(boost::shared_ptr<ActivityRegistry> areg) {
+  void Worker::setActivityRegistry(std::shared_ptr<ActivityRegistry> areg) {
     actReg_ = areg;
   }
 
@@ -110,16 +103,10 @@ private:
 
   void Worker::beginJob() {
     try {
-      try {
+      convertException::wrap([&]() {
         ModuleBeginJobSignalSentry cpp(actReg_.get(), description());
         implBeginJob();
-      }
-      catch (cms::Exception& e) { throw; }
-      catch(std::bad_alloc& bda) { convertException::badAllocToEDM(); }
-      catch (std::exception& e) { convertException::stdToEDM(e); }
-      catch(std::string& s) { convertException::stringToEDM(s); }
-      catch(char const* c) { convertException::charPtrToEDM(c); }
-      catch (...) { convertException::unknownToEDM(); }
+      });
     }
     catch(cms::Exception& ex) {
       state_ = Exception;
@@ -132,16 +119,10 @@ private:
   
   void Worker::endJob() {
     try {
-      try {
+      convertException::wrap([&]() {
         ModuleEndJobSignalSentry cpp(actReg_.get(), description());
         implEndJob();
-      }
-      catch (cms::Exception& e) { throw; }
-      catch(std::bad_alloc& bda) { convertException::badAllocToEDM(); }
-      catch (std::exception& e) { convertException::stdToEDM(e); }
-      catch(std::string& s) { convertException::stringToEDM(s); }
-      catch(char const* c) { convertException::charPtrToEDM(c); }
-      catch (...) { convertException::unknownToEDM(); }
+      });
     }
     catch(cms::Exception& ex) {
       state_ = Exception;
@@ -154,7 +135,7 @@ private:
 
   void Worker::beginStream(StreamID id, StreamContext& streamContext) {
     try {
-      try {
+      convertException::wrap([&]() {
         streamContext.setTransition(StreamContext::Transition::kBeginStream);
         streamContext.setEventID(EventID(0, 0, 0));
         streamContext.setRunIndex(RunIndex::invalidRunIndex());
@@ -165,13 +146,7 @@ private:
         moduleCallingContext_.setState(ModuleCallingContext::State::kRunning);
         ModuleBeginStreamSignalSentry beginSentry(actReg_.get(), streamContext, moduleCallingContext_);
         implBeginStream(id);
-      }
-      catch (cms::Exception& e) { throw; }
-      catch(std::bad_alloc& bda) { convertException::badAllocToEDM(); }
-      catch (std::exception& e) { convertException::stdToEDM(e); }
-      catch(std::string& s) { convertException::stringToEDM(s); }
-      catch(char const* c) { convertException::charPtrToEDM(c); }
-      catch (...) { convertException::unknownToEDM(); }
+      });
     }
     catch(cms::Exception& ex) {
       state_ = Exception;
@@ -184,7 +159,7 @@ private:
   
   void Worker::endStream(StreamID id, StreamContext& streamContext) {
     try {
-      try {
+      convertException::wrap([&]() {
         streamContext.setTransition(StreamContext::Transition::kEndStream);
         streamContext.setEventID(EventID(0, 0, 0));
         streamContext.setRunIndex(RunIndex::invalidRunIndex());
@@ -195,13 +170,7 @@ private:
         moduleCallingContext_.setState(ModuleCallingContext::State::kRunning);
         ModuleEndStreamSignalSentry endSentry(actReg_.get(), streamContext, moduleCallingContext_);
         implEndStream(id);
-      }
-      catch (cms::Exception& e) { throw; }
-      catch(std::bad_alloc& bda) { convertException::badAllocToEDM(); }
-      catch (std::exception& e) { convertException::stdToEDM(e); }
-      catch(std::string& s) { convertException::stringToEDM(s); }
-      catch(char const* c) { convertException::charPtrToEDM(c); }
-      catch (...) { convertException::unknownToEDM(); }
+      });
     }
     catch(cms::Exception& ex) {
       state_ = Exception;
@@ -212,10 +181,6 @@ private:
     }
   }
 
-  void Worker::useStopwatch(){
-    stopwatch_.reset(new RunStopwatch::StopwatchPointer::element_type);
-  }
-  
   void Worker::pathFinished(EventPrincipal& iEvent) {
     if(earlyDeleteHelper_) {
       earlyDeleteHelper_->pathFinished(iEvent);

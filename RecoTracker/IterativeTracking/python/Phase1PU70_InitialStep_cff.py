@@ -6,9 +6,14 @@ import FWCore.ParameterSet.Config as cms
 from RecoLocalTracker.SiPixelRecHits.PixelCPEESProducers_cff import *
 from RecoTracker.TransientTrackingRecHit.TTRHBuilders_cff import *
 
+# SEEDING LAYERS
+import RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi
+initialStepSeedLayers = RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi.PixelLayerTriplets.clone()
+
 # seeding
 from RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff import *
 from RecoTracker.TkTrackingRegions.GlobalTrackingRegionFromBeamSpot_cfi import RegionPsetFomBeamSpotBlock
+from RecoPixelVertexing.PixelTriplets.quadrupletseedmerging_cff import *
 initialStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.globalSeedsFromTriplets.clone(
     RegionFactoryPSet = RegionPsetFomBeamSpotBlock.clone(
         ComponentName = cms.string('GlobalRegionProducerFromBeamSpot'),
@@ -19,26 +24,27 @@ initialStepSeeds = RecoTracker.TkSeedGenerator.GlobalSeedsFromTriplets_cff.globa
             )
     ),
     SeedMergerPSet = cms.PSet(
-        layerListName = cms.string('PixelSeedMergerQuadruplets'),
+        layerList = cms.PSet(refToPSet_ = cms.string("PixelSeedMergerQuadruplets")),
 	addRemainingTriplets = cms.bool(False),
 	mergeTriplets = cms.bool(True),
 	ttrhBuilderLabel = cms.string('PixelTTRHBuilderWithoutAngle')
     )
 )
+initialStepSeeds.OrderedHitsFactoryPSet.SeedingLayers = 'initialStepSeedLayers'
+initialStepSeeds.SeedCreatorPSet.magneticField = ''
+initialStepSeeds.SeedCreatorPSet.propagator = 'PropagatorWithMaterial'
 
 from RecoPixelVertexing.PixelLowPtUtilities.ClusterShapeHitFilterESProducer_cfi import *
-initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet.ComponentName = 'LowPtClusterShapeSeedComparitor'
+import RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi
+initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet = RecoPixelVertexing.PixelLowPtUtilities.LowPtClusterShapeSeedComparitor_cfi.LowPtClusterShapeSeedComparitor
 initialStepSeeds.ClusterCheckPSet.doClusterCheck = cms.bool(False)
 initialStepSeeds.OrderedHitsFactoryPSet.GeneratorPSet.maxElement = cms.uint32(0)
 
 # building
-import TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi
-initialStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.clone(
-    ComponentName = 'initialStepTrajectoryFilter',
-    filterPset = TrackingTools.TrajectoryFiltering.TrajectoryFilterESProducer_cfi.trajectoryFilterESProducer.filterPset.clone(
+import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
+initialStepTrajectoryFilter = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     minimumNumberOfHits = 3,
     minPt = 0.2
-    )
     )
 
 import TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProducer_cfi
@@ -48,10 +54,9 @@ initialStepChi2Est = TrackingTools.KalmanUpdators.Chi2MeasurementEstimatorESProd
     MaxChi2 = cms.double(30.0)
 )
 
-import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi
-initialStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilderESProducer_cfi.GroupedCkfTrajectoryBuilder.clone(
-    ComponentName = 'initialStepTrajectoryBuilder',
-    trajectoryFilterName = 'initialStepTrajectoryFilter',
+import RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi
+initialStepTrajectoryBuilder = RecoTracker.CkfPattern.GroupedCkfTrajectoryBuilder_cfi.GroupedCkfTrajectoryBuilder.clone(
+    trajectoryFilter = cms.PSet(refToPSet_ = cms.string('initialStepTrajectoryFilter')),
     alwaysUseInvalidHits = True,
     maxCand = 6,
     estimator = cms.string('initialStepChi2Est'),
@@ -65,7 +70,7 @@ initialStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTr
     ### these two parameters are relevant only for the CachingSeedCleanerBySharedInput
     numHitsForSeedCleaner = cms.int32(50),
     onlyPixelHitsForSeedCleaner = cms.bool(True),
-    TrajectoryBuilder = 'initialStepTrajectoryBuilder',
+    TrajectoryBuilderPSet = cms.PSet(refToPSet_ = cms.string('initialStepTrajectoryBuilder')),
     doSeedingRegionRebuilding = True,
     useHitsSplitting = True
     )
@@ -74,7 +79,7 @@ initialStepTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTr
 import RecoTracker.TrackProducer.TrackProducer_cfi
 initialStepTracks = RecoTracker.TrackProducer.TrackProducer_cfi.TrackProducer.clone(
     src = 'initialStepTrackCandidates',
-    AlgorithmName = cms.string('iter0'),
+    AlgorithmName = cms.string('initialStep'),
     Fitter = cms.string('FlexibleKFFittingSmoother'),
     TTRHBuilder=cms.string('WithTrackAngle')
 )
@@ -126,7 +131,8 @@ initialStepSelector = RecoTracker.FinalTrackSelectors.multiTrackSelector_cfi.mul
     ) #end of clone
 
 # Final sequence
-InitialStep = cms.Sequence(initialStepSeeds*
+InitialStep = cms.Sequence(initialStepSeedLayers*
+                           initialStepSeeds*
                            initialStepTrackCandidates*
                            initialStepTracks*
                            initialStepSelector)

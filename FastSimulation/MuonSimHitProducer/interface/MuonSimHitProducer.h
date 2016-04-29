@@ -23,7 +23,7 @@
 #include <memory>
 
 // user include files
-#include "FWCore/Framework/interface/EDProducer.h"
+#include "FWCore/Framework/interface/stream/EDProducer.h"
 #include "TrackingTools/KalmanUpdators/interface/Chi2MeasurementEstimator.h"
 
 // FastSimulation headers
@@ -37,7 +37,8 @@ class MaterialEffects;
 class TrajectoryStateOnSurface;
 class Propagator;
 class RandomEngineAndDistribution;
-
+class SimTrack;
+class SimVertex;
 /*
 namespace reco { 
   class Muon;
@@ -54,7 +55,7 @@ namespace edm {
 // class declaration
 //
 
-class MuonSimHitProducer : public edm::EDProducer {
+class MuonSimHitProducer : public edm::stream::EDProducer <> {
    public:
 
       explicit MuonSimHitProducer(const edm::ParameterSet&);
@@ -93,10 +94,19 @@ class MuonSimHitProducer : public edm::EDProducer {
                                 RandomEngineAndDistribution const*);
 
           
-  // ----------- parameters ---------------------------- 
+      // ----------- parameters ---------------------------- 
       bool fullPattern_;
       bool doL1_ , doL3_ , doGL_;
-      std::string theSimModuleLabel_ , theSimModuleProcess_, theTrkModuleLabel_ ;
+
+      // tags
+      edm::InputTag simMuonLabel;
+      edm::InputTag simVertexLabel;
+
+      // tokens
+      edm::EDGetTokenT<std::vector<SimTrack> > simMuonToken;
+      edm::EDGetTokenT<std::vector<SimVertex> > simVertexToken;
+      
+      
 };
 
 #endif

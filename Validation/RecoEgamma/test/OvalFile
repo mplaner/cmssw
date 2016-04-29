@@ -1,13 +1,12 @@
 <var name="TEST_COMMENT" value="">
-<var name="TEST_NEW" value="7_0_0_pre6">
-<var name="TEST_REF" value="7_0_0_pre5">
+<var name="TEST_NEW" value="7_5_0_pre5_std">
+<var name="TEST_REF" value="7_5_0_pre4_std">
 
-<var name="TAG_STARTUP" value="PRE_ST62_V8">
-<var name="TAG_IDEAL" value="PRE_ST62_V8">
+<var name="TAG_STARTUP" value="MCRUN2_75_V5">
 <var name="DATA_VERSION" value="v1">
 
 TAG for the REFERENCE DATA, USED ONLY FOR INFORMATION ON WEB PAGE
-<var name="DD_COND_REF" value="PRE_ST62_V8-v1">
+<var name="DD_COND_REF" value="MCRUN2_75_V1-v1">
 
 <var name="DD_RELEASE" value="${CMSSW_VERSION}">
 
@@ -65,6 +64,7 @@ The file defined below is used by the script electronDataDiscovery.py when we wa
 some RelVal reco files which have been regenerated locally.
 
 <var name="TEST_AFS_DIR" value="/afs/cern.ch/cms/CAF/CMSPHYS/PHYS_EGAMMA/electrons/chamont/ReleaseValidationTmp/SeedsRemaker3">
+<!--var name="TEST_AFS_DIR" value="/afs/cern.ch/user/a/archiron/private/Root_Regress"-->
 <file name="electronInputDataFiles.txt">
 file:${TEST_AFS_DIR}/RelValSingleElectronPt10-STARTUP-RECO.root
 file:${TEST_AFS_DIR}/RelValSingleElectronPt35-STARTUP-RECO.root
@@ -111,9 +111,10 @@ FullSim
        
     <var name="DD_COND" value="${TEST_GLOBAL_TAG}-${DATA_VERSION}">    
     
-    <environment name="ValFullPt10Startup">
+    <!--var name="DD_COND" value="STARTUP"-->
+    <environment name="ValFullPt10Startup_UP15">
     
-      <var name="DD_SAMPLE" value="RelValSingleElectronPt10">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt10_UP15">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
@@ -126,13 +127,12 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/Full_${DD_SAMPLE}_Startup'>
   
     </environment>
 
-    <environment name="ValFullPt35Startup">
+    <environment name="ValFullPt35Startup_UP15">
   
-      <var name="DD_SAMPLE" value="RelValSingleElectronPt35">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt35_UP15">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
@@ -145,13 +145,12 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/Full_${DD_SAMPLE}_Startup'>
             
     </environment>
 
-    <environment name="ValFullPt1000Startup">
+    <environment name="ValFullPt1000Startup_UP15">
     
-      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000_UP15">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
@@ -159,37 +158,17 @@ FullSim
       <target name="wget" cmd="electronWget.py castor">
       
       <target name="dd" cmd="electronDataDiscovery.py">
-      <target name="analyze" cmd="cmsRun ElectronMcSignalPt1000Validation_cfg.py">
+      <target name="analyze" cmd="cmsRun ElectronMcSignalValidationPt1000_cfg.py">
       <target name="finalize" cmd="cmsRun ${VAL_POST_CONFIGURATION}.py">
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/Full_${DD_SAMPLE}_Startup'>
   
     </environment>
 
-    <environment name="ValFullTTbarStartup">
+    <environment name="ValFullTTbarStartup_13">
   
-      <var name="DD_SAMPLE" value="RelValTTbar">
-      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
-      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
-      
-      <target name="dqm" cmd="electronDataDiscovery.py castor">
-      <target name="wget" cmd="electronWget.py castor">
-      
-      <target name="dd" cmd="electronDataDiscovery.py">
-      <target name="analyze" cmd="cmsRun ${VAL_CONFIGURATION}.py">
-      <target name="finalize" cmd="cmsRun ${VAL_POST_CONFIGURATION}.py">
-      
-      <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/Full_${DD_SAMPLE}_Startup'>
-  
-    </environment>
-
-    <environment name="ValFullZEEStartup">
-    
-      <var name="DD_SAMPLE" value="RelValZEE">
+      <var name="DD_SAMPLE" value="RelValTTbar_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
@@ -202,17 +181,33 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/Full_${DD_SAMPLE}_Startup'>
   
     </environment>
 
-    <environment name="ValFullQcdPt80Pt120Startup">
+    <environment name="ValFullZEEStartup_13">
     
-      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120">
+      <var name="DD_SAMPLE" value="RelValZEE_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="VAL_HISTOS" value="ElectronMcFakeHistos.txt">
+      <target name="dqm" cmd="electronDataDiscovery.py castor">
+      <target name="wget" cmd="electronWget.py castor">
+      
+      <target name="dd" cmd="electronDataDiscovery.py">
+      <target name="analyze" cmd="cmsRun ${VAL_CONFIGURATION}.py">
+      <target name="finalize" cmd="cmsRun ${VAL_POST_CONFIGURATION}.py">
+      
+      <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
+      <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
+  
+    </environment>
+
+    <environment name="ValFullQcdPt80Pt120Startup_13">
+    
+      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
       <var name="VAL_ANALYZER" value="ElectronMcFakeValidator">
       <var name="VAL_POST_ANALYZER" value="ElectronMcFakePostValidator">
       <var name="VAL_CONFIGURATION" value="ElectronMcFakeValidation_cfg">
@@ -227,19 +222,15 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/Full_${DD_SAMPLE}_Startup'>
   
     </environment>
 
-    <environment name="ValFullPt10Startup_gedGsfE">
+    <environment name="ValFullPt10Startup_UP15_gedGsfE">
     
-      <var name="DD_SAMPLE" value="RelValSingleElectronPt10">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt10_UP15">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="BLUE_FILE" value="electronHistos.ValFullPt10Startup.root">
-      <var name="RED_FILE" value="electronHistos.ValFullPt10Startup_gedGsfE.root">
-
       <target name="dqm" cmd="electronDataDiscovery.py castor">
       <target name="wget" cmd="electronWget.py castor">
       
@@ -249,20 +240,15 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/Full_${DD_SAMPLE}_gedGsfE_Startup'>
 
     </environment>
 
-    <environment name="ValFullPt35Startup_gedGsfE">
+    <environment name="ValFullPt35Startup_UP15_gedGsfE">
   
-      <var name="DD_SAMPLE" value="RelValSingleElectronPt35">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt35_UP15">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="BLUE_FILE" value="electronHistos.ValFullPt35Startup.root">
-      <var name="RED_FILE" value="electronHistos.ValFullPt35Startup_gedGsfE.root">
-
       <target name="dqm" cmd="electronDataDiscovery.py castor">
       <target name="wget" cmd="electronWget.py castor">
       
@@ -272,43 +258,37 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/Full_${DD_SAMPLE}_gedGsfE_Startup'>
       
     </environment>
     
-    <environment name="ValFullPt1000Startup_gedGsfE">
+    <environment name="ValFullPt1000Startup_UP15_gedGsfE">
     
-      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000">
+      <var name="VAL_ANALYZER" value="ElectronMcSignalValidatorPt1000">
+      <var name="VAL_POST_ANALYZER" value="ElectronMcSignalPostValidatorPt1000">
+      <var name="VAL_CONFIGURATION_gedGsfE" value="ElectronMcSignalValidationPt1000_gedGsfElectrons_cfg">
+      <var name="VAL_POST_CONFIGURATION" value="ElectronMcSignalPostValidationPt1000_cfg">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000_UP15">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="BLUE_FILE" value="electronHistos.ValFullPt1000Startup.root">
-      <var name="RED_FILE" value="electronHistos.ValFullPt1000Startup_gedGsfE.root">
-
       <target name="dqm" cmd="electronDataDiscovery.py castor">
       <target name="wget" cmd="electronWget.py castor">
       
       <target name="dd" cmd="electronDataDiscovery.py">
-      <target name="analyze" cmd="cmsRun ElectronMcSignalPt1000Validation_gedGsfElectrons_cfg.py">
+      <target name="analyze" cmd="cmsRun ElectronMcSignalValidationPt1000_gedGsfElectrons_cfg.py">
       <target name="finalize" cmd="cmsRun ${VAL_POST_CONFIGURATION}.py">
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/Full_${DD_SAMPLE}_gedGsfE_Startup'>
 
     </environment>
 
-    <environment name="ValFullTTbarStartup_gedGsfE">
+    <environment name="ValFullTTbarStartup_13_gedGsfE">
   
-      <var name="DD_SAMPLE" value="RelValTTbar">
+      <var name="DD_SAMPLE" value="RelValTTbar_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="BLUE_FILE" value="electronHistos.ValFullTTbarStartup.root">
-      <var name="RED_FILE" value="electronHistos.ValFullTTbarStartup_gedGsfE.root">
-
       <target name="dqm" cmd="electronDataDiscovery.py castor">
       <target name="wget" cmd="electronWget.py castor">
       
@@ -318,21 +298,15 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/Full_${DD_SAMPLE}_gedGsfE_Startup'>
 
     </environment>
   
-
-    <environment name="ValFullZEEStartup_gedGsfE">
+    <environment name="ValFullZEEStartup_13_gedGsfE">
     
-      <var name="DD_SAMPLE" value="RelValZEE">
+      <var name="DD_SAMPLE" value="RelValZEE_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="BLUE_FILE" value="electronHistos.ValFullZEEStartup.root">
-      <var name="RED_FILE" value="electronHistos.ValFullZEEStartup_gedGsfE.root">
-
       <target name="dqm" cmd="electronDataDiscovery.py castor">
       <target name="wget" cmd="electronWget.py castor">
       
@@ -342,21 +316,15 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/Full_${DD_SAMPLE}_gedGsfE_Startup'>
   
     </environment>
 
-    <environment name="ValFullQcdPt80Pt120Startup_gedGsfE">
+    <environment name="ValFullQcdPt80Pt120Startup_13_gedGsfE">
     
-      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120">
+      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
-      <var name="BLUE_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup.root">
-      <var name="RED_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup_gedGsfE.root">
-
-      <var name="VAL_HISTOS" value="ElectronMcFakeHistos.txt">
       <var name="VAL_ANALYZER" value="ElectronMcFakeValidator">
       <var name="VAL_POST_ANALYZER" value="ElectronMcFakePostValidator">
       <var name="VAL_CONFIGURATION" value="ElectronMcFakeValidation_gedGsfElectrons_cfg">
@@ -371,8 +339,283 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/Full_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>  
+  
+  </environment>
+
+  <environment name="ValFullGsfvsGsf">
+  
+    <var name="TEST_GLOBAL_TAG" value="${TAG_STARTUP}">
+    <var name="TEST_GLOBAL_AUTOCOND" value="startup">
+       
+    <var name="DD_COND" value="${TEST_GLOBAL_TAG}-${DATA_VERSION}">    
+    
+    <!--var name="DD_COND" value="STARTUP"-->
+    <environment name="ValGsfvsGsfFullPt10Startup_UP15">
+    
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt10_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      <var name="TEST_HISTOS_FILE" value="electronHistos.ValFullPt10Startup_UP15.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/FullGsfvsGsf_${DD_SAMPLE}_Startup'>
+  
+    </environment>
+
+    <environment name="ValGsfvsGsfFullPt35Startup_UP15">
+  
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt35_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      <var name="TEST_HISTOS_FILE" value="electronHistos.ValFullPt35Startup_UP15.root">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/FullGsfvsGsf_${DD_SAMPLE}_Startup'>
+            
+    </environment>
+
+    <environment name="ValGsfvsGsfFullPt1000Startup_UP15">
+    
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      <var name="TEST_HISTOS_FILE" value="electronHistos.ValFullPt1000Startup_UP15.root">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/FullGsfvsGsf_${DD_SAMPLE}_Startup'>
+  
+    </environment>
+
+    <environment name="ValGsfvsGsfFullTTbarStartup_13">
+  
+      <var name="DD_SAMPLE" value="RelValTTbar_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      <var name="TEST_HISTOS_FILE" value="electronHistos.ValFullTTbarStartup_13.root">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/FullGsfvsGsf_${DD_SAMPLE}_Startup'>
+  
+    </environment>
+
+    <environment name="ValGsfvsGsfFullZEEStartup_13">
+    
+      <var name="DD_SAMPLE" value="RelValZEE_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      <var name="TEST_HISTOS_FILE" value="electronHistos.ValFullZEEStartup_13.root">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/FullGsfvsGsf_${DD_SAMPLE}_Startup'>
+  
+    </environment>
+
+    <environment name="ValGsfvsGsfFullQcdPt80Pt120Startup_13">
+    
+      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      <var name="TEST_HISTOS_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup_13.root">
+      
+      <var name="VAL_HISTOS" value="ElectronMcFakeHistos.txt">
+      <var name="VAL_ANALYZER" value="ElectronMcFakeValidator">
+      <var name="VAL_POST_ANALYZER" value="ElectronMcFakePostValidator">
+      <var name="VAL_CONFIGURATION" value="ElectronMcFakeValidation_cfg">
+      <var name="VAL_POST_CONFIGURATION" value="ElectronMcFakePostValidation_cfg">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${TEST_HISTOS_FILE} ${STORE_REF}/${TEST_HISTOS_FILE} ${WEB_DIR}/${TEST_NEW}/vs${TEST_REF}/FullGsfvsGsf_${DD_SAMPLE}_Startup'>
+  
+    </environment>
+
+  </environment>
+  
+  <environment name="ValFullgedvsGsf">
+  
+    <var name="TEST_GLOBAL_TAG" value="${TAG_STARTUP}">
+    <var name="TEST_GLOBAL_AUTOCOND" value="startup">
+       
+    <var name="DD_COND" value="${TEST_GLOBAL_TAG}-${DATA_VERSION}">    
+    
+    <!--var name="DD_COND" value="STARTUP"-->
+
+    <environment name="ValgedvsGsfFullPt10Startup_UP15_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt10_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullPt10Startup_UP15_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullPt10Startup_UP15.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGed/FullgedvsGsf_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>
+
+    <environment name="ValgedvsGsfFullPt35Startup_UP15_gedGsfE">
+  
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt35_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullPt35Startup_UP15_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullPt35Startup_UP15.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGed/FullgedvsGsf_${DD_SAMPLE}_gedGsfE_Startup'>
+      
+    </environment>
+    
+    <environment name="ValgedvsGsfFullPt1000Startup_UP15_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullPt1000Startup_UP15_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullPt1000Startup_UP15.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGed/FullgedvsGsf_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>
+
+    <environment name="ValgedvsGsfFullTTbarStartup_13_gedGsfE">
+  
+      <var name="DD_SAMPLE" value="RelValTTbar_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullTTbarStartup_13_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullTTbarStartup_13.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGed/FullgedvsGsf_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>
+  
+    <environment name="ValgedvsGsfFullZEEStartup_13_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValZEE_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullZEEStartup_13_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullZEEStartup_13.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGed/FullgedvsGsf_${DD_SAMPLE}_gedGsfE_Startup'>
+  
+    </environment>
+
+    <environment name="ValgedvsGsfFullQcdPt80Pt120Startup_13_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup_13_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup_13.root">
+
+      <var name="VAL_HISTOS" value="ElectronMcFakeHistos.txt">
+      <var name="VAL_ANALYZER" value="ElectronMcFakeValidator">
+      <var name="VAL_POST_ANALYZER" value="ElectronMcFakePostValidator">
+      <var name="VAL_CONFIGURATION" value="ElectronMcFakeValidation_gedGsfElectrons_cfg">
+      <var name="VAL_POST_CONFIGURATION" value="ElectronMcFakePostValidation_cfg">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGed/FullgedvsGsf_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>  
+  
+  </environment>
+  
+  <environment name="ValFullgedvsged">
+  
+    <var name="TEST_GLOBAL_TAG" value="${TAG_STARTUP}">
+    <var name="TEST_GLOBAL_AUTOCOND" value="startup">
+       
+    <var name="DD_COND" value="${TEST_GLOBAL_TAG}-${DATA_VERSION}">    
+    
+    <!--var name="DD_COND" value="STARTUP"-->
+
+    <environment name="ValgedvsgedFullPt10Startup_UP15_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt10_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullPt10Startup_UP15_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullPt10Startup_UP15_gedGsfE.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GedvsGed_${TEST_REF}/Fullgedvsged_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>
+
+    <environment name="ValgedvsgedFullPt35Startup_UP15_gedGsfE">
+  
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt35_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullPt35Startup_UP15_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullPt35Startup_UP15_gedGsfE.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GedvsGed_${TEST_REF}/Fullgedvsged_${DD_SAMPLE}_gedGsfE_Startup'>
+      
+    </environment>
+    
+    <environment name="ValgedvsgedFullPt1000Startup_UP15_gedGsfE">
+    
+      <var name="VAL_HISTOS" value="ElectronMcSignalHistosPt1000.txt">
+      <var name="VAL_ANALYZER" value="ElectronMcSignalValidatorPt1000">
+      <var name="VAL_POST_ANALYZER" value="ElectronMcSignalPostValidatorPt1000">
+      <var name="VAL_CONFIGURATION_gedGsfE" value="ElectronMcSignalValidationPt1000_gedGsfElectrons_cfg">
+      <var name="VAL_POST_CONFIGURATION" value="ElectronMcSignalPostValidationPt1000_cfg">
+      <var name="DD_SAMPLE" value="RelValSingleElectronPt1000_UP15">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullPt1000Startup_UP15_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullPt1000Startup_UP15_gedGsfE.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GedvsGed_${TEST_REF}/Fullgedvsged_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>
+
+    <environment name="ValgedvsgedFullTTbarStartup_13_gedGsfE">
+  
+      <var name="DD_SAMPLE" value="RelValTTbar_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullTTbarStartup_13_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullTTbarStartup_13_gedGsfE.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GedvsGed_${TEST_REF}/Fullgedvsged_${DD_SAMPLE}_gedGsfE_Startup'>
+
+    </environment>
+  
+    <environment name="ValgedvsgedFullZEEStartup_13_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValZEE_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullZEEStartup_13_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullZEEStartup_13_gedGsfE.root">
+
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GedvsGed_${TEST_REF}/Fullgedvsged_${DD_SAMPLE}_gedGsfE_Startup'>
+  
+    </environment>
+
+    <environment name="ValgedvsgedFullQcdPt80Pt120Startup_13_gedGsfE">
+    
+      <var name="DD_SAMPLE" value="RelValQCD_Pt_80_120_13">
+      <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
+      <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
+      
+      <var name="BLUE_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup_13_gedGsfE.root">
+      <var name="RED_FILE" value="electronHistos.ValFullQcdPt80Pt120Startup_13_gedGsfE.root">
+
+      <var name="VAL_HISTOS" value="ElectronMcFakeHistos.txt">
+      <var name="VAL_ANALYZER" value="ElectronMcFakeValidator">
+      <var name="VAL_POST_ANALYZER" value="ElectronMcFakePostValidator">
+      <var name="VAL_CONFIGURATION" value="ElectronMcFakeValidation_gedGsfElectrons_cfg">
+      <var name="VAL_POST_CONFIGURATION" value="ElectronMcFakePostValidation_cfg">
+      
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND_REF}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GedvsGed_${TEST_REF}/Fullgedvsged_${DD_SAMPLE}_gedGsfE_Startup'>
 
     </environment>  
   
@@ -387,7 +630,7 @@ FullSim
 
       <environment name="ValPileUpTTbarStartup">
         
-        <var name="DD_SAMPLE" value="RelValTTbar">
+        <var name="DD_SAMPLE" value="RelValTTbar_13">
         <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
         <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
 
@@ -406,7 +649,7 @@ FullSim
 
     <environment name="ValPileUpZEEStartup">
     
-      <var name="DD_SAMPLE" value="RelValZEE">
+      <var name="DD_SAMPLE" value="RelValZEE_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
       
@@ -425,11 +668,11 @@ FullSim
 
       <environment name="ValPileUpTTbarStartup_gedGsfE">
         
-        <var name="DD_SAMPLE" value="RelValTTbar">
+        <var name="DD_SAMPLE" value="RelValTTbar_13">
         <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
         <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
 	
-	<var name="BLUE_FILE" value="electronHistos.ValPileUpTTbarStartup.root">
+	    <var name="BLUE_FILE" value="electronHistos.ValPileUpTTbarStartup.root">
         <var name="RED_FILE" value="electronHistos.ValPileUpTTbarStartup_gedGsfE.root">
  
         <target name="dqm" cmd="electronDataDiscovery.py castor">
@@ -441,14 +684,13 @@ FullSim
       
         <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
         <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-	<target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/PileUp_${DD_SAMPLE}_gedGsfE_Startup'>
+	    <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_NEW} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND}" ${STORE_DIR}/${RED_FILE} ${STORE_DIR}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/PileUp_${DD_SAMPLE}_gedGsfE_Startup'>
 
       </environment>
 
     <environment name="ValPileUpZEEStartup_gedGsfE">
     
-      <var name="DD_SAMPLE" value="RelValZEE">
+      <var name="DD_SAMPLE" value="RelValZEE_13">
       <!--var name="DD_SOURCE" value="/castor/cern.ch/cms/store/unmerged/dqm/${DD_SAMPLE}-${DD_RELEASE}-${DD_COND}-DQM-DQMHarvest-OfflineDQM"-->
       <var name="DD_SOURCE" value="/eos/cms/store/relval/${DD_RELEASE}/${DD_SAMPLE}/${DD_TIER}/${DD_COND}">
      
@@ -464,8 +706,7 @@ FullSim
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
       <target name="force" cmd='electronStore.py -f -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
-      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${TEST_NEW} -b ${TEST_REF} -t "${TEST_NEW} / ${DD_SAMPLE} / ${DD_COND} vs
-      ${TEST_REF} / ${DD_SAMPLE} / ${DD_COND}" ${STORE_DIR}/${RED_FILE} ${STORE_REF}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/PileUp_${DD_SAMPLE}_gedGsfE_Startup'>
+      <target name="publish" cmd='electronCompare.py -c ${VAL_HISTOS} -r ${RED_FILE} -b ${BLUE_FILE} -t "${TEST_NEW} / gedGsfElectrons / ${DD_SAMPLE} / ${DD_COND} vs ${TEST_REF} / GsfElectrons / ${DD_SAMPLE} / ${DD_COND}" ${STORE_DIR}/${RED_FILE} ${STORE_DIR}/${BLUE_FILE} ${WEB_DIR}/${TEST_NEW}/GfsVsGedGsf/PileUp_${DD_SAMPLE}_gedGsfE_Startup'>
 
     </environment>
   

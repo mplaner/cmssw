@@ -125,7 +125,7 @@ HcalCorrPFCalculation::HcalCorrPFCalculation(edm::ParameterSet const& iConfig) {
   tok_EE_ = consumes<EcalRecHitCollection>( edm::InputTag("ecalRecHit","EcalRecHitsEE") );
   tok_EB_ = consumes<EcalRecHitCollection>( edm::InputTag("ecalRecHit","EcalRecHitsEB") );
   tok_tracks_ = consumes<reco::TrackCollection>( edm::InputTag("generalTracks") );
-  tok_gen_ = consumes<edm::HepMCProduct>( edm::InputTag("generator") ); 
+  tok_gen_ = consumes<edm::HepMCProduct>(edm::InputTag("generatorSmeared")); 
 
   //  outputFile_ = iConfig.getUntrackedParameter<std::string>("outputFile", "myfile.root");
   
@@ -136,7 +136,8 @@ HcalCorrPFCalculation::HcalCorrPFCalculation(edm::ParameterSet const& iConfig) {
   //energyECALmip = iConfig.getParameter<double>("energyECALmip");
 
   edm::ParameterSet parameters = iConfig.getParameter<edm::ParameterSet>("TrackAssociatorParameters");
-  parameters_.loadParameters( parameters );
+  edm::ConsumesCollector iC = consumesCollector();
+  parameters_.loadParameters( parameters, iC );
   trackAssociator_.useDefaultPropagator();
 
   associationConeSize_=iConfig.getParameter<double>("associationConeSize");
@@ -261,7 +262,7 @@ void HcalCorrPFCalculation::analyze(edm::Event const& ev, edm::EventSetup const&
    
     
   edm::Handle<edm::HepMCProduct> evtMC;
-  //  ev.getByLabel("VtxSmeared",evtMC);
+  //  ev.getByLabel("generatorSmeared",evtMC);
   ev.getByToken(tok_gen_,evtMC);
   if (!evtMC.isValid()) 
     {

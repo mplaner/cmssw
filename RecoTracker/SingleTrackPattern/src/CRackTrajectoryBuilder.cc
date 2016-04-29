@@ -29,20 +29,21 @@
 using namespace std;
 
 
-CRackTrajectoryBuilder::CRackTrajectoryBuilder(const edm::ParameterSet& conf) : conf_(conf) { 
+CRackTrajectoryBuilder::CRackTrajectoryBuilder(const edm::ParameterSet& conf) {
   //minimum number of hits per tracks
 
-  theMinHits=conf_.getParameter<int>("MinHits");
+  theMinHits=conf.getParameter<int>("MinHits");
   //cut on chi2
-  chi2cut=conf_.getParameter<double>("Chi2Cut");
+  chi2cut=conf.getParameter<double>("Chi2Cut");
   edm::LogInfo("CosmicTrackFinder")<<"Minimum number of hits "<<theMinHits<<" Cut on Chi2= "<<chi2cut;
 
-  debug_info=conf_.getUntrackedParameter<bool>("debug", false);
-  fastPropagation=conf_.getUntrackedParameter<bool>("fastPropagation", false);
-  useMatchedHits=conf_.getUntrackedParameter<bool>("useMatchedHits", true);
+  debug_info=conf.getUntrackedParameter<bool>("debug", false);
+  fastPropagation=conf.getUntrackedParameter<bool>("fastPropagation", false);
+  useMatchedHits=conf.getUntrackedParameter<bool>("useMatchedHits", true);
 
 
-  geometry=conf_.getUntrackedParameter<std::string>("GeometricStructure","STANDARD");
+  geometry=conf.getUntrackedParameter<std::string>("GeometricStructure","STANDARD");
+  theBuilderName = conf.getParameter<std::string>("TTRHBuilder");
 
   
 
@@ -55,7 +56,6 @@ CRackTrajectoryBuilder::~CRackTrajectoryBuilder() {
 
 
 void CRackTrajectoryBuilder::init(const edm::EventSetup& es, bool seedplus){
-
 
 //  edm::ParameterSet tise_params = conf_.getParameter<edm::ParameterSet>("TransientInitialStateEstimatorParameters") ;
 // theInitialState          = new TransientInitialStateEstimator( es,tise_params);
@@ -82,8 +82,7 @@ void CRackTrajectoryBuilder::init(const edm::EventSetup& es, bool seedplus){
   
 
   edm::ESHandle<TransientTrackingRecHitBuilder> theBuilder;
-  std::string builderName = conf_.getParameter<std::string>("TTRHBuilder");   
-  es.get<TransientRecHitRecord>().get(builderName,theBuilder);
+  es.get<TransientRecHitRecord>().get(theBuilderName,theBuilder);
   
 
   RHBuilder=   theBuilder.product();
@@ -177,9 +176,8 @@ void CRackTrajectoryBuilder::run(const TrajectorySeedCollection &collseed,
 	  
 	  if(debug_info){
 	    cout << "Debugging show fitted hits" << endl;	    
-	        std::vector< ConstReferenceCountingPointer< TransientTrackingRecHit> > hitsFit= trajTmp.recHits();
-	        std::vector< ConstReferenceCountingPointer< TransientTrackingRecHit> >::const_iterator hit;
-	        for(hit=hitsFit.begin();hit!=hitsFit.end();hit++){
+	        auto hitsFit= trajTmp.recHits();
+	        for(auto hit=hitsFit.begin();hit!=hitsFit.end();hit++){
 		  
 	          cout << RHBuilder->build( &(*(*hit)->hit()) )->globalPosition() << endl;
 	        }
@@ -210,11 +208,10 @@ void CRackTrajectoryBuilder::run(const TrajectorySeedCollection &collseed,
     
     if(debug_info){
       cout << "Debugging show All fitted hits" << endl;	    
-      std::vector< ConstReferenceCountingPointer< TransientTrackingRecHit> > hits= traj.recHits();
-	    std::vector< ConstReferenceCountingPointer< TransientTrackingRecHit> >::const_iterator hit;
-	    for(hit=hits.begin();hit!=hits.end();hit++){
+      auto hits= traj.recHits();
+	    for(auto hit=hits.begin();hit!=hits.end();hit++){
 	      
-	      cout << RHBuilder->build( &(*(*hit)->hit()) )->globalPosition() << endl;
+	      cout << (*hit)->globalPosition() << endl;
 	    }
 
 	    cout << qualityFilter( traj) << " <- quality filter good?" << endl;
@@ -255,13 +252,8 @@ void CRackTrajectoryBuilder::run(const TrajectorySeedCollection &collseed,
 Trajectory CRackTrajectoryBuilder::createStartingTrajectory( const TrajectorySeed& seed) const
 {
   Trajectory result( seed, seed.direction());
-  std::vector<TM> seedMeas = seedMeasurements(seed);
-  if ( !seedMeas.empty()) {
-    for (std::vector<TM>::const_iterator i=seedMeas.begin(); i!=seedMeas.end(); i++){
-      result.push(*i);
-    }
-  }
- 
+  std::vector<TM> && seedMeas = seedMeasurements(seed);
+  for (auto i : seedMeas) result.push(std::move(i));
   return result;
 }
 
@@ -280,11 +272,11 @@ CRackTrajectoryBuilder::seedMeasurements(const TrajectorySeed& seed) const
 
     if (ihit == hitRange.second - 1) {
       TSOS  updatedState=startingTSOS(seed);
-      result.push_back(TM( invalidState, updatedState, recHit));
+      result.push_back(std::move(TM( invalidState, updatedState, recHit)));
 
     } 
     else {
-      result.push_back(TM( invalidState, recHit));
+      result.push_back(std::move(TM( invalidState, recHit)));
     }
     
   }
@@ -673,7 +665,7 @@ void CRackTrajectoryBuilder::AddHit(Trajectory &traj,
                double currChi2 = theEstimator->estimate(prSt, *tmpHit).second;
                if ( currChi2 < chi2min )
                  {
-                   currChi2 = chi2min;
+                   chi2min = currChi2;
                    bestHit = tmpHit;
                  }
              }
@@ -684,7 +676,7 @@ void CRackTrajectoryBuilder::AddHit(Trajectory &traj,
                if (debug_info) cout << "chi2 fine : " << chi2min << endl;
                TSOS UpdatedState= theUpdator->update( prSt, *bestHit );
                if (UpdatedState.isValid()){
- 		hits.push_back(&(*bestHit));
+ 		hits.push_back(bestHit);
                  traj.push( TM(prSt,UpdatedState, bestHit, chi2min) );
  		if (debug_info) edm::LogInfo("CosmicTrackFinder") <<
                    "STATE UPDATED WITH HIT AT POSITION "
@@ -854,7 +846,7 @@ void CRackTrajectoryBuilder::AddHit(Trajectory &traj,
  		TSOS UpdatedState= theUpdator->update( currPrSt, *bestHit );
  		if (UpdatedState.isValid()){
  
- 		  hits.push_back(&(*bestHit));
+ 		  hits.push_back(bestHit);
  		  traj.push( TM(currPrSt,UpdatedState, bestHit, chi2min) );
  		  if (debug_info) edm::LogInfo("CosmicTrackFinder") <<
  		    "STATE UPDATED WITH HIT AT POSITION "
@@ -907,9 +899,8 @@ bool
 CRackTrajectoryBuilder::qualityFilter(const Trajectory& traj){
   int ngoodhits=0;
   if(geometry=="MTCC"){
-    std::vector< ConstReferenceCountingPointer< TransientTrackingRecHit> > hits= traj.recHits();
-    std::vector< ConstReferenceCountingPointer< TransientTrackingRecHit> >::const_iterator hit;
-    for(hit=hits.begin();hit!=hits.end();hit++){
+    auto hits= traj.recHits();
+    for(auto hit=hits.begin();hit!=hits.end();hit++){
       unsigned int iid=(*hit)->hit()->geographicalId().rawId();
       //CHECK FOR 3 hits r-phi
       if(((iid>>0)&0x3)!=1) ngoodhits++;

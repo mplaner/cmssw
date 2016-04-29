@@ -19,16 +19,12 @@ For its usage, see "FWCore/Framework/interface/PrincipalGetAdapter.h"
 ----------------------------------------------------------------------*/
 
 #include "DataFormats/Common/interface/Wrapper.h"
-#include "DataFormats/Common/interface/WrapperOwningHolder.h"
 #include "FWCore/Common/interface/LuminosityBlockBase.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/PrincipalGetAdapter.h"
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "FWCore/Utilities/interface/ProductKindOfType.h"
 #include "FWCore/Utilities/interface/LuminosityBlockIndex.h"
-
-
-#include "boost/shared_ptr.hpp"
 
 #include <memory>
 #include <set>
@@ -39,6 +35,8 @@ For its usage, see "FWCore/Framework/interface/PrincipalGetAdapter.h"
 namespace edm {
   class ModuleCallingContext;
   class ProducerBase;
+  class SharedResourcesAcquirer;
+  
   namespace stream {
     template< typename T> class ProducingModuleAdaptorBase;
   }
@@ -69,6 +67,9 @@ namespace edm {
     
     //Used in conjunction with EDGetToken
     void setConsumer(EDConsumerBase const* iConsumer);
+    
+    void setSharedResourcesAcquirer( SharedResourcesAcquirer* iResourceAcquirer);
+
     template <typename PROD>
     bool
     getByLabel(std::string const& label, Handle<PROD>& result) const;
@@ -107,10 +108,18 @@ namespace edm {
     void
     put(std::auto_ptr<PROD> product) {put<PROD>(product, std::string());}
 
+    template <typename PROD>
+    void
+    put(std::unique_ptr<PROD> product) {put<PROD>(product, std::string());}
+
     ///Put a new product with a 'product instance name'
     template <typename PROD>
     void
     put(std::auto_ptr<PROD> product, std::string const& productInstanceName);
+
+    template <typename PROD>
+    void
+    put(std::unique_ptr<PROD> product, std::string const& productInstanceName);
 
     Provenance
     getProvenance(BranchID const& theID) const;
@@ -125,6 +134,8 @@ namespace edm {
 
     ModuleCallingContext const* moduleCallingContext() const { return moduleCallingContext_; }
 
+    void labelsForToken(EDGetToken const& iToken, ProductLabels& oLabels) const { provRecorder_.labelsForToken(iToken, oLabels); }
+
   private:
     LuminosityBlockPrincipal const&
     luminosityBlockPrincipal() const;
@@ -135,7 +146,7 @@ namespace edm {
     // Override version from LuminosityBlockBase class
     virtual BasicHandle getByLabelImpl(std::type_info const& iWrapperType, std::type_info const& iProductType, InputTag const& iTag) const;
 
-    typedef std::vector<std::pair<WrapperOwningHolder, BranchDescription const*> > ProductPtrVec;
+    typedef std::vector<std::pair<std::unique_ptr<WrapperBase>, BranchDescription const*> > ProductPtrVec;
     ProductPtrVec& putProducts() {return putProducts_;}
     ProductPtrVec const& putProducts() const {return putProducts_;}
 
@@ -155,7 +166,7 @@ namespace edm {
     PrincipalGetAdapter provRecorder_;
     ProductPtrVec putProducts_;
     LuminosityBlockAuxiliary const& aux_;
-    boost::shared_ptr<Run const> const run_;
+    std::shared_ptr<Run const> const run_;
     typedef std::set<BranchID> BranchIDSet;
     mutable BranchIDSet gotBranchIDs_;
     ModuleCallingContext const* moduleCallingContext_;
@@ -166,6 +177,12 @@ namespace edm {
   template <typename PROD>
   void
   LuminosityBlock::put(std::auto_ptr<PROD> product, std::string const& productInstanceName) {
+    put(std::unique_ptr<PROD>(product.release()),productInstanceName);
+  }
+
+  template <typename PROD>
+  void
+  LuminosityBlock::put(std::unique_ptr<PROD> product, std::string const& productInstanceName) {
     if(product.get() == 0) {                // null pointer is illegal
       TypeID typeID(typeid(PROD));
       principal_get_adapter_detail::throwOnPutOfNullProduct("LuminosityBlock", typeID, productInstanceName);
@@ -181,8 +198,8 @@ namespace edm {
     BranchDescription const& desc =
       provRecorder_.getBranchDescription(TypeID(*product), productInstanceName);
 
-    WrapperOwningHolder edp(new Wrapper<PROD>(product), Wrapper<PROD>::getInterface());
-    putProducts().emplace_back(edp, &desc);
+    std::unique_ptr<Wrapper<PROD> > wp(new Wrapper<PROD>(std::move(product)));
+    putProducts().emplace_back(std::move(wp), &desc);
 
     // product.release(); // The object has been copied into the Wrapper.
     // The old copy must be deleted, so we cannot release ownership.

@@ -1,15 +1,17 @@
 #include "Mixing/Base/interface/PileUp.h"
 #include "DataFormats/Provenance/interface/BranchIDListHelper.h"
 #include "DataFormats/Provenance/interface/ModuleDescription.h"
+#include "DataFormats/Provenance/interface/ThinnedAssociationsHelper.h"
 #include "FWCore/Framework/interface/EventPrincipal.h"
-#include "FWCore/Framework/interface/InputSourceDescription.h"
 #include "FWCore/Framework/src/SignallingProductRegistry.h"
 #include "FWCore/ServiceRegistry/interface/ActivityRegistry.h"
+#include "FWCore/Sources/interface/VectorInputSourceDescription.h"
 #include "FWCore/Sources/interface/VectorInputSourceFactory.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/GetPassID.h"
+#include "FWCore/Utilities/interface/StreamID.h"
 #include "FWCore/Version/interface/GetReleaseVersion.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -21,13 +23,47 @@
 #include "CondFormats/DataRecord/interface/MixingRcd.h"
 #include "CondFormats/RunInfo/interface/MixingModuleConfig.h"
 
-#include "boost/shared_ptr.hpp"
+#include "CLHEP/Random/RandPoissonQ.h"
+#include "CLHEP/Random/RandPoisson.h"
 
 #include <algorithm>
+#include <memory>
+#include "TMath.h"
+
+////////////////////////////////////////////////////////////////////////////////
+/// return a random number distributed according the histogram bin contents.
+///
+/// This routine is derived from root/hist/hist/src/TH1.cxx
+/*************************************************************************
+ * Copyright (C) 1995-2000, Rene Brun and Fons Rademakers.               *
+ * All rights reserved.                                                  *
+ *                                                                       *
+ * For the licensing terms see $ROOTSYS/LICENSE.                         *
+ * For the list of contributors see $ROOTSYS/README/CREDITS.             *
+ *************************************************************************/
+
+static Double_t GetRandom(TH1* th1, CLHEP::HepRandomEngine* rng)
+{
+   Int_t nbinsx = th1->GetNbinsX();
+   Double_t* fIntegral = th1->GetIntegral();
+   Double_t integral = fIntegral[nbinsx];
+
+   if (integral == 0) return 0;
+
+   Double_t r1 = rng->flat();
+   Int_t ibin = TMath::BinarySearch(nbinsx,fIntegral,r1);
+   Double_t x = th1->GetBinLowEdge(ibin+1);
+   if (r1 > fIntegral[ibin])
+      x += th1->GetBinWidth(ibin+1)*(r1-fIntegral[ibin])/(fIntegral[ibin+1] - fIntegral[ibin]);
+   return x;
+}
+////////////////////////////////////////////////////////////////////////////////
+
 
 namespace edm {
-  PileUp::PileUp(ParameterSet const& pset, double averageNumber, TH1F * const histo, const bool playback) :
+  PileUp::PileUp(ParameterSet const& pset, std::string sourcename, double averageNumber, TH1F * const histo, const bool playback) :
     type_(pset.getParameter<std::string>("type")),
+    Source_type_(sourcename),
     averageNumber_(averageNumber),
     intAverage_(static_cast<int>(averageNumber)),
     histo_(histo),
@@ -36,48 +72,45 @@ namespace edm {
     poisson_(type_ == "poisson"),
     fixed_(type_ == "fixed"),
     none_(type_ == "none"),
+    fileNameHash_(0U),
     productRegistry_(new SignallingProductRegistry),
-    input_(VectorInputSourceFactory::get()->makeVectorInputSource(pset, InputSourceDescription(
-                                                                   ModuleDescription(),
-                                                                   *productRegistry_,
-                                                                   boost::shared_ptr<BranchIDListHelper>(new BranchIDListHelper),
-                                                                   boost::shared_ptr<ActivityRegistry>(new ActivityRegistry),
-                                                                   -1, -1,
-                                                                   PreallocationConfiguration()
-                                                                   )).release()),
+    input_(VectorInputSourceFactory::get()->makeVectorInputSource(pset, VectorInputSourceDescription(
+                                                                   productRegistry_, edm::PreallocationConfiguration())).release()),
     processConfiguration_(new ProcessConfiguration(std::string("@MIXING"), getReleaseVersion(), getPassID())),
     eventPrincipal_(),
     lumiPrincipal_(),
     runPrincipal_(),
     provider_(),
-    poissonDistribution_(),
-    poissonDistr_OOT_(),
+    vPoissonDistribution_(),
+    vPoissonDistr_OOT_(),
+    randomEngines_(),
     playback_(playback),
-    sequential_(pset.getUntrackedParameter<bool>("sequential", false)),
-    samelumi_(pset.getUntrackedParameter<bool>("sameLumiBlock", false)),
-    seed_(0) {
+    sequential_(pset.getUntrackedParameter<bool>("sequential", false)) {
 
     // Use the empty parameter set for the parameter set ID of our "@MIXING" process.
     processConfiguration_->setParameterSetID(ParameterSet::emptyParameterSetID());
 
     if(pset.existsAs<std::vector<ParameterSet> >("producers", true)) {
       std::vector<ParameterSet> producers = pset.getParameter<std::vector<ParameterSet> >("producers");
-      provider_.reset(new SecondaryEventProvider(producers, *productRegistry_, ExceptionToActionTable(), processConfiguration_));
+      provider_.reset(new SecondaryEventProvider(producers, *productRegistry_, processConfiguration_));
     }
 
     productRegistry_->setFrozen();
 
     // A modified HistoryAppender must be used for unscheduled processing.
     eventPrincipal_.reset(new EventPrincipal(input_->productRegistry(),
-                                       input_->branchIDListHelper(),
+                                       std::make_shared<BranchIDListHelper>(),
+                                       std::make_shared<ThinnedAssociationsHelper>(),
                                        *processConfiguration_,
                                        nullptr));
 
-    if (pset.exists("nbPileupEvents")) {
-       seed_=pset.getParameter<edm::ParameterSet>("nbPileupEvents").getUntrackedParameter<int>("seed",0);
-    }
-
     bool DB=type_=="readDB";
+
+    if (pset.exists("nbPileupEvents")) {
+       if (0 != pset.getParameter<edm::ParameterSet>("nbPileupEvents").getUntrackedParameter<int>("seed",0)) {
+         edm::LogWarning("MixingModule") << "Parameter nbPileupEvents.seed is not supported";
+       }
+    }
 
     edm::Service<edm::RandomNumberGenerator> rng;
     if (!rng.isAvailable()) {
@@ -87,21 +120,6 @@ namespace edm {
 	"in the configuration file or remove the modules that require it.";
     }
     
-    CLHEP::HepRandomEngine& engine = rng->getEngine();
-    poissonDistribution_.reset(new CLHEP::RandPoissonQ(engine, averageNumber_));
-    
-    // Get seed for the case when using user histogram or probability function
-    if (histoDistribution_ || probFunctionDistribution_ || DB){ 
-      if(seed_ !=0) {
-	gRandom->SetSeed(seed_);
-	LogInfo("MixingModule") << " Change seed for " << type_ << " mode. The seed is set to " << seed_;
-      }
-      else {
-	gRandom->SetSeed(engine.getSeed());
-      }
-    } 
-     
-        
     if (!(histoDistribution_ || probFunctionDistribution_ || poisson_ || fixed_ || none_) && !DB) {
       throw cms::Exception("Illegal parameter value","PileUp::PileUp(ParameterSet const& pset)")
         << "'type' parameter (a string) has a value of '" << type_ << "'.\n"
@@ -134,7 +152,6 @@ namespace edm {
 
       if(OOT_type == "Poisson" || OOT_type == "poisson") {
 	poisson_OOT_ = true;
-	poissonDistr_OOT_.reset(new CLHEP::RandPoisson(engine));
       }
       else if(OOT_type == "Fixed" || OOT_type == "fixed") {
 	fixed_OOT_ = true;
@@ -154,7 +171,19 @@ namespace edm {
     }
     }
     
-  }
+    if(Source_type_ == "cosmics") {  // allow for some extra flexibility for mixing
+      minBunch_cosmics_ = pset.getUntrackedParameter<int>("minBunch_cosmics", -1000);
+      maxBunch_cosmics_ = pset.getUntrackedParameter<int>("maxBunch_cosmics", 1000);
+    }
+
+
+
+  } // end of constructor
+
+
+
+
+
   void PileUp::beginJob () {
     input_->doBeginJob();
     if (provider_.get() != nullptr) {
@@ -171,14 +200,14 @@ namespace edm {
 
   void PileUp::beginRun(const edm::Run& run, const edm::EventSetup& setup) {
     if (provider_.get() != nullptr) {
-      boost::shared_ptr<RunAuxiliary> aux(new RunAuxiliary(run.runAuxiliary()));
+      auto aux = std::make_shared<RunAuxiliary>(run.runAuxiliary());
       runPrincipal_.reset(new RunPrincipal(aux, productRegistry_, *processConfiguration_, nullptr, 0));
       provider_->beginRun(*runPrincipal_, setup, run.moduleCallingContext());
     }
   }
   void PileUp::beginLuminosityBlock(const edm::LuminosityBlock& lumi, const edm::EventSetup& setup) {
     if (provider_.get() != nullptr) {
-      boost::shared_ptr<LuminosityBlockAuxiliary> aux(new LuminosityBlockAuxiliary(lumi.luminosityBlockAuxiliary()));
+      auto aux = std::make_shared<LuminosityBlockAuxiliary>(lumi.luminosityBlockAuxiliary());
       lumiPrincipal_.reset(new LuminosityBlockPrincipal(aux, productRegistry_, *processConfiguration_, nullptr, 0));
       lumiPrincipal_->setRunPrincipal(runPrincipal_);
       provider_->beginLuminosityBlock(*lumiPrincipal_, setup, lumi.moduleCallingContext());
@@ -229,9 +258,11 @@ namespace edm {
     else if (poisson_)
       {
 	averageNumber_=config.averageNumber();
-	edm::Service<edm::RandomNumberGenerator> rng; 
-	CLHEP::HepRandomEngine& engine = rng->getEngine();            
-	poissonDistribution_.reset(new CLHEP::RandPoissonQ(engine, averageNumber_));
+        for(auto & distribution : vPoissonDistribution_) {
+          if(distribution) {
+            distribution.reset(new CLHEP::RandPoissonQ(distribution->engine(), averageNumber_));
+          }
+        }
       }
     else if (probFunctionDistribution_)
       {
@@ -274,7 +305,7 @@ namespace edm {
 	}
 	
 	// Check if the histogram is normalized
-	if ( ((histo_->Integral() - 1) > 1.0e-02) && ((histo_->Integral() - 1) < -1.0e-02)){ 
+	if (std::abs(histo_->Integral() - 1) > 1.0e-02){ 
 	  throw cms::Exception("BadProbFunction") << "The probability function should be normalized!!! " << std::endl;
 	}
 	averageNumber_=histo_->GetMean();
@@ -286,7 +317,6 @@ namespace edm {
       {
 	manage_OOT_=true;
 	poisson_OOT_ = false;
-	if (poissonDistr_OOT_){poissonDistr_OOT_.reset(); }
 	fixed_OOT_ = true;
 	intFixed_OOT_=config.fixedOutOfTime();
       }
@@ -295,12 +325,6 @@ namespace edm {
 	manage_OOT_=true;
 	poisson_OOT_ = true;
 	fixed_OOT_ = false;
-	if (!poissonDistr_OOT_) {
-	  //no need to trash the previous one if already there
-	  edm::Service<edm::RandomNumberGenerator> rng; 
-	  CLHEP::HepRandomEngine& engine = rng->getEngine();            	  
-	  poissonDistr_OOT_.reset(new CLHEP::RandPoisson(engine));
-	}
       }
 
     
@@ -308,7 +332,53 @@ namespace edm {
   PileUp::~PileUp() {
   }
 
-  void PileUp::CalculatePileup(int MinBunch, int MaxBunch, std::vector<int>& PileupSelection, std::vector<float>& TrueNumInteractions) {
+  std::unique_ptr<CLHEP::RandPoissonQ> const& PileUp::poissonDistribution(StreamID const& streamID) {
+    unsigned int index = streamID.value();
+    if(index >= vPoissonDistribution_.size()) {
+      // This resizing is not thread safe and only works because
+      // this is used by a "one" type module
+      vPoissonDistribution_.resize(index + 1);
+    }
+    std::unique_ptr<CLHEP::RandPoissonQ>& ptr = vPoissonDistribution_[index];
+    if(!ptr) {
+      CLHEP::HepRandomEngine& engine = *randomEngine(streamID);
+      ptr.reset(new CLHEP::RandPoissonQ(engine, averageNumber_));
+    }
+    return ptr;
+  }
+
+  std::unique_ptr<CLHEP::RandPoisson> const& PileUp::poissonDistr_OOT(StreamID const& streamID) {
+    unsigned int index = streamID.value();
+    if(index >= vPoissonDistr_OOT_.size()) {
+      // This resizing is not thread safe and only works because
+      // this is used by a "one" type module
+      vPoissonDistr_OOT_.resize(index + 1);
+    }
+    std::unique_ptr<CLHEP::RandPoisson>& ptr = vPoissonDistr_OOT_[index];
+    if(!ptr) {
+      CLHEP::HepRandomEngine& engine = *randomEngine(streamID);
+      ptr.reset(new CLHEP::RandPoisson(engine));
+    }
+    return ptr;
+  }
+
+  CLHEP::HepRandomEngine* PileUp::randomEngine(StreamID const& streamID) {
+    unsigned int index = streamID.value();
+    if(index >= randomEngines_.size()) {
+      // This resizing is not thread safe and only works because
+      // this is used by a "one" type module
+      randomEngines_.resize(index + 1, nullptr);
+    }
+    CLHEP::HepRandomEngine* ptr = randomEngines_[index];
+    if(!ptr) {
+      Service<RandomNumberGenerator> rng;
+      ptr = &rng->getEngine(streamID);
+      randomEngines_[index] = ptr;
+    }
+    return ptr;
+  }
+
+  void PileUp::CalculatePileup(int MinBunch, int MaxBunch, std::vector<int>& PileupSelection, std::vector<float>& TrueNumInteractions, StreamID const& streamID) {
 
     // if we are managing the distribution of out-of-time pileup separately, select the distribution for bunch
     // crossing zero first, save it for later.
@@ -320,11 +390,18 @@ namespace edm {
       if (none_){
 	nzero_crossing = 0;
       }else if (poisson_){
-	nzero_crossing =  poissonDistribution_->fire() ;
+	nzero_crossing =  poissonDistribution(streamID)->fire() ;
       }else if (fixed_){
 	nzero_crossing =  intAverage_ ;
       }else if (histoDistribution_ || probFunctionDistribution_){
-	double d = histo_->GetRandom();
+        // RANDOM_NUMBER_ERROR
+        // Random number should be generated by the engines from the
+        // RandomNumberGeneratorService. This appears to use the global
+        // engine in ROOT. This is not thread safe unless the module using
+        // it is a one module and declares a shared resource and all
+        // other modules using it also declare the same shared resource.
+        // This also breaks replay.
+	double d = GetRandom(histo_, randomEngine(streamID));
 	//n = (int) floor(d + 0.5);  // incorrect for bins with integer edges
 	Fnzero_crossing =  d;
 	nzero_crossing = int(d);
@@ -345,7 +422,7 @@ namespace edm {
  	      PileupSelection.push_back(intFixed_ITPU_) ;
 	    }
 	    else{
-	      PileupSelection.push_back(poissonDistr_OOT_->fire(Fnzero_crossing)) ;
+	      PileupSelection.push_back(poissonDistr_OOT(streamID)->fire(Fnzero_crossing)) ;
 	    }
 	    TrueNumInteractions.push_back( Fnzero_crossing );
 	  }
@@ -360,13 +437,20 @@ namespace edm {
 	  PileupSelection.push_back(0);
 	  TrueNumInteractions.push_back( 0. );
 	}else if (poisson_){
-	  PileupSelection.push_back(poissonDistribution_->fire());
+	  PileupSelection.push_back(poissonDistribution(streamID)->fire());
 	  TrueNumInteractions.push_back( averageNumber_ );
 	}else if (fixed_){
 	  PileupSelection.push_back(intAverage_);
 	  TrueNumInteractions.push_back( intAverage_ );
 	}else if (histoDistribution_ || probFunctionDistribution_){
-	  double d = histo_->GetRandom();
+          // RANDOM_NUMBER_ERROR
+          // Random number should be generated by the engines from the
+          // RandomNumberGeneratorService. This appears to use the global
+          // engine in ROOT. This is not thread safe unless the module using
+          // it is a one module and declares a shared resource and all
+          // other modules using it also declare the same shared resource.
+          // This also breaks replay.
+	  double d = GetRandom(histo_, randomEngine(streamID));
 	  PileupSelection.push_back(int(d));
 	  TrueNumInteractions.push_back( d );
 	}

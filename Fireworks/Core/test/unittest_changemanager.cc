@@ -16,13 +16,10 @@
 #include <boost/test/test_tools.hpp>
 
 #include "TClass.h"
-#include "Cintex/Cintex.h"
 
 // user include files
 #include "Fireworks/Core/interface/FWModelChangeManager.h"
-#define private public
 #include "Fireworks/Core/interface/FWEventItem.h"
-#undef private
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 
@@ -78,7 +75,6 @@ namespace {
 
 BOOST_AUTO_TEST_CASE( changemanager )
 {
-   ROOT::Cintex::Cintex::Enable();
 
    FWModelChangeManager cm;
    

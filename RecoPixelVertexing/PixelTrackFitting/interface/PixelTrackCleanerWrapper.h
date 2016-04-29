@@ -2,7 +2,7 @@
 #define RecoPixelVertexing_PixelTrackFitting_PixelTrackCleanerWrapper_H
 
 #include "RecoPixelVertexing/PixelTrackFitting/interface/PixelTrackCleaner.h"
-#include  "RecoPixelVertexing/PixelTrackFitting/interface/TracksWithHits.h"
+#include "RecoPixelVertexing/PixelTrackFitting/interface/TracksWithHits.h"
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 
 #include <map>
@@ -16,7 +16,7 @@ public:
 					   const TrackerTopology *tTopo) {
     
     pixeltrackfitting::TracksWithRecHits initialT_TRHs;
-    std::map<const TrackingRecHit *, TransientTrackingRecHit::ConstRecHitPointer> hitMap;
+    std::map<const TrackingRecHit *, SeedingHitSet::ConstRecHitPointer> hitMap;
 
     for (pixeltrackfitting::TracksWithTTRHs::const_iterator it = initialT_TTRHs.begin(), iend = initialT_TTRHs.end(); it < iend; ++it) {
       SeedingHitSet ttrhs = it->second;
@@ -36,7 +36,10 @@ public:
        const std::vector<const TrackingRecHit *> & trhs = it->second;
        assert(!(trhs.size()<2));
        if (trhs.size()<2) continue;
-       SeedingHitSet ttrhs( hitMap[trhs[0]], hitMap[trhs[1]], trhs.size()>2 ? hitMap[trhs[2]] : SeedingHitSet::nullPtr()); 
+       SeedingHitSet ttrhs( hitMap[trhs[0]], hitMap[trhs[1]], 
+               trhs.size()>2 ? hitMap[trhs[2]] : SeedingHitSet::nullPtr(),
+               trhs.size()>3 ? hitMap[trhs[3]] : SeedingHitSet::nullPtr() ); 
+
        finalT_TTRHs.push_back( pixeltrackfitting::TrackWithTTRHs(it->first, ttrhs));
     }
     return finalT_TTRHs;
