@@ -163,7 +163,7 @@ void TagProbeFitTreeAnalyzer::calculateEfficiency(string name, const edm::Parame
     effCats.push_back(effCatState[2*i]);
     effStates.push_back(effCatState[2*i+1]);
   }
-
+  //  std::cout << "calculating efficiency with TagProbeFitter.cc" << std::endl;
   fitter.calculateEfficiency(name, effCats, effStates, unbinnedVariables, binnedVariables, mappedCategories, binToPDFmap);
 }
 
