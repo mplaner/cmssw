@@ -1,0 +1,743 @@
+cms.string('MCRUN2_74_V9A::All')
+DEBUG 2015-08-25 16:01:24,946: 	 Executing command: 'submit'
+DEBUG 2015-08-25 16:01:24,947: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-25 16:01:24,972: 	 Checking credentials
+DEBUG 2015-08-25 16:01:24,973: 	 Found proxy file /home/llr/cms/sauvan/.t3/proxy.cert
+DEBUG 2015-08-25 16:01:24,973: 	 Getting proxy life time left
+DEBUG 2015-08-25 16:01:25,475: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -timeleft
+ output : 429061
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:26,079: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -actimeleft
+ output : 429060
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:26,079: 	 Proxy valid for 119:11:01 hours
+INFO 2015-08-25 16:01:26,080: 	 Will use CRAB configuration file crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25.py
+DEBUG 2015-08-25 16:01:26,080: 	 Loading CRAB configuration file.
+DEBUG 2015-08-25 16:01:26,093: 	 Will use CRAB Analysis plugin (i.e. will run an analysis job type).
+DEBUG 2015-08-25 16:01:26,243: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 16:01:26,243: 	 Checking credentials
+DEBUG 2015-08-25 16:01:26,243: 	 Found proxy file /home/llr/cms/sauvan/.t3/proxy.cert
+DEBUG 2015-08-25 16:01:26,243: 	 Getting proxy life time left
+DEBUG 2015-08-25 16:01:26,746: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -timeleft
+ output : 429060
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:27,249: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -actimeleft
+ output : 429059
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:27,250: 	 Proxy valid for 119:11:00 hours
+DEBUG 2015-08-25 16:01:27,753: 	 Executing : 
+ command : env X509_USER_PROXY=/home/llr/cms/sauvan/.t3/proxy.cert voms-proxy-info -fqan
+ output : /cms/Role=NULL/Capability=NULL
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:28,068: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-25 16:01:28,176: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 16:01:28,176: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-25 16:01:28,176: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 16:01:28,679: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 199:31:33  (8.3 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:28,680: 	 Myproxy is valid: 718293
+DEBUG 2015-08-25 16:01:28,782: 	 Executing : 
+ command : openssl x509 -noout -in ~/.globus/usercert.pem -dates
+ output : notBefore=Jul  6 08:06:22 2015 GMT
+notAfter=Oct 14 08:06:22 2015 GMT
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 16:01:28,885: 	 Delegating a myproxy for 720:00 hours
+DEBUG 2015-08-25 16:01:28,885: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 16:01:32,795: 	 Executing : 
+ command : export GT_PROXY_MODE=rfc ; myproxy-init -d -n -s myproxy.cern.ch -x -R '/DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch' -x -Z '/DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch' -l '28235d7851854e94220931c3ee80d47b7c6f5878' -t 168:00 -c 720:00
+ output : Your identity: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+Creating proxy ......................................... Done
+Proxy Verify OK
+Your proxy is valid until: Thu Sep 24 16:01:32 2015
+A proxy valid for 720 hours (30.0 days) for user 28235d7851854e94220931c3ee80d47b7c6f5878 now exists on myproxy.cern.ch.
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:32,795: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 16:01:33,199: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 719:59:59  (30.0 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:01:33,199: 	 My-proxy delegated.
+DEBUG 2015-08-25 16:01:33,199: 	 Command use: submit
+DEBUG 2015-08-25 16:01:33,200: 	 Options use: ['--config=crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25.py']
+DEBUG 2015-08-25 16:01:33,522: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-25 16:01:33,522: 	 Instance is prod
+DEBUG 2015-08-25 16:01:33,522: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-25 16:01:33,522: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-25 16:01:33,522: 	 Started submission
+DEBUG 2015-08-25 16:01:33,522: 	 Working on /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-25 16:01:33,862: 	 Loading required information from the environment
+DEBUG 2015-08-25 16:01:33,862: 	 Found CMSSW_7_4_6 for slc6_amd64_gcc491 with base /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6
+DEBUG 2015-08-25 16:01:33,877: 	 UNIQUE NAME: tarUUID 0f1990d2-6ebf-4a8e-8df8-c3643a4bf7c2 
+DEBUG 2015-08-25 16:01:33,878: 	 self.config: from WMCore.Configuration import Configuration
+config = Configuration()
+config.section_('General')
+config.General.workArea = 'crab3'
+config.General.requestName = 'regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25'
+config.section_('JobType')
+config.JobType.psetName = '../runElectronRegressionTrees_cfg.py'
+config.JobType.pluginName = 'Analysis'
+config.JobType.allowUndistributedCMSSW = True
+config.section_('Data')
+config.Data.inputDataset = '/DoubleElectron_FlatPt-1To300/RunIISpring15DR74-AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/GEN-SIM-RECO'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob = 50
+config.Data.publishDataName = 'regression_ntuple_RunIISpring15DR74-AsymptFlat0to50bx25RawReco_MCRUN2_74_V9A-v3_2015_08_25'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'FileBased'
+config.Data.outLFNDirBase = '/store/user/jsauvan/Regression/Ntuples/'
+config.Data.publication = False
+config.section_('Site')
+config.Site.storageSite = 'T2_FR_GRIF_LLR'
+
+DEBUG 2015-08-25 16:01:33,878: 	 self.config.JobType.psetName: ../runElectronRegressionTrees_cfg.py
+DEBUG 2015-08-25 16:01:33,878: 	 Importing CMSSW configuration ../runElectronRegressionTrees_cfg.py
+DEBUG 2015-08-25 16:01:39,547: 	 Writing CMSSW configuration to /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/inputs/PSet.py
+DEBUG 2015-08-25 16:01:42,411: 	 The following EDM output files will be collected: []
+DEBUG 2015-08-25 16:01:42,411: 	 The following TFile output files will be collected: ['regression_ntuple_746.root']
+DEBUG 2015-08-25 16:01:42,411: 	 The following user output files will be collected: []
+DEBUG 2015-08-25 16:01:42,411: 	 Loading required information from the environment
+DEBUG 2015-08-25 16:01:42,411: 	 Found CMSSW_7_4_6 for slc6_amd64_gcc491 with base /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6
+DEBUG 2015-08-25 16:01:42,411: 	 Making tarball in /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/inputs/0f1990d2-6ebf-4a8e-8df8-c3643a4bf7c2default.tgz
+DEBUG 2015-08-25 16:01:42,412: 	  checking directory /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/lib
+DEBUG 2015-08-25 16:01:42,412: 	  adding directory /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/lib to tarball
+DEBUG 2015-08-25 16:01:42,840: 	  checking directory /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/biglib
+DEBUG 2015-08-25 16:01:42,840: 	  adding directory /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/biglib to tarball
+DEBUG 2015-08-25 16:01:42,852: 	  checking directory /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/module
+DEBUG 2015-08-25 16:01:43,066: 	  adding data directory /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/HiggsAnalysis/GBRLikelihood/interface to tarball
+DEBUG 2015-08-25 16:01:44,362: 	 tgz contents: [('lib', 0, 1440507915, 'sauvan'), ('lib/slc6_amd64_gcc491', 0, 1440509690, 'sauvan'), ('lib/slc6_amd64_gcc491/pluginRegressionRegressionTrees.so', 369121, 1440509688, 'sauvan'), ('lib/slc6_amd64_gcc491/RegressionRegressionTrees.edmplugin', 42, 1440509688, 'sauvan'), ('lib/slc6_amd64_gcc491/libHiggsAnalysisGBRLikelihood.so', 842248, 1440508011, 'sauvan'), ('lib/slc6_amd64_gcc491/HiggsAnalysisGBRLikelihood_yr_rdict.pcm', 13664, 1440508012, 'sauvan'), ('lib/slc6_amd64_gcc491/.poisonededmplugincache', 0, 1440508014, 'sauvan'), ('lib/slc6_amd64_gcc491/.edmplugincache', 758, 1440509690, 'sauvan'), ('biglib', 0, 1440407060, 'sauvan'), ('biglib/slc6_amd64_gcc491', 0, 1440407060, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface', 0, 1440407067, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooGausDoubleExp.h', 1031, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooCBFast.h', 955, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooCBExp.h', 1003, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/HybridGBRTreeD.h', 3929, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/HybridGBRTree.h', 3913, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/HybridGBRForestFlex.h', 2406, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/HybridGBRForestD.h', 3113, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/HybridGBRForest.h', 3103, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/HybridGBREvent.h', 5623, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/GBRArrayUtils.h', 709, 1440407066, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooRevCBFast.h', 985, 1440407067, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooRevCBExp.h', 1031, 1440407067, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooHybridBDTAutoPdf.h', 19468, 1440407067, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooGaussianFast.h', 907, 1440407067, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/RooDoubleCBFast.h', 1115, 1440407067, 'sauvan'), ('src/HiggsAnalysis/GBRLikelihood/interface/GBRMath.h', 683, 1440407067, 'sauvan'), ('PSet.py', 101, 1440511302, 'sauvan'), ('PSet.pkl', 4082905, 1440511302, 'sauvan'), ('debug/originalPSet.py', 3600, 1440407065, 'sauvan'), ('debug/crabConfig.py', 967, 1440511304, 'sauvan')]
+DEBUG 2015-08-25 16:01:44,362: 	 MD5 checksum: dc39330c5ee19b919f6eebdcbec97989
+DEBUG 2015-08-25 16:01:44,370: 	  uploading archive to cache /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/inputs/0f1990d2-6ebf-4a8e-8df8-c3643a4bf7c2default.tgz 
+DEBUG 2015-08-25 16:01:45,002: 	 Result uploading input files: ('2dcf79926e571374ca6274061596af6be1630fd5d4c2be473829be35f84f416e.tar.gz', 'dc39330c5ee19b919f6eebdcbec97989') 
+INFO 2015-08-25 16:01:45,002: 	 Sending the request to the server
+DEBUG 2015-08-25 16:01:45,002: 	 Submitting {'ignorelocality': 0, 'savelogsflag': 0, 'useparent': 0, 'asyncdest': 'T2_FR_GRIF_LLR', 'algoargs': 50, 'cachefilename': '2dcf79926e571374ca6274061596af6be1630fd5d4c2be473829be35f84f416e.tar.gz', 'addoutputfiles': [], 'generator': 'pythia', 'publishdbsurl': 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSWriter', 'jobsw': 'CMSSW_7_4_6', 'edmoutfiles': [], 'cacheurl': 'https://cmsweb.cern.ch/crabcache', 'inputdata': '/DoubleElectron_FlatPt-1To300/RunIISpring15DR74-AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/GEN-SIM-RECO', 'lfn': '/store/user/jsauvan/Regression/Ntuples/', 'dryrun': 0, 'workflow': 'crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25', 'adduserfiles': [], 'publishname': 'regression_ntuple_RunIISpring15DR74-AsymptFlat0to50bx25RawReco_MCRUN2_74_V9A-v3_2015_08_25-dc39330c5ee19b919f6eebdcbec97989', 'nonprodsw': 1, 'tfileoutfiles': ['regression_ntuple_746.root'], 'oneEventMode': 0, 'saveoutput': 1, 'publication': 0, 'jobarch': 'slc6_amd64_gcc491', 'totalunits': -1, 'splitalgo': 'FileBased', 'nonvaliddata': 0, 'dbsurl': 'https://cmsweb.cern.ch/dbs/prod/global/DBSReader', 'publishgroupname': 0, 'jobtype': 'Analysis'} 
+DEBUG 2015-08-25 16:01:45,003: 	 Encoded submit request: ignorelocality=0&savelogsflag=0&useparent=0&asyncdest=T2_FR_GRIF_LLR&algoargs=50&cachefilename=2dcf79926e571374ca6274061596af6be1630fd5d4c2be473829be35f84f416e.tar.gz&generator=pythia&publishdbsurl=https%3A%2F%2Fcmsweb.cern.ch%2Fdbs%2Fprod%2Fphys03%2FDBSWriter&jobsw=CMSSW_7_4_6&cacheurl=https%3A%2F%2Fcmsweb.cern.ch%2Fcrabcache&inputdata=%2FDoubleElectron_FlatPt-1To300%2FRunIISpring15DR74-AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1%2FGEN-SIM-RECO&lfn=%2Fstore%2Fuser%2Fjsauvan%2FRegression%2FNtuples%2F&dryrun=0&workflow=crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25&publishname=regression_ntuple_RunIISpring15DR74-AsymptFlat0to50bx25RawReco_MCRUN2_74_V9A-v3_2015_08_25-dc39330c5ee19b919f6eebdcbec97989&nonprodsw=1&oneEventMode=0&saveoutput=1&publication=0&jobarch=slc6_amd64_gcc491&totalunits=-1&splitalgo=FileBased&nonvaliddata=0&dbsurl=https%3A%2F%2Fcmsweb.cern.ch%2Fdbs%2Fprod%2Fglobal%2FDBSReader&publishgroupname=0&jobtype=Analysis&tfileoutfiles=regression_ntuple_746.root
+DEBUG 2015-08-25 16:01:55,040: 	 Result: {'result': [{'RequestName': '150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25'}]}
+INFO 2015-08-25 16:01:55,044: 	 Success: Your task has been delivered to the CRAB3 server.
+INFO 2015-08-25 16:01:55,044: 	 Task name: 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 16:01:55,044: 	 Please use 'crab status' to check how the submission process proceeds.
+DEBUG 2015-08-25 16:01:55,044: 	 About to return
+INFO 2015-08-25 16:01:55,049: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-25 16:02:10,917: 	 Executing command: 'status'
+DEBUG 2015-08-25 16:02:10,917: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-25 16:02:10,942: 	 Checking credentials
+DEBUG 2015-08-25 16:02:10,942: 	 Found proxy file /home/llr/cms/sauvan/.t3/proxy.cert
+DEBUG 2015-08-25 16:02:10,942: 	 Getting proxy life time left
+DEBUG 2015-08-25 16:02:11,446: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -timeleft
+ output : 429015
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:02:11,949: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -actimeleft
+ output : 429015
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:02:11,949: 	 Proxy valid for 119:10:15 hours
+DEBUG 2015-08-25 16:02:12,100: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 16:02:12,100: 	 Checking credentials
+DEBUG 2015-08-25 16:02:12,101: 	 Found proxy file /home/llr/cms/sauvan/.t3/proxy.cert
+DEBUG 2015-08-25 16:02:12,101: 	 Getting proxy life time left
+DEBUG 2015-08-25 16:02:12,603: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -timeleft
+ output : 429014
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:02:13,107: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -actimeleft
+ output : 429013
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:02:13,107: 	 Proxy valid for 119:10:14 hours
+DEBUG 2015-08-25 16:02:13,406: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-25 16:02:13,513: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 16:02:13,513: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-25 16:02:13,514: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 16:02:17,521: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 719:59:15  (30.0 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 16:02:17,522: 	 Myproxy is valid: 2591955
+DEBUG 2015-08-25 16:02:17,522: 	 Command use: status
+DEBUG 2015-08-25 16:02:17,522: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-25 16:02:17,840: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-25 16:02:17,840: 	 Instance is prod
+DEBUG 2015-08-25 16:02:17,840: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-25 16:02:17,840: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-25 16:02:17,840: 	 Looking up detailed status of task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-25 16:02:19,396: 	 {'status': 'QUEUED', 'schedd': 'crab3test-2@vocms095.cern.ch', 'saveLogs': 'F', 'totalJobdefs': 0, 'jobSetID': '', 'jobsPerStatus': {}, 'taskWarningMsg': [], 'taskFailureMsg': '', 'failedJobdefs': 0, 'jobdefErrors': [], 'collector': 'vocms097.cern.ch,vocms099.cern.ch', 'jobList': []}
+INFO 2015-08-25 16:02:19,396: 	 CRAB project directory:		/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 16:02:19,397: 	 Task name:			150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 16:02:19,397: 	 Task status:			QUEUED
+INFO 2015-08-25 16:02:19,397: 	 
+No jobs created yet!
+INFO 2015-08-25 16:02:19,399: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-25 23:30:51,739: 	 Executing command: 'status'
+DEBUG 2015-08-25 23:30:51,740: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-25 23:30:51,768: 	 Checking credentials
+DEBUG 2015-08-25 23:30:51,768: 	 Proxy file /tmp/x509up_u815 not found
+DEBUG 2015-08-25 23:30:51,768: 	 Creating new proxy for 24:00 hours with VO group '' and VO role 'NULL'.
+DEBUG 2015-08-25 23:30:58,780: 	 Executing : 
+ command : voms-proxy-init -voms cms:/cms -valid 24:00 -rfc
+ output : None
+ error: None
+ retcode : 0
+DEBUG 2015-08-25 23:30:59,283: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86398
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:30:59,786: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86398
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:31:00,289: 	 Executing : 
+ command : env X509_USER_PROXY=/tmp/x509up_u815 voms-proxy-info -fqan
+ output : /cms/Role=NULL/Capability=NULL
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:31:00,290: 	 Proxy created.
+DEBUG 2015-08-25 23:31:00,417: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 23:31:00,417: 	 Checking credentials
+DEBUG 2015-08-25 23:31:00,417: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-25 23:31:00,417: 	 Getting proxy life time left
+DEBUG 2015-08-25 23:31:00,921: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86397
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:31:01,424: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86396
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:31:01,424: 	 Proxy valid for 23:59:57 hours
+DEBUG 2015-08-25 23:31:01,769: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-25 23:31:01,875: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 23:31:01,875: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-25 23:31:01,876: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 23:31:02,378: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 712:30:30  (29.7 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:31:02,379: 	 Myproxy is valid: 2565030
+DEBUG 2015-08-25 23:31:02,379: 	 Command use: status
+DEBUG 2015-08-25 23:31:02,379: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-25 23:31:02,711: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-25 23:31:02,711: 	 Instance is prod
+DEBUG 2015-08-25 23:31:02,711: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-25 23:31:02,711: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-25 23:31:02,711: 	 Looking up detailed status of task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-25 23:31:04,074: 	 {'status': 'SUBMITTED', 'schedd': 'crab3test-2@vocms095.cern.ch', 'saveLogs': 'F', 'jobsPerStatus': {'failed': 11, 'finished': 77, 'running': 1}, 'jobs': {'24': {'State': 'finished'}, '25': {'State': 'finished'}, '26': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '27': {'State': 'finished'}, '20': {'State': 'finished'}, '21': {'State': 'finished'}, '22': {'State': 'finished'}, '23': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '28': {'State': 'finished'}, '29': {'State': 'finished'}, '4': {'State': 'finished'}, '8': {'State': 'finished'}, '59': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '58': {'State': 'finished'}, '55': {'State': 'finished'}, '54': {'State': 'finished'}, '57': {'State': 'finished'}, '56': {'State': 'finished'}, '51': {'State': 'finished'}, '50': {'State': 'finished'}, '53': {'State': 'finished'}, '52': {'State': 'finished'}, '88': {'State': 'finished'}, '89': {'State': 'finished'}, '82': {'State': 'finished'}, '83': {'State': 'finished'}, '80': {'State': 'finished'}, '81': {'State': 'finished'}, '86': {'State': 'finished'}, '87': {'State': 'finished'}, '84': {'State': 'finished'}, '85': {'State': 'finished'}, '3': {'State': 'finished'}, '7': {'State': 'finished'}, '39': {'State': 'finished'}, '38': {'State': 'finished'}, '33': {'State': 'finished'}, '32': {'State': 'finished'}, '31': {'State': 'finished'}, '30': {'State': 'finished'}, '37': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '36': {'State': 'finished'}, '35': {'State': 'finished'}, '34': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '60': {'State': 'finished'}, '61': {'State': 'finished'}, '62': {'State': 'finished'}, '63': {'State': 'finished'}, '64': {'State': 'finished'}, '65': {'State': 'finished'}, '66': {'State': 'finished'}, '67': {'State': 'finished'}, '68': {'State': 'finished'}, '69': {'State': 'finished'}, '2': {'State': 'finished'}, '6': {'State': 'finished'}, '11': {'State': 'finished'}, '10': {'State': 'finished'}, '13': {'State': 'finished'}, '12': {'State': 'finished'}, '15': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '14': {'State': 'running'}, '17': {'State': 'finished'}, '16': {'State': 'finished'}, '19': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '18': {'State': 'finished'}, '48': {'State': 'finished'}, '49': {'State': 'finished'}, '46': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Constructing the EventProcessor\n   [1] Constructing input source of type PoolSource\n   [2] Calling RootInputFileSequence::initFile()\n   [3] Calling StorageFactory::open()\n   [4] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Constructing the EventProcessor\n   [1] Constructing input source of type PoolSource\n   [2] Calling RootInputFileSequence::initFile()\n   [3] Calling StorageFactory::open()\n   [4] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '47': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '44': {'State': 'finished'}, '45': {'State': 'finished'}, '42': {'State': 'finished'}, '43': {'State': 'finished'}, '40': {'State': 'finished'}, '41': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '1': {'State': 'finished'}, '5': {'State': 'finished'}, '9': {'State': 'finished'}, '77': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '76': {'State': 'finished'}, '75': {'State': 'finished'}, '74': {'State': 'finished'}, '73': {'State': 'finished'}, '72': {'State': 'finished'}, '71': {'State': 'finished'}, '70': {'State': 'finished'}, '79': {'State': 'finished'}, '78': {'State': 'finished'}}, 'publication': {'disabled': []}, 'taskWarningMsg': [], 'outdatasets': None, 'taskFailureMsg': '', 'failedJobdefs': 0, 'ASOURL': 'https://cmsweb.cern.ch/couchdb', 'totalJobdefs': 0, 'jobSetID': '150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25', 'jobdefErrors': [], 'collector': 'vocms097.cern.ch,vocms099.cern.ch', 'jobList': [['finished', 24], ['finished', 25], ['failed', 26], ['finished', 27], ['finished', 20], ['finished', 21], ['finished', 22], ['failed', 23], ['finished', 28], ['finished', 29], ['finished', 4], ['finished', 8], ['failed', 59], ['finished', 58], ['finished', 55], ['finished', 54], ['finished', 57], ['finished', 56], ['finished', 51], ['finished', 50], ['finished', 53], ['finished', 52], ['finished', 88], ['finished', 89], ['finished', 82], ['finished', 83], ['finished', 80], ['finished', 81], ['finished', 86], ['finished', 87], ['finished', 84], ['finished', 85], ['finished', 3], ['finished', 7], ['finished', 39], ['finished', 38], ['finished', 33], ['finished', 32], ['finished', 31], ['finished', 30], ['failed', 37], ['finished', 36], ['finished', 35], ['failed', 34], ['finished', 60], ['finished', 61], ['finished', 62], ['finished', 63], ['finished', 64], ['finished', 65], ['finished', 66], ['finished', 67], ['finished', 68], ['finished', 69], ['finished', 2], ['finished', 6], ['finished', 11], ['finished', 10], ['finished', 13], ['finished', 12], ['failed', 15], ['running', 14], ['finished', 17], ['finished', 16], ['failed', 19], ['finished', 18], ['finished', 48], ['finished', 49], ['failed', 46], ['failed', 47], ['finished', 44], ['finished', 45], ['finished', 42], ['finished', 43], ['finished', 40], ['failed', 41], ['finished', 1], ['finished', 5], ['finished', 9], ['failed', 77], ['finished', 76], ['finished', 75], ['finished', 74], ['finished', 73], ['finished', 72], ['finished', 71], ['finished', 70], ['finished', 79], ['finished', 78]]}
+INFO 2015-08-25 23:31:04,074: 	 CRAB project directory:		/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:31:04,075: 	 Task name:			150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:31:04,075: 	 Task status:			SUBMITTED
+INFO 2015-08-25 23:31:04,075: 	 Glidemon monitoring URL:	http://glidemon.web.cern.ch/glidemon/jobs.php?taskname=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:31:04,075: 	 Dashboard monitoring URL:	http://dashb-cms-job.cern.ch/dashboard/templates/task-analysis/#user=crab&refresh=0&table=Jobs&p=1&records=25&activemenu=2&status=&site=&tid=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:31:04,075: 	 Details:			failed         12.4% (11/89)
+INFO 2015-08-25 23:31:04,075: 	 				finished       86.5% (77/89)
+INFO 2015-08-25 23:31:04,075: 	 				running         1.1% ( 1/89)
+INFO 2015-08-25 23:31:04,076: 	 
+No publication information (publication has been disabled in the CRAB configuration file)
+INFO 2015-08-25 23:31:04,076: 	 
+Error Summary: (use --verboseErrors for details about the errors)
+
+ 7 jobs failed with exit code 134
+
+ 4 jobs failed with exit code 8028
+
+Have a look at https://twiki.cern.ch/twiki/bin/viewauth/CMSPublic/JobExitCodes for a description of the exit codes.
+INFO 2015-08-25 23:31:04,078: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-25 23:32:17,939: 	 Executing command: 'resubmit'
+DEBUG 2015-08-25 23:32:17,939: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-25 23:32:17,961: 	 Checking credentials
+DEBUG 2015-08-25 23:32:17,961: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-25 23:32:17,961: 	 Getting proxy life time left
+DEBUG 2015-08-25 23:32:18,463: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86319
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:32:18,966: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86319
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:32:18,967: 	 Proxy valid for 23:58:39 hours
+DEBUG 2015-08-25 23:32:19,076: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 23:32:19,077: 	 Checking credentials
+DEBUG 2015-08-25 23:32:19,077: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-25 23:32:19,077: 	 Getting proxy life time left
+DEBUG 2015-08-25 23:32:19,579: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86318
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:32:20,083: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86318
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:32:20,083: 	 Proxy valid for 23:58:38 hours
+DEBUG 2015-08-25 23:32:20,577: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-25 23:32:20,685: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 23:32:20,685: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-25 23:32:20,685: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 23:32:21,190: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 712:29:11  (29.7 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:32:21,191: 	 Myproxy is valid: 2564951
+DEBUG 2015-08-25 23:32:21,191: 	 Command use: resubmit
+DEBUG 2015-08-25 23:32:21,191: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-25 23:32:21,450: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-25 23:32:21,450: 	 Instance is prod
+DEBUG 2015-08-25 23:32:21,450: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-25 23:32:21,450: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-25 23:32:21,450: 	 Requesting resubmission of failed jobs in task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:32:21,451: 	 Sending the request to the server
+DEBUG 2015-08-25 23:32:21,451: 	 Submitting {'force': 0, 'subresource': 'resubmit', 'workflow': '150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25'} 
+DEBUG 2015-08-25 23:32:21,451: 	 Encoded resubmit request: force=0&subresource=resubmit&workflow=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-25 23:32:59,553: 	 Result: {'result': [{'result': 'ok'}], 'desc': {'columns': ['tm_site_blacklist', 'tm_site_whitelist', 'tm_maxjobruntime', 'tm_maxmemory', 'tm_numcores', 'tm_priority']}}
+INFO 2015-08-25 23:32:59,553: 	 Resubmit request sent to the CRAB3 server.
+INFO 2015-08-25 23:32:59,553: 	 Please use 'crab status' to check how the resubmission process proceeds.
+INFO 2015-08-25 23:32:59,555: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-25 23:33:10,223: 	 Executing command: 'status'
+DEBUG 2015-08-25 23:33:10,223: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-25 23:33:10,240: 	 Checking credentials
+DEBUG 2015-08-25 23:33:10,241: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-25 23:33:10,241: 	 Getting proxy life time left
+DEBUG 2015-08-25 23:33:10,745: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86267
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:33:11,148: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86266
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:33:11,148: 	 Proxy valid for 23:57:47 hours
+DEBUG 2015-08-25 23:33:11,258: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 23:33:11,259: 	 Checking credentials
+DEBUG 2015-08-25 23:33:11,259: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-25 23:33:11,259: 	 Getting proxy life time left
+DEBUG 2015-08-25 23:33:11,762: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86266
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:33:12,265: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86265
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:33:12,265: 	 Proxy valid for 23:57:46 hours
+DEBUG 2015-08-25 23:33:12,520: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-25 23:33:12,626: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-25 23:33:12,627: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-25 23:33:12,627: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-25 23:33:13,029: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 712:28:20  (29.7 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-25 23:33:13,030: 	 Myproxy is valid: 2564900
+DEBUG 2015-08-25 23:33:13,030: 	 Command use: status
+DEBUG 2015-08-25 23:33:13,030: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-25 23:33:13,348: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-25 23:33:13,348: 	 Instance is prod
+DEBUG 2015-08-25 23:33:13,348: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-25 23:33:13,348: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-25 23:33:13,348: 	 Looking up detailed status of task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-25 23:33:22,884: 	 {'status': 'QUEUED', 'schedd': 'crab3test-2@vocms095.cern.ch', 'saveLogs': 'F', 'jobsPerStatus': {'failed': 11, 'finished': 77, 'running': 1}, 'jobs': {'24': {'State': 'finished'}, '25': {'State': 'finished'}, '26': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '27': {'State': 'finished'}, '20': {'State': 'finished'}, '21': {'State': 'finished'}, '22': {'State': 'finished'}, '23': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '28': {'State': 'finished'}, '29': {'State': 'finished'}, '4': {'State': 'finished'}, '8': {'State': 'finished'}, '59': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/20E41135-5C12-E511-A57E-0025905A4964.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '58': {'State': 'finished'}, '55': {'State': 'finished'}, '54': {'State': 'finished'}, '57': {'State': 'finished'}, '56': {'State': 'finished'}, '51': {'State': 'finished'}, '50': {'State': 'finished'}, '53': {'State': 'finished'}, '52': {'State': 'finished'}, '88': {'State': 'finished'}, '89': {'State': 'finished'}, '82': {'State': 'finished'}, '83': {'State': 'finished'}, '80': {'State': 'finished'}, '81': {'State': 'finished'}, '86': {'State': 'finished'}, '87': {'State': 'finished'}, '84': {'State': 'finished'}, '85': {'State': 'finished'}, '3': {'State': 'finished'}, '7': {'State': 'finished'}, '39': {'State': 'finished'}, '38': {'State': 'finished'}, '33': {'State': 'finished'}, '32': {'State': 'finished'}, '31': {'State': 'finished'}, '30': {'State': 'finished'}, '37': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '36': {'State': 'finished'}, '35': {'State': 'finished'}, '34': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '60': {'State': 'finished'}, '61': {'State': 'finished'}, '62': {'State': 'finished'}, '63': {'State': 'finished'}, '64': {'State': 'finished'}, '65': {'State': 'finished'}, '66': {'State': 'finished'}, '67': {'State': 'finished'}, '68': {'State': 'finished'}, '69': {'State': 'finished'}, '2': {'State': 'finished'}, '6': {'State': 'finished'}, '11': {'State': 'finished'}, '10': {'State': 'finished'}, '13': {'State': 'finished'}, '12': {'State': 'finished'}, '15': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '14': {'State': 'running'}, '17': {'State': 'finished'}, '16': {'State': 'finished'}, '19': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '18': {'State': 'finished'}, '48': {'State': 'finished'}, '49': {'State': 'finished'}, '46': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Constructing the EventProcessor\n   [1] Constructing input source of type PoolSource\n   [2] Calling RootInputFileSequence::initFile()\n   [3] Calling StorageFactory::open()\n   [4] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Constructing the EventProcessor\n   [1] Constructing input source of type PoolSource\n   [2] Calling RootInputFileSequence::initFile()\n   [3] Calling StorageFactory::open()\n   [4] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/9A85D5D0-6D12-E511-9FC1-0025905A6068.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '47': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file file:///cms/data/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=xrootd1.ihepa.ufl.edu,xrootd2.ihepa.ufl.edu,gridftp3.ihepa.ufl.edu,cmsio1.rc.ufl.edu,cmsio2.rc.ufl.edu,cmsio3.rc.ufl.edu,cmsio4.rc.ufl.edu,cmsio5.rc.ufl.edu,cmsio6.rc.ufl.edu,cmsio7.rc.ufl.edu,cmsio8.rc.ufl.edu,cmsio9.rc.ufl.edu,cmsio10.rc.ufl.edu', flags=0x10, permissions=0660) => error '[ERROR] Operation expired' (errno=0, code=206). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60001/96B61C81-6712-E511-ACAF-0025905A48FC.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '44': {'State': 'finished'}, '45': {'State': 'finished'}, '42': {'State': 'finished'}, '43': {'State': 'finished'}, '40': {'State': 'finished'}, '41': {'State': 'failed', 'Error': [134, 'CmsRunFailure', {}]}, '1': {'State': 'finished'}, '5': {'State': 'finished'}, '9': {'State': 'finished'}, '77': {'State': 'failed', 'Error': [8028, "CmsRunFailure\nCMSSW error message follows.\nFatal Exception\nAn exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095\n", {'type': 'Fatal Exception', 'details': "An exception of category 'FallbackFileOpenError' occurred while\n   [0] Calling InputSource::readFile_\n   [1] Calling RootInputFileSequence::initFile()\n   [2] Calling StorageFactory::open()\n   [3] Calling XrdFile::open()\nException Message:\nFailed to open the file 'root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root'\n   Additional Info:\n      [a] open() failed with system error 'No such file or directory' (error code 2)\n      [b] Input file /mnt/hadoop/user/uscms01/pnfs/unl.edu/data4/cms/store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root could not be opened.\nFallback Input file root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root also could not be opened.\nOriginal exception info is above; fallback exception info is below.\n      [c] XrdCl::File::Open(name='root://cmsxrootd.fnal.gov//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root', flags=0x10, permissions=0660) => error '[ERROR] Socket error' (errno=0, code=102). No additional data servers were found.\n      [d] Last URL tried: root://cmssrmdisk.fnal.gov:1095//store/mc/RunIISpring15DR74/DoubleElectron_FlatPt-1To300/GEN-SIM-RECO/AsymptFlat0to50bx25RawReco_MCRUN2_74_V9-v1/60002/4891E049-8A12-E511-A7CE-0025905A612E.root?tried=\n      [e] Problematic data server: cmssrmdisk.fnal.gov:1095\n      [f] Disabled source: cmssrmdisk.fnal.gov:1095", 'exitCode': '8028'}]}, '76': {'State': 'finished'}, '75': {'State': 'finished'}, '74': {'State': 'finished'}, '73': {'State': 'finished'}, '72': {'State': 'finished'}, '71': {'State': 'finished'}, '70': {'State': 'finished'}, '79': {'State': 'finished'}, '78': {'State': 'finished'}}, 'publication': {'disabled': []}, 'taskWarningMsg': [], 'outdatasets': None, 'taskFailureMsg': '', 'failedJobdefs': 0, 'ASOURL': 'https://cmsweb.cern.ch/couchdb', 'totalJobdefs': 0, 'jobSetID': '150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25', 'jobdefErrors': [], 'collector': 'vocms097.cern.ch,vocms099.cern.ch', 'jobList': [['finished', 24], ['finished', 25], ['failed', 26], ['finished', 27], ['finished', 20], ['finished', 21], ['finished', 22], ['failed', 23], ['finished', 28], ['finished', 29], ['finished', 4], ['finished', 8], ['failed', 59], ['finished', 58], ['finished', 55], ['finished', 54], ['finished', 57], ['finished', 56], ['finished', 51], ['finished', 50], ['finished', 53], ['finished', 52], ['finished', 88], ['finished', 89], ['finished', 82], ['finished', 83], ['finished', 80], ['finished', 81], ['finished', 86], ['finished', 87], ['finished', 84], ['finished', 85], ['finished', 3], ['finished', 7], ['finished', 39], ['finished', 38], ['finished', 33], ['finished', 32], ['finished', 31], ['finished', 30], ['failed', 37], ['finished', 36], ['finished', 35], ['failed', 34], ['finished', 60], ['finished', 61], ['finished', 62], ['finished', 63], ['finished', 64], ['finished', 65], ['finished', 66], ['finished', 67], ['finished', 68], ['finished', 69], ['finished', 2], ['finished', 6], ['finished', 11], ['finished', 10], ['finished', 13], ['finished', 12], ['failed', 15], ['running', 14], ['finished', 17], ['finished', 16], ['failed', 19], ['finished', 18], ['finished', 48], ['finished', 49], ['failed', 46], ['failed', 47], ['finished', 44], ['finished', 45], ['finished', 42], ['finished', 43], ['finished', 40], ['failed', 41], ['finished', 1], ['finished', 5], ['finished', 9], ['failed', 77], ['finished', 76], ['finished', 75], ['finished', 74], ['finished', 73], ['finished', 72], ['finished', 71], ['finished', 70], ['finished', 79], ['finished', 78]]}
+INFO 2015-08-25 23:33:22,884: 	 CRAB project directory:		/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:33:22,884: 	 Task name:			150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:33:22,884: 	 Task status:			QUEUED
+INFO 2015-08-25 23:33:22,884: 	 Glidemon monitoring URL:	http://glidemon.web.cern.ch/glidemon/jobs.php?taskname=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:33:22,884: 	 Dashboard monitoring URL:	http://dashb-cms-job.cern.ch/dashboard/templates/task-analysis/#user=crab&refresh=0&table=Jobs&p=1&records=25&activemenu=2&status=&site=&tid=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-25 23:33:22,884: 	 Details:			failed         12.4% (11/89)
+INFO 2015-08-25 23:33:22,884: 	 				finished       86.5% (77/89)
+INFO 2015-08-25 23:33:22,885: 	 				running         1.1% ( 1/89)
+INFO 2015-08-25 23:33:22,885: 	 
+No publication information (publication has been disabled in the CRAB configuration file)
+INFO 2015-08-25 23:33:22,885: 	 
+Error Summary: (use --verboseErrors for details about the errors)
+
+ 7 jobs failed with exit code 134
+
+ 4 jobs failed with exit code 8028
+
+Have a look at https://twiki.cern.ch/twiki/bin/viewauth/CMSPublic/JobExitCodes for a description of the exit codes.
+INFO 2015-08-25 23:33:22,890: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-26 20:38:27,897: 	 Executing command: 'status'
+DEBUG 2015-08-26 20:38:27,898: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-26 20:38:27,921: 	 Checking credentials
+DEBUG 2015-08-26 20:38:27,921: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-26 20:38:27,921: 	 Getting proxy life time left
+DEBUG 2015-08-26 20:38:28,424: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 10349
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:38:28,929: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 10349
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:38:28,930: 	 Proxy valid for 02:52:29 hours
+DEBUG 2015-08-26 20:38:29,060: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-26 20:38:29,061: 	 Checking credentials
+DEBUG 2015-08-26 20:38:29,061: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-26 20:38:29,061: 	 Getting proxy life time left
+DEBUG 2015-08-26 20:38:29,563: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 10348
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:38:30,066: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 10347
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:38:30,067: 	 Proxy valid for 02:52:28 hours
+DEBUG 2015-08-26 20:38:30,357: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-26 20:38:30,465: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-26 20:38:30,465: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-26 20:38:30,465: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-26 20:38:31,168: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 691:23:01  (28.8 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:38:31,169: 	 Myproxy is valid: 2488981
+DEBUG 2015-08-26 20:38:31,169: 	 Command use: status
+DEBUG 2015-08-26 20:38:31,169: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-26 20:38:31,453: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-26 20:38:31,453: 	 Instance is prod
+DEBUG 2015-08-26 20:38:31,453: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-26 20:38:31,453: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-26 20:38:31,453: 	 Looking up detailed status of task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-26 20:38:34,428: 	 {'status': 'FAILED', 'schedd': 'crab3test-2@vocms095.cern.ch', 'saveLogs': 'F', 'jobsPerStatus': {'failed': 1, 'finished': 88}, 'jobs': {'24': {'State': 'finished'}, '25': {'State': 'finished'}, '26': {'State': 'finished'}, '27': {'State': 'finished'}, '20': {'State': 'finished'}, '21': {'State': 'finished'}, '22': {'State': 'finished'}, '23': {'State': 'finished'}, '28': {'State': 'finished'}, '29': {'State': 'finished'}, '4': {'State': 'finished'}, '8': {'State': 'finished'}, '59': {'State': 'finished'}, '58': {'State': 'finished'}, '55': {'State': 'finished'}, '54': {'State': 'finished'}, '57': {'State': 'finished'}, '56': {'State': 'finished'}, '51': {'State': 'finished'}, '50': {'State': 'finished'}, '53': {'State': 'finished'}, '52': {'State': 'finished'}, '88': {'State': 'finished'}, '89': {'State': 'finished'}, '82': {'State': 'finished'}, '83': {'State': 'finished'}, '80': {'State': 'finished'}, '81': {'State': 'finished'}, '86': {'State': 'finished'}, '87': {'State': 'finished'}, '84': {'State': 'finished'}, '85': {'State': 'finished'}, '3': {'State': 'finished'}, '7': {'State': 'finished'}, '39': {'State': 'finished'}, '38': {'State': 'finished'}, '33': {'State': 'finished'}, '32': {'State': 'finished'}, '31': {'State': 'finished'}, '30': {'State': 'finished'}, '37': {'State': 'finished'}, '36': {'State': 'finished'}, '35': {'State': 'finished'}, '34': {'State': 'finished'}, '60': {'State': 'finished'}, '61': {'State': 'finished'}, '62': {'State': 'finished'}, '63': {'State': 'finished'}, '64': {'State': 'finished'}, '65': {'State': 'finished'}, '66': {'State': 'finished'}, '67': {'State': 'finished'}, '68': {'State': 'finished'}, '69': {'State': 'finished'}, '2': {'State': 'finished'}, '6': {'State': 'finished'}, '11': {'State': 'finished'}, '10': {'State': 'finished'}, '13': {'State': 'finished'}, '12': {'State': 'finished'}, '15': {'State': 'finished'}, '14': {'State': 'failed', 'Error': [50664, 'Not retrying job due to wall clock limit (job automatically killed on the worker node)', {}]}, '17': {'State': 'finished'}, '16': {'State': 'finished'}, '19': {'State': 'finished'}, '18': {'State': 'finished'}, '48': {'State': 'finished'}, '49': {'State': 'finished'}, '46': {'State': 'finished'}, '47': {'State': 'finished'}, '44': {'State': 'finished'}, '45': {'State': 'finished'}, '42': {'State': 'finished'}, '43': {'State': 'finished'}, '40': {'State': 'finished'}, '41': {'State': 'finished'}, '1': {'State': 'finished'}, '5': {'State': 'finished'}, '9': {'State': 'finished'}, '77': {'State': 'finished'}, '76': {'State': 'finished'}, '75': {'State': 'finished'}, '74': {'State': 'finished'}, '73': {'State': 'finished'}, '72': {'State': 'finished'}, '71': {'State': 'finished'}, '70': {'State': 'finished'}, '79': {'State': 'finished'}, '78': {'State': 'finished'}}, 'publication': {'disabled': []}, 'taskWarningMsg': [], 'outdatasets': None, 'taskFailureMsg': '', 'failedJobdefs': 0, 'ASOURL': 'https://cmsweb.cern.ch/couchdb', 'totalJobdefs': 0, 'jobSetID': '150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25', 'jobdefErrors': [], 'collector': 'vocms097.cern.ch,vocms099.cern.ch', 'jobList': [['finished', 24], ['finished', 25], ['finished', 26], ['finished', 27], ['finished', 20], ['finished', 21], ['finished', 22], ['finished', 23], ['finished', 28], ['finished', 29], ['finished', 4], ['finished', 8], ['finished', 59], ['finished', 58], ['finished', 55], ['finished', 54], ['finished', 57], ['finished', 56], ['finished', 51], ['finished', 50], ['finished', 53], ['finished', 52], ['finished', 88], ['finished', 89], ['finished', 82], ['finished', 83], ['finished', 80], ['finished', 81], ['finished', 86], ['finished', 87], ['finished', 84], ['finished', 85], ['finished', 3], ['finished', 7], ['finished', 39], ['finished', 38], ['finished', 33], ['finished', 32], ['finished', 31], ['finished', 30], ['finished', 37], ['finished', 36], ['finished', 35], ['finished', 34], ['finished', 60], ['finished', 61], ['finished', 62], ['finished', 63], ['finished', 64], ['finished', 65], ['finished', 66], ['finished', 67], ['finished', 68], ['finished', 69], ['finished', 2], ['finished', 6], ['finished', 11], ['finished', 10], ['finished', 13], ['finished', 12], ['finished', 15], ['failed', 14], ['finished', 17], ['finished', 16], ['finished', 19], ['finished', 18], ['finished', 48], ['finished', 49], ['finished', 46], ['finished', 47], ['finished', 44], ['finished', 45], ['finished', 42], ['finished', 43], ['finished', 40], ['finished', 41], ['finished', 1], ['finished', 5], ['finished', 9], ['finished', 77], ['finished', 76], ['finished', 75], ['finished', 74], ['finished', 73], ['finished', 72], ['finished', 71], ['finished', 70], ['finished', 79], ['finished', 78]]}
+INFO 2015-08-26 20:38:34,428: 	 CRAB project directory:		/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:38:34,428: 	 Task name:			150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:38:34,428: 	 Task status:			FAILED
+INFO 2015-08-26 20:38:34,428: 	 Glidemon monitoring URL:	http://glidemon.web.cern.ch/glidemon/jobs.php?taskname=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:38:34,428: 	 Dashboard monitoring URL:	http://dashb-cms-job.cern.ch/dashboard/templates/task-analysis/#user=crab&refresh=0&table=Jobs&p=1&records=25&activemenu=2&status=&site=&tid=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:38:34,429: 	 Details:			failed          1.1% ( 1/89)
+INFO 2015-08-26 20:38:34,429: 	 				finished       98.9% (88/89)
+INFO 2015-08-26 20:38:34,429: 	 
+No publication information (publication has been disabled in the CRAB configuration file)
+INFO 2015-08-26 20:38:34,429: 	 
+Error Summary: (use --verboseErrors for details about the errors)
+
+ 1 jobs failed with exit code 50664
+
+Have a look at https://twiki.cern.ch/twiki/bin/viewauth/CMSPublic/JobExitCodes for a description of the exit codes.
+INFO 2015-08-26 20:38:34,432: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-26 20:39:37,710: 	 Executing command: 'resubmit'
+DEBUG 2015-08-26 20:39:37,711: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-26 20:39:37,734: 	 Checking credentials
+DEBUG 2015-08-26 20:39:37,734: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-26 20:39:37,734: 	 Getting proxy life time left
+DEBUG 2015-08-26 20:39:38,337: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 10279
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:38,840: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 10279
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:38,841: 	 Proxy valid for 02:51:19 hours
+DEBUG 2015-08-26 20:39:38,950: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-26 20:39:38,950: 	 Checking credentials
+DEBUG 2015-08-26 20:39:38,951: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-26 20:39:38,951: 	 Getting proxy life time left
+DEBUG 2015-08-26 20:39:39,453: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 10278
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:39,956: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 10278
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:39,956: 	 Proxy valid for 02:51:18 hours
+DEBUG 2015-08-26 20:39:40,443: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-26 20:39:40,551: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-26 20:39:40,551: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-26 20:39:40,551: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-26 20:39:41,054: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 691:21:51  (28.8 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:41,055: 	 Myproxy is valid: 2488911
+DEBUG 2015-08-26 20:39:41,055: 	 Command use: resubmit
+DEBUG 2015-08-26 20:39:41,055: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-26 20:39:41,339: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-26 20:39:41,339: 	 Instance is prod
+DEBUG 2015-08-26 20:39:41,339: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-26 20:39:41,339: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-26 20:39:41,339: 	 Requesting resubmission of failed jobs in task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:39:41,339: 	 Sending the request to the server
+DEBUG 2015-08-26 20:39:41,339: 	 Submitting {'force': 0, 'subresource': 'resubmit', 'workflow': '150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25'} 
+DEBUG 2015-08-26 20:39:41,339: 	 Encoded resubmit request: force=0&subresource=resubmit&workflow=150825_140145%3Ajsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-26 20:39:42,641: 	 Result: {'result': [{'result': 'ok'}], 'desc': {'columns': ['tm_site_blacklist', 'tm_site_whitelist', 'tm_maxjobruntime', 'tm_maxmemory', 'tm_numcores', 'tm_priority']}}
+INFO 2015-08-26 20:39:42,641: 	 Resubmit request sent to the CRAB3 server.
+INFO 2015-08-26 20:39:42,641: 	 Please use 'crab status' to check how the resubmission process proceeds.
+INFO 2015-08-26 20:39:42,643: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log
+DEBUG 2015-08-26 20:39:46,537: 	 Executing command: 'status'
+DEBUG 2015-08-26 20:39:46,538: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-26 20:39:46,544: 	 Checking credentials
+DEBUG 2015-08-26 20:39:46,544: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-26 20:39:46,544: 	 Getting proxy life time left
+DEBUG 2015-08-26 20:39:47,247: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 10270
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:47,751: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 10270
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:47,751: 	 Proxy valid for 02:51:10 hours
+DEBUG 2015-08-26 20:39:47,860: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-26 20:39:47,860: 	 Checking credentials
+DEBUG 2015-08-26 20:39:47,860: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-08-26 20:39:47,860: 	 Getting proxy life time left
+DEBUG 2015-08-26 20:39:48,363: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 10269
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:48,766: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 10269
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:48,766: 	 Proxy valid for 02:51:09 hours
+DEBUG 2015-08-26 20:39:49,028: 	 Registering user credentials for server /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+DEBUG 2015-08-26 20:39:49,137: 	 Executing : 
+ command : openssl x509 -in ~/.globus/usercert.pem -subject -noout
+ output : subject= /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+
+ error: WARNING: can't open config file: /build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/tmp/BUILDROOT/ef35842be28ecca6d10195ea8182a5ac/build/dmwmbld/srv/state/dmwmbld/builds/comp_gcc481/w/slc6_amd64_gcc481/external/openssl/1.0.1p/ssl/openssl.cnf
+
+ retcode : 0
+DEBUG 2015-08-26 20:39:49,137: 	 Getting myproxy life time left for myproxy.cern.ch
+DEBUG 2015-08-26 20:39:49,137: 	 Calculating hash of /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan_cmsweb.cern.ch for credential name
+DEBUG 2015-08-26 20:39:49,639: 	 Executing : 
+ command : myproxy-info -l 28235d7851854e94220931c3ee80d47b7c6f5878 -s myproxy.cern.ch
+ output : username: 28235d7851854e94220931c3ee80d47b7c6f5878
+owner: /O=GRID-FR/C=FR/O=CNRS/OU=LLR/CN=Jean-Baptiste Sauvan
+  renewal policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  trusted retrieval policy: /DC=ch/DC=cern/OU=computers/CN=vocms(045|052|021|031|0118|0119).cern.ch
+  timeleft: 691:21:43  (28.8 days)
+
+ error: 
+ retcode : 0
+DEBUG 2015-08-26 20:39:49,640: 	 Myproxy is valid: 2488903
+DEBUG 2015-08-26 20:39:49,640: 	 Command use: status
+DEBUG 2015-08-26 20:39:49,641: 	 Options use: ['--dir=crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/']
+DEBUG 2015-08-26 20:39:49,994: 	 CRABClient version: 3.3.1507
+DEBUG 2015-08-26 20:39:49,994: 	 Instance is prod
+DEBUG 2015-08-26 20:39:49,994: 	 Server base url is cmsweb.cern.ch
+DEBUG 2015-08-26 20:39:49,994: 	 Command url /crabserver/prod/workflow
+DEBUG 2015-08-26 20:39:49,994: 	 Looking up detailed status of task 150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+DEBUG 2015-08-26 20:39:50,303: 	 {'status': 'RESUBMIT', 'schedd': '', 'saveLogs': 'F', 'totalJobdefs': 0, 'jobSetID': '', 'jobsPerStatus': {}, 'taskWarningMsg': [], 'taskFailureMsg': '', 'failedJobdefs': 0, 'jobdefErrors': [], 'collector': '', 'jobList': []}
+INFO 2015-08-26 20:39:50,303: 	 CRAB project directory:		/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:39:50,303: 	 Task name:			150825_140145:jsauvan_crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25
+INFO 2015-08-26 20:39:50,303: 	 Task status:			RESUBMIT
+INFO 2015-08-26 20:39:50,303: 	 
+No jobs created yet!
+INFO 2015-08-26 20:39:50,306: 	 Log file is /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25/crab.log

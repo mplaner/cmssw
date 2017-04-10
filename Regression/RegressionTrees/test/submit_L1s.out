@@ -1,0 +1,20 @@
+nohup: ignoring input
+Generating submit files in /nfs_scratch/tperry/74x_25ns_L1seed_pat_ntuple-runElectronRegressionTrees_HLTRECO_cfg...
+............................................
+Submitting job(s)............................................
+44 job(s) submitted to cluster 4904323.
+
+Your jobs should show up in ~6 minutes
+at the NEW job monitoring web page :
+    http://www.hep.wisc.edu/cms/comp/jobs/
+Jobs for 74x_25ns_L1seed_pat_ntuple are created in /nfs_scratch/tperry/74x_25ns_L1seed_pat_ntuple-runElectronRegressionTrees_HLTRECO_cfg
+nohup: ignoring input
+Generating submit files in /nfs_scratch/tperry/74x_25ns_Unseed_pat_ntuple-runElectronRegressionTrees_HLTRECO_cfg...
+............................................
+Submitting job(s)............................................
+44 job(s) submitted to cluster 4904324.
+
+Your jobs should show up in ~6 minutes
+at the NEW job monitoring web page :
+    http://www.hep.wisc.edu/cms/comp/jobs/
+Jobs for 74x_25ns_Unseed_pat_ntuple are created in /nfs_scratch/tperry/74x_25ns_Unseed_pat_ntuple-runElectronRegressionTrees_HLTRECO_cfg

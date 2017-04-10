@@ -1,0 +1,227 @@
+DEBUG 2015-05-20 10:31:17,404: 	 Executing command: 'submit'
+DEBUG 2015-05-20 10:31:17,405: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-05-20 10:31:17,438: 	 Checking credentials
+DEBUG 2015-05-20 10:31:17,438: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-05-20 10:31:17,438: 	 Getting proxy life time left
+DEBUG 2015-05-20 10:31:17,942: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 0
+
+ error: 
+ retcode : 0
+DEBUG 2015-05-20 10:31:17,942: 	 Proxy valid for 00:00:00 hours
+DEBUG 2015-05-20 10:31:17,942: 	 Creating new proxy for 24:00 hours with VO group '' and VO role 'NULL'.
+DEBUG 2015-05-20 10:31:23,653: 	 Executing : 
+ command : voms-proxy-init -voms cms:/cms -valid 24:00 -rfc
+ output : None
+ error: None
+ retcode : 0
+DEBUG 2015-05-20 10:31:24,258: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86398
+
+ error: 
+ retcode : 0
+DEBUG 2015-05-20 10:31:24,762: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86398
+
+ error: 
+ retcode : 0
+DEBUG 2015-05-20 10:31:25,466: 	 Executing : 
+ command : env X509_USER_PROXY=/tmp/x509up_u815 voms-proxy-info -fqan
+ output : /cms/Role=NULL/Capability=NULL
+
+ error: 
+ retcode : 0
+DEBUG 2015-05-20 10:31:25,467: 	 Proxy created.
+INFO 2015-05-20 10:31:25,467: 	 Will use CRAB configuration file crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25.py
+DEBUG 2015-05-20 10:31:25,467: 	 Loading CRAB configuration file.
+ERROR 2015-05-20 10:31:25,481: 	 Invalid CRAB configuration: Parameter Data.outLFN has been renamed to Data.outLFNDirBase starting from CRAB v3.3.16; please change your configuration file accordingly.
+The documentation about the CRAB configuration file can be found in https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3ConfigurationFile.
+ERROR 2015-05-20 10:31:25,481: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/bin/crab", line 139, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/bin/crab", line 124, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/lib/python2.6/site-packages/CRABClient/Commands/submit.py", line 39, in __init__
+    SubCommand.__init__(self, logger, cmdargs, disable_interspersed_args = True)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 290, in __init__
+    self.loadConfig(self.options.config, self.args)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 88, in loadConfig
+    raise ConfigurationException(configmsg)
+ConfigurationException: Invalid CRAB configuration: Parameter Data.outLFN has been renamed to Data.outLFNDirBase starting from CRAB v3.3.16; please change your configuration file accordingly.
+The documentation about the CRAB configuration file can be found in https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3ConfigurationFile.
+DEBUG 2015-05-20 10:32:05,630: 	 Executing command: 'submit'
+DEBUG 2015-05-20 10:32:05,631: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-05-20 10:32:05,639: 	 Checking credentials
+DEBUG 2015-05-20 10:32:05,639: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-05-20 10:32:05,639: 	 Getting proxy life time left
+DEBUG 2015-05-20 10:32:06,143: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 86356
+
+ error: 
+ retcode : 0
+DEBUG 2015-05-20 10:32:06,648: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 86356
+
+ error: 
+ retcode : 0
+DEBUG 2015-05-20 10:32:06,648: 	 Proxy valid for 23:59:16 hours
+INFO 2015-05-20 10:32:06,649: 	 Will use CRAB configuration file crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25.py
+DEBUG 2015-05-20 10:32:06,649: 	 Loading CRAB configuration file.
+ERROR 2015-05-20 10:32:06,677: 	 Invalid CRAB configuration: Parameter JobType.allowNonProductionCMSSW has been renamed to JobType.allowUndistributedCMSSW starting from CRAB v3.3.16; please change your configuration file accordingly.
+The documentation about the CRAB configuration file can be found in https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3ConfigurationFile.
+ERROR 2015-05-20 10:32:06,677: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/bin/crab", line 139, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/bin/crab", line 124, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/lib/python2.6/site-packages/CRABClient/Commands/submit.py", line 39, in __init__
+    SubCommand.__init__(self, logger, cmdargs, disable_interspersed_args = True)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 290, in __init__
+    self.loadConfig(self.options.config, self.args)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.16/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 88, in loadConfig
+    raise ConfigurationException(configmsg)
+ConfigurationException: Invalid CRAB configuration: Parameter JobType.allowNonProductionCMSSW has been renamed to JobType.allowUndistributedCMSSW starting from CRAB v3.3.16; please change your configuration file accordingly.
+The documentation about the CRAB configuration file can be found in https://twiki.cern.ch/twiki/bin/view/CMSPublic/CRAB3ConfigurationFile.
+DEBUG 2015-05-26 16:36:22,762: 	 Executing command: 'submit'
+DEBUG 2015-05-26 16:36:22,763: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-05-26 16:37:55,357: 	 Executing command: 'status'
+DEBUG 2015-05-26 16:37:55,358: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-07-16 14:27:19,549: 	 Executing command: 'submit'
+DEBUG 2015-07-16 14:27:19,550: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-07-16 14:27:19,568: 	 Checking credentials
+DEBUG 2015-07-16 14:27:19,568: 	 Found proxy file /tmp/x509up_u815
+DEBUG 2015-07-16 14:27:19,568: 	 Getting proxy life time left
+DEBUG 2015-07-16 14:27:20,371: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -timeleft
+ output : 24670
+
+ error: 
+ retcode : 0
+DEBUG 2015-07-16 14:27:20,875: 	 Executing : 
+ command : voms-proxy-info -file /tmp/x509up_u815 -actimeleft
+ output : 24670
+
+ error: 
+ retcode : 0
+DEBUG 2015-07-16 14:27:20,875: 	 Proxy valid for 06:51:10 hours
+INFO 2015-07-16 14:27:20,875: 	 Will use CRAB configuration file crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25.py
+DEBUG 2015-07-16 14:27:20,875: 	 Loading CRAB configuration file.
+DEBUG 2015-07-16 14:27:20,892: 	 Will use CRAB Analysis plugin (i.e. will run an analysis job type).
+ERROR 2015-07-16 14:27:20,893: 	 Working area '/grid_mnt/vol__vol_U__u/llr/cms/sauvan/CMSSW/ForRegressionTrainingTesting/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25' already exists 
+Please change the requestName in the config file
+ERROR 2015-07-16 14:27:20,893: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1507-comp/bin/crab", line 133, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1507-comp/bin/crab", line 119, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1507-comp/lib/python2.6/site-packages/CRABClient/Commands/submit.py", line 40, in __init__
+    SubCommand.__init__(self, logger, cmdargs, disable_interspersed_args = True)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1507-comp/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 298, in __init__
+    getattr(self.configuration.General, 'requestName', None))
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1507-comp/lib/python2.6/site-packages/CRABClient/ClientUtilities.py", line 387, in createWorkArea
+    raise ConfigException("Working area '%s' already exists \nPlease change the requestName in the config file" % fullpath)
+ConfigException: Working area '/grid_mnt/vol__vol_U__u/llr/cms/sauvan/CMSSW/ForRegressionTrainingTesting/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx25' already exists 
+Please change the requestName in the config file
+DEBUG 2015-07-16 15:59:15,362: 	 Executing command: 'status'
+DEBUG 2015-07-16 15:59:15,363: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-08-03 23:32:07,731: 	 Executing command: 'submit'
+DEBUG 2015-08-03 23:32:07,732: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-10-12 22:58:48,374: 	 Executing command: 'submit'
+DEBUG 2015-10-12 22:58:48,375: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-10-12 22:58:48,392: 	 Checking credentials
+DEBUG 2015-10-12 22:58:48,393: 	 Found proxy file /home/llr/cms/sauvan/.t3/proxy.cert
+DEBUG 2015-10-12 22:58:48,393: 	 Getting proxy life time left
+DEBUG 2015-10-12 22:58:48,995: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -timeleft
+ output : 42986
+
+ error: 
+ retcode : 0
+DEBUG 2015-10-12 22:58:49,699: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -actimeleft
+ output : 42984
+
+ error: 
+ retcode : 0
+DEBUG 2015-10-12 22:58:49,699: 	 Proxy valid for 11:56:26 hours
+ERROR 2015-10-12 22:58:49,699: 	 CRAB configuration file =crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx50.py not found.
+ERROR 2015-10-12 22:58:49,700: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/bin/crab", line 159, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/bin/crab", line 145, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/lib/python2.6/site-packages/CRABClient/Commands/submit.py", line 32, in __init__
+    SubCommand.__init__(self, logger, cmdargs, disable_interspersed_args=True)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 294, in __init__
+    self.loadConfig(self.options.config, self.args)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 45, in loadConfig
+    raise ConfigurationException("CRAB configuration file %s not found." % (configname))
+ConfigurationException: CRAB configuration file =crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx50.py not found.
+ERROR 2015-10-12 22:58:49,702: 	 Unhandled Exception!
+ERROR 2015-10-12 22:58:49,702: 	 'NoneType' object has no attribute 'terminate'
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/bin/crab", line 213, in <module>
+    client.cmd.terminate( exitcode )
+AttributeError: 'NoneType' object has no attribute 'terminate'
+ERROR 2015-10-12 22:58:49,702: 	 ERROR: AttributeError: 'NoneType' object has no attribute 'terminate'
+ERROR 2015-10-12 22:58:49,703: 	 
+	Please email hn-cms-computing-tools@cern.ch for support with the crab.log file or crab.log URL.
+ERROR 2015-10-12 22:58:49,703: 	 	Client Version: 3.3.1510
+ERROR 2015-10-12 22:58:49,703: 	 	Please use 'crab uploadlog' to upload the log file /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab.log to the CRAB cache.
+DEBUG 2015-10-12 22:59:04,505: 	 Executing command: 'submit'
+DEBUG 2015-10-12 22:59:04,506: 	 Found CRAB cache file /home/llr/cms/sauvan/.crab3
+DEBUG 2015-10-12 22:59:04,511: 	 Checking credentials
+DEBUG 2015-10-12 22:59:04,511: 	 Found proxy file /home/llr/cms/sauvan/.t3/proxy.cert
+DEBUG 2015-10-12 22:59:04,511: 	 Getting proxy life time left
+DEBUG 2015-10-12 22:59:05,015: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -timeleft
+ output : 42970
+
+ error: 
+ retcode : 0
+DEBUG 2015-10-12 22:59:05,619: 	 Executing : 
+ command : voms-proxy-info -file /home/llr/cms/sauvan/.t3/proxy.cert -actimeleft
+ output : 42968
+
+ error: 
+ retcode : 0
+DEBUG 2015-10-12 22:59:05,619: 	 Proxy valid for 11:56:10 hours
+INFO 2015-10-12 22:59:05,619: 	 Will use CRAB configuration file crab3_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx50.py
+DEBUG 2015-10-12 22:59:05,620: 	 Loading CRAB configuration file.
+DEBUG 2015-10-12 22:59:05,635: 	 Will use CRAB Analysis plugin (i.e. will run an analysis job type).
+ERROR 2015-10-12 22:59:05,636: 	 Working area '/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx50' already exists 
+Please change the requestName in the config file
+ERROR 2015-10-12 22:59:05,636: 	 Caught exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/bin/crab", line 159, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/bin/crab", line 145, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/lib/python2.6/site-packages/CRABClient/Commands/submit.py", line 32, in __init__
+    SubCommand.__init__(self, logger, cmdargs, disable_interspersed_args=True)
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/lib/python2.6/site-packages/CRABClient/Commands/SubCommand.py", line 298, in __init__
+    getattr(self.configuration.General, 'requestName', None))
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/lib/python2.6/site-packages/CRABClient/ClientUtilities.py", line 393, in createWorkArea
+    raise ConfigException("Working area '%s' already exists \nPlease change the requestName in the config file" % fullpath)
+ConfigException: Working area '/grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab3/crab_regression_ntuple_DoubleElectron_Pt1-300_PU0-50bx50' already exists 
+Please change the requestName in the config file
+ERROR 2015-10-12 22:59:05,639: 	 Unhandled Exception!
+ERROR 2015-10-12 22:59:05,639: 	 'NoneType' object has no attribute 'terminate'
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/crab3/slc6_amd64_gcc481/cms/crabclient/3.3.1510/bin/crab", line 213, in <module>
+    client.cmd.terminate( exitcode )
+AttributeError: 'NoneType' object has no attribute 'terminate'
+ERROR 2015-10-12 22:59:05,639: 	 ERROR: AttributeError: 'NoneType' object has no attribute 'terminate'
+ERROR 2015-10-12 22:59:05,639: 	 
+	Please email hn-cms-computing-tools@cern.ch for support with the crab.log file or crab.log URL.
+ERROR 2015-10-12 22:59:05,639: 	 	Client Version: 3.3.1510
+ERROR 2015-10-12 22:59:05,639: 	 	Please use 'crab uploadlog' to upload the log file /grid_mnt/vol__vol_U__u/llr/cms/sauvan/Projects/EgammaRegression_Run2/CMSSW/CMSSW_7_4_6/src/Regression/RegressionTrees/test/crab/crab.log to the CRAB cache.
