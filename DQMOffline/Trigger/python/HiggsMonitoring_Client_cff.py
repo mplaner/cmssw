@@ -1,10 +1,13 @@
 import FWCore.ParameterSet.Config as cms
-diphotonEfficiency = cms.EDAnalyzer("DQMGenericClient",
-    subDirs        = cms.untracked.vstring("HLT/Higgs/*"),
+from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
+
+diphotonEfficiency = cms.EDProducer("DQMGenericClient",
+    subDirs        = cms.untracked.vstring("HLT/photon/HLT_Diphoton30_22_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass90_v","HLT/photon/HLT_Diphoton30_22_R9Id_OR_IsoCaloId_AND_HE_R9Id_Mass95_v","HLT_Diphoton30PV_18PV_R9Id_AND_IsoCaloId_AND_HE_R9Id_PixelVeto_Mass55_v"),
+                                    #subDirs        = cms.untracked.vstring("HLT/Higgs/*"),
     verbose        = cms.untracked.uint32(0), # Set to 2 for all messages
     resolution     = cms.vstring(),
     efficiency     = cms.vstring(
-        "eff_diphoton_pt          'Photon turnON;             Photon pt [GeV]; efficiency'     photon_pt_numerator          photon_pt_denominator",
+        "eff_diphoton_pt       'Photon turnON;             Photon pt [GeV]; efficiency'     photon_pt_numerator          photon_pt_denominator",
         "eff_diphoton_variable 'Photon turnON;             Photon pt [GeV]; efficiency'     photon_pt_variable_numerator photon_pt_variable_denominator",
         "eff_diphoton_eta      'Photon turnON;             Photon eta; efficiency'          photon_eta_numerator         photon_eta_denominator",
         "eff_diphoton_subpt    'Photon turnON;             Photon subpt [GeV]; efficiency'     subphoton_pt_numerator          subphoton_pt_denominator",
